@@ -1,17 +1,26 @@
 export type RequestStatus = "APPROVED" | "REJECTED"  // 백엔드 확인 필요
 export type ReviewSentiment = 'GOOD' | 'BAD';
 
-export interface BorrowedRentalResponse {
+
+// 빌려준 것
+export interface LentRentalResponse {
     requestStatus: RequestStatus
-    rentalTime: string
+    rentalStartTime: string
+    borrower: string
+    title: string
 }
 
-export interface LentRentalResponse {
-    name: string
+// 빌린 것
+export interface BorrowedRentalResponse {
+    requestStatus: RequestStatus
+    rentalStartTime: string
+    rentalEndTime: string
+    lender: string
+    title: string
 }
 
 export interface CreateReviewRequest {
-    reviewSentiment: ReviewSentiment;
+    reviewSentiment: ReviewSentiment
 }
 
 export interface ReviewResponse {
