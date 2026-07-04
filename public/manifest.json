@@ -1,0 +1,24 @@
+{
+    "id": "/",
+    "short_name": "baro",
+    "name": "baro",
+    "icons": [
+        {
+        "src": "logo2.png",
+        "sizes": "148x148",
+        "type": "image/png",
+        "purpose": "any"
+        },
+        {
+        "src": "logo2.png",
+        "sizes": "148x148",
+        "type": "image/png",
+        "purpose": "maskable"
+        }
+    ],
+    "start_url": ".",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#ffffff",
+    "background_color": "#ffffff"
+}
