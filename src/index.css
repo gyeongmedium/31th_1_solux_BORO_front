@@ -1,4 +1,9 @@
+@import "pretendard/dist/web/static/pretendard.css";
 @import "tailwindcss";
+
+button {
+    font-weight: inherit;
+}
 
 body {
     margin: 0;
@@ -8,6 +13,9 @@ body {
     justify-content: center;   /* 가로 가운데 정렬 */
     align-items: center;       /* 세로 가운데 정렬 */
     min-height: 100vh;         /* 모니터 꽉 차게 */
+    font-family: 'Pretendard', sans-serif;
+    font-weight: 400;  
+    font-size: 14px;
 }
 
 #root {
@@ -27,4 +35,12 @@ body {
     overflow-x: hidden;
     
     position: relative;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
