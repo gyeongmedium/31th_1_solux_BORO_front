@@ -1,4 +1,4 @@
-export type RequestStatus = "APPROVED" | "REJECTED"  // 백엔드 확인 필요
+export type RequestStatus = "요청중" | "대여중" | "대여가능" | "반납완료" // 백엔드 확인 필요
 export type ReviewSentiment = 'GOOD' | 'BAD';
 
 
@@ -8,6 +8,7 @@ export interface LentRentalResponse {
     rentalStartTime: string
     borrower: string
     title: string
+    //category: string              // 백엔드에게 요청 필요
 }
 
 // 빌린 것
@@ -17,6 +18,7 @@ export interface BorrowedRentalResponse {
     rentalEndTime: string
     lender: string
     title: string
+    //category: string              // 백엔드에게 요청 필요
 }
 
 export interface CreateReviewRequest {
