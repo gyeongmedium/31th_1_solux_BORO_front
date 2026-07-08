@@ -4,8 +4,9 @@ import LoginPage from "./pages/onboarding/LoginPage";
 import SignUpPage from "./pages/onboarding/SignUpPage";
 import HomePage from "./pages/home/HomePage";
 import ChatListPage from "./pages/chat/ChatListPage";
-import RentalPage from "./pages/rental/LentPage";
+import LentalPage from "./pages/rental/LentPage";
 import BorrowedPage from "./pages/rental/BorrowedPage";
+import RentalLayout from "./pages/rental/RentalLayout";
 import MyPage from "./pages/mypage/MyPage";
 
 
@@ -37,8 +38,10 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/chat" element={<ChatListPage />} />
           
-          <Route path="/rental" element={<RentalPage />} />
-          <Route path="/rental/borrowed" element={<BorrowedPage />} />
+          <Route element={<RentalLayout />}>
+            <Route path="/rental" element={<LentalPage />} />
+            <Route path="/rental/borrowed" element={<BorrowedPage />} />
+          </Route>
 
           <Route path="/mypage" element={<MyPage />} />
 

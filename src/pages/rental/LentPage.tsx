@@ -1,11 +1,11 @@
 // 대여현황 (빌려준 탭)
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useOutletContext } from "react-router-dom";        //  useNavigate,
 import { mockLentRentals } from "../../api/mockRental";
 import type { LentRentalResponse, RequestStatus } from "../../types/rental";
 import BottomNav from "../../components/BottomNav";
-
+import Tab from "../../components/Tab";
 
 // 팝업 컴포넌트 (취소/확인)
 function ConfirmModal({ 
@@ -75,7 +75,9 @@ function getStatusStyle(status: RequestStatus) {
 
 
 export default function LentPage() {
-    const navigate = useNavigate();
+    //const navigate = useNavigate();
+    const { borrowedCount } = useOutletContext<{ borrowedCount: number }>();
+
 
     // 초기값으로 mock 데이터를 넣어 리스트가 보이게 유지합니다.
     const [rentals, setRentals] = useState<LentRentalResponse[]>([
@@ -138,19 +140,15 @@ export default function LentPage() {
             </div>
 
             {/* 탭 메뉴 */}
-            <div className="px-6 mb-4 h-[44px] flex-shrink-0 relative">
-                <div className="absolute top-0 left-[22px] flex bg-[#E6E6E6] rounded-[40px] w-[359px] h-[44px] p-1">                    
-                    <button className="w-[175px] h-[34px] mt-[1px] ml-[6px] flex items-center justify-center bg-[#9996FF] text-[#FFFFFF] rounded-[40px] text-sm font-bold">
-                        내가 빌려준 것 ({rentals.length})
-                    </button>
-                    <button
-                        onClick={() => navigate("/rental/borrowed")}
-                        className="flex-1 py-1.5 text-center text-[#7F7F7F] text-sm hover:text-gray-600 transition-colors"
-                    >
-                        내가 빌린 것 (1)
-                    </button>
-                </div>
-            </div>
+            <Tab 
+                activeTab="first"
+                firstLabel="내가 빌려준 것"
+                firstCount={`(${rentals.length})`}
+                firstPath="/rental/"
+                secondLabel="내가 빌린 것"
+                secondCount={`(${borrowedCount})`}
+                secondPath="/rental/borrowed"
+            />
 
             {/* 콘텐츠 리스트 영역 */}
             <div className="flex-1 overflow-y-auto px-4 space-y-4 pt-2 pb-[75px] scrollbar-thin">                
