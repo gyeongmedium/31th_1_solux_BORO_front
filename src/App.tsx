@@ -3,10 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/onboarding/LoginPage";
 import SignUpPage from "./pages/onboarding/SignUpPage";
 import HomePage from "./pages/home/HomePage";
+
 import ChatListPage from "./pages/chat/ChatListPage";
+import EmptySpotChatListPage from "./pages/chat/EmptySpotChatListPage";
+
 import LentalPage from "./pages/rental/LentPage";
 import BorrowedPage from "./pages/rental/BorrowedPage";
 import RentalLayout from "./pages/rental/RentalLayout";
+
 import MyPage from "./pages/mypage/MyPage";
 
 
@@ -36,7 +40,9 @@ export default function App() {
 
           {/* 메인 탭 전환 주소들 */}
           <Route path="/" element={<HomePage />} />
+
           <Route path="/chat" element={<ChatListPage />} />
+          <Route path="/chat/spot" element={<EmptySpotChatListPage/>} />
           
           <Route element={<RentalLayout />}>
             <Route path="/rental" element={<LentalPage />} />
