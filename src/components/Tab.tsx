@@ -34,7 +34,7 @@ export default function Tab({
                     onClick={() => navigate(firstPath)}
                     className={`transition-colors text-sm ${
                         activeTab === "first"
-                            ? "w-[175px] h-[34px] mt-[1px] ml-[1px] flex items-center justify-center bg-[#9996FF] text-[#FFFFFF] rounded-[40px] font-bold"
+                            ? "w-[175px] h-[34px] mt-[1px] ml-[5px] flex items-center justify-center bg-[#9996FF] text-[#FFFFFF] rounded-[40px] font-bold"
                             : "flex-1 py-1.5 text-center text-[#7F7F7F] hover:text-gray-600"
                     }`}
                 >

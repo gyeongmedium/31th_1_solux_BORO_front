@@ -6,6 +6,7 @@ import HomePage from "./pages/home/HomePage";
 
 import ChatListPage from "./pages/chat/ChatListPage";
 import EmptySpotChatListPage from "./pages/chat/EmptySpotChatListPage";
+import DetaildChatPage from "./pages/chat/DetailedChatPage";
 
 import LentalPage from "./pages/rental/LentPage";
 import BorrowedPage from "./pages/rental/BorrowedPage";

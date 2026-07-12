@@ -7,7 +7,7 @@ export const mockChatRooms: ChatRoomListResponse[] = [
         otherUserId: 1,
         otherUserNickname: '코딩왕',
         lastMessage: '네! 내일 2시에 정문 앞 스타벅스에서 뵐게요!',
-        lastMessageAt: '2026-04-09T16:30:00',
+        lastMessageAt: '2026-07-11T23:30:00',
         unreadCount: 2,
     },
     {
@@ -15,7 +15,7 @@ export const mockChatRooms: ChatRoomListResponse[] = [
         otherUserId: 2,
         otherUserNickname: '공대생활',
         lastMessage: '감사합니다~',
-        lastMessageAt: '2026-04-08T18:20:00',
+        lastMessageAt: '2024-03-08T18:20:00',
         unreadCount: 0,
     },
     {
