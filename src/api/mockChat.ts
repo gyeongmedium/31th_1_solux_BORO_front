@@ -111,6 +111,22 @@ export const mockChatMessages: Record<number, ChatMessageResponse[]> = {
         content: '네! 내일 2시에 정문 앞 스타벅스에서 뵐게요!',
         createdAt: '2026-04-09T16:30:00',
         },
+        {
+        roomId: 101,
+        messageId: 5,
+        senderId: 999,
+        senderNickName: '나',
+        content: 'test',
+        createdAt: '2026-04-09T16:30:00',
+        },
+        {
+        roomId: 101,
+        messageId: 6,
+        senderId: 5,
+        senderNickName: '코딩왕',
+        content: 'test',
+        createdAt: '2026-04-10T17:30:00',
+        },
     ],
 };
 

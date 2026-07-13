@@ -1,5 +1,6 @@
 // 빈자리 채팅 목록
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 // import { getSpotChatList } from "../../api/chat"; // 실제 API 연결 시 주석 해제
 // import type { SpotChatListResponse } from "../../types/chat"; 
 import BottomNav from "../../components/BottomNav";
@@ -7,6 +8,7 @@ import Tab from "../../components/Tab";
 
 // 백엔드 연결을 대비해 임시 선언해 둔 타입 구조
 interface SpotChatListItem {
+    roomId: number;
     id: number;
     nickname: string;
     createdAt: string; // LocalDateTime 형식 (예: "2026-04-09T15:30:00")
@@ -18,6 +20,7 @@ interface SpotChatListItem {
 // 시안 화면을 그리기 위한 가짜 임시 mock 데이터
 const mockSpots: SpotChatListItem[] = [
     {
+        roomId: 101,
         id: 1,
         nickname: "스터디마스터",
         createdAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5분 후
@@ -26,6 +29,7 @@ const mockSpots: SpotChatListItem[] = [
         tags: ["콘센트", "창가"],
     },
     {
+        roomId: 102,
         id: 2,
         nickname: "열공러",
         createdAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(), // 15분 후
@@ -34,6 +38,7 @@ const mockSpots: SpotChatListItem[] = [
         tags: [],
     },
     {
+        roomId: 103,
         id: 3,
         nickname: "공학도",
         createdAt: new Date(Date.now() + 20 * 60 * 1000).toISOString(), // 20분 후
@@ -65,6 +70,11 @@ const getRemainingTimeBadge = (dateTimeStr: string): string => {
 };
 
 export default function EmptySpotChatListPage() {
+    const navigate = useNavigate();
+    const handleStartChat = (roomId: number) => {
+        navigate(`/chat/${roomId}`, { state: { type: "SPOT" } });
+    };
+
     // 초기값으로 mock 데이터를 넣어 리스트가 보이게 유지합니다.        // setSpots
     const [spots] = useState<SpotChatListItem[]>(mockSpots);
 
@@ -162,7 +172,10 @@ export default function EmptySpotChatListPage() {
                         )}
 
                         {/* 4. 하단 버튼 행 */}
-                        <button className="w-[300px] h-[34px] ml-1 mb-[-5px] border border-[#7F7F7F] rounded-[40px] flex items-center justify-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition-colors mt-auto">
+                        <button 
+                            onClick={() => handleStartChat(spot.roomId)}
+                            className="w-[300px] h-[34px] ml-1 mb-[-5px] border border-[#7F7F7F] rounded-[40px] flex items-center justify-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition-colors mt-auto"
+                        >
                             <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M1.97679 13.504L4.29821 12.7325L4.71786 12.9352C5.74299 13.4192 6.86548 13.6641 8 13.6515C11.9946 13.6515 14.8571 10.8092 14.8571 7.39457C14.8571 3.96747 12.0161 1.13763 8 1.13763C3.98393 1.13763 1.14286 3.96747 1.14286 7.39457C1.14916 8.70628 1.58277 9.98057 2.37857 11.0261L2.76786 11.5362L1.97679 13.504ZM1.16964 14.9704C1.06627 15.005 0.955134 15.0093 0.84935 14.983C0.743566 14.9567 0.647551 14.9008 0.572641 14.822C0.49773 14.7431 0.447051 14.6446 0.426586 14.5379C0.40612 14.4313 0.416723 14.3211 0.457143 14.2203L1.46607 11.7104C0.520898 10.4677 0.00643473 8.95324 0 7.39457C0 3.62441 3.06429 0 8 0C12.9357 0 16 3.62441 16 7.39457C16 11.1647 12.9036 14.7891 8 14.7891C6.69284 14.8024 5.39988 14.5185 4.21964 13.959L1.16964 14.9704Z" fill="black"/>
                             </svg>

@@ -6,7 +6,7 @@ import HomePage from "./pages/home/HomePage";
 
 import ChatListPage from "./pages/chat/ChatListPage";
 import EmptySpotChatListPage from "./pages/chat/EmptySpotChatListPage";
-import DetaildChatPage from "./pages/chat/DetailedChatPage";
+import DetailedChatPage from "./pages/chat/DetailedChatPage";
 
 import LentalPage from "./pages/rental/LentPage";
 import BorrowedPage from "./pages/rental/BorrowedPage";
@@ -43,7 +43,8 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
 
           <Route path="/chat" element={<ChatListPage />} />
-          <Route path="/chat/spot" element={<EmptySpotChatListPage/>} />
+          <Route path="/chat/spot" element={<EmptySpotChatListPage />} />
+          <Route path="/chat/:roomId" element={<DetailedChatPage />} />
           
           <Route element={<RentalLayout />}>
             <Route path="/rental" element={<LentalPage />} />

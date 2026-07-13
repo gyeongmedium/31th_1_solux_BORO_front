@@ -1,5 +1,6 @@
 // 거래 채팅 목록 (기본)
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 // import { getChatRoomList } from "../../api/chat"; // 실제 API 연결 시 주석 해제
 import { mockChatRooms } from "../../api/mockChat";
 import type { ChatRoomListResponse } from "../../types/chat";
@@ -52,7 +53,7 @@ const formatChatTime = (dateTimeStr: string): string => {
 };
 
 export default function ChatListPage() {
-
+    const navigate = useNavigate();
     // 초기 Mock 데이터를 가장 최근 메시지 시간순(내림차순)으로 정렬하여 상태에 저장합니다.  // setRooms
     const [rooms] = useState<ChatRoomListResponse[]>(() => 
         [...mockChatRooms].sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime())
@@ -104,7 +105,10 @@ export default function ChatListPage() {
             {/* 거래 채팅 리스트 영역 */}
             <div className="flex-1 overflow-y-auto pl-[30px] pr-[20px] space-y-6 pt-6 pb-[70px]">
                 {rooms.map((room) => (
-                    <div key={room.roomId} className="flex items-stretch justify-between cursor-pointer group w-full">
+                    <div key={room.roomId}
+                        onClick={() => navigate(`/chat/${room.roomId}`, { state: { type: "TRADE" } })}
+                        className="flex items-stretch justify-between cursor-pointer group w-full"
+                    >
                         <div className="flex items-center gap-[13px] mb-[30px] flex-1">
                             {/* 프로필 이미지 구역 */}
                             <div className="w-[56px] h-[56px] rounded-full bg-[#E6E6E6] flex items-center justify-center flex-shrink-0">
