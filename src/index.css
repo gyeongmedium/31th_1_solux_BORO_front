@@ -1,4 +1,9 @@
+@import "pretendard/dist/web/static/pretendard.css";
 @import "tailwindcss";
+
+button {
+    font-weight: inherit;
+}
 
 body {
     margin: 0;
@@ -8,6 +13,9 @@ body {
     justify-content: center;   /* 가로 가운데 정렬 */
     align-items: center;       /* 세로 가운데 정렬 */
     min-height: 100vh;         /* 모니터 꽉 차게 */
+    font-family: 'Pretendard', sans-serif;
+    font-weight: 400;  
+    font-size: 14px;
 }
 
 #root {
@@ -22,9 +30,54 @@ body {
     min-height: 874px;
     max-height: 874px;
     
-    /* 화면 크기를 벗어나는 내용은 스크롤바로 처리 */
-    overflow-y: auto; 
-    overflow-x: hidden;
+    /* 이제 카드 목록만 자체 스크롤되므로 root는 스크롤 필요 없음 */
+    overflow: hidden;
     
     position: relative;
+}
+
+/* 세로 스크롤바 (카드 목록) - 얇고 심플하게 */
+.vertical-scroll::-webkit-scrollbar {
+  width: 11px;
+}
+
+.vertical-scroll::-webkit-scrollbar-track {
+  background: #ffffff;
+  border-radius: 10px;
+  margin: 0 20px;
+}
+
+.vertical-scroll::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 10px;
+
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.vertical-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* 카테고리 가로 스크롤바 - 조금 더 두껍게 */
+.category-scroll {
+  overflow-y: hidden;
+}
+
+.category-scroll::-webkit-scrollbar {
+  height: 14px;
+  width: 0px;
+}
+
+.category-scroll::-webkit-scrollbar-track {
+  background: #E6E6E6;
+  border-radius: 10px;
+  margin: 0 20px;
+}
+
+.category-scroll::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 10px;
+  border: 4px solid transparent;
+  background-clip: content-box;
 }
