@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 // 하단 네비게이션 (홈, 대여 현황, 채팅, 마이 페이지)
 
+=======
+>>>>>>> develop
 import { useNavigate, useLocation } from "react-router-dom";
 
 export default function BottomNav() {
