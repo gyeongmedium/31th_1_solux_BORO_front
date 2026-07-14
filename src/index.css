@@ -1,16 +1,12 @@
-<<<<<<< HEAD
 @import 'pretendard/dist/web/variable/pretendardvariable.css';
 @import "tailwindcss";
 
 * {
     font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-=======
-@import "pretendard/dist/web/static/pretendard.css";
-@import "tailwindcss";
+}
 
 button {
     font-weight: inherit;
->>>>>>> develop
 }
 
 body {
@@ -38,13 +34,8 @@ body {
     min-height: 874px;
     max-height: 874px;
     
-<<<<<<< HEAD
-    /* 화면 크기를 벗어나는 내용은 스크롤바로 처리 */
-    overflow-y: hidden; 
-=======
     /* 이제 카드 목록만 자체 스크롤되므로 root는 스크롤 필요 없음 */
     overflow: hidden;
->>>>>>> develop
     
     position: relative;
 }
