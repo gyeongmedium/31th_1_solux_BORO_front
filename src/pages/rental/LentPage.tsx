@@ -1,7 +1,7 @@
 // 대여현황 (빌려준 탭)
 
-import { useState, useEffect } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom"; // useNavigate 활성화
+import { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { mockLentRentals } from "../../api/mockRental";
 import type { LentRentalResponse, RequestStatus } from "../../types/rental";
 import BottomNav from "../../components/BottomNav";
@@ -75,10 +75,10 @@ function getStatusStyle(status: RequestStatus) {
 
 export default function LentPage() {
     const navigate = useNavigate(); // navigate 훅 초기화
-    const { borrowedCount } = useOutletContext<{ borrowedCount: number }>();
 
     // roomId 매핑을 위해 목데이터 개별 고유 ID 설정
     const [rentals, setRentals] = useState<(LentRentalResponse & { roomId?: number; category?: string; isReturnWaiting?: boolean })[]>([
+        { ...mockLentRentals, roomId: 101, category: "과잠", title: "컴퓨터 공학과 과잠 대여하고 싶어요", borrower: "코딩왕" },
         { ...mockLentRentals, roomId: 101, category: "과잠", title: "컴퓨터 공학과 과잠 대여하고 싶어요", borrower: "코딩왕" },
         { 
             ...mockLentRentals, 
@@ -99,9 +99,6 @@ export default function LentPage() {
     }>({ show: false, index: null, action: null })
 
     const [toast, setToast] = useState<string | null>(null)
-
-    useEffect(() => {
-    }, []);
 
     const handleApprove = (index: number) => {
         setModalState({ show: true, index, action: 'approve' })
@@ -162,13 +159,14 @@ export default function LentPage() {
                 <h1 className="text-2xl font-bold leading-none text-black">대여현황</h1>
             </div>
 
+            {/* 개수 노출을 포기하고 군더더기 없는 이동 패스만 전달 */}
             <Tab 
                 activeTab="first"
                 firstLabel="내가 빌려준 것"
-                firstCount={`(${rentals.length})`}
+                firstCount=""
                 firstPath="/rental/"
                 secondLabel="내가 빌린 것"
-                secondCount={`(${borrowedCount})`}
+                secondCount=""
                 secondPath="/rental/borrowed"
             />
 
@@ -246,8 +244,6 @@ export default function LentPage() {
                                         >
                                             반납 대기
                                         </button>
-                                        
-                                        {/* 💬 1. 반납대기 상태 채팅하기 버튼 */}
                                         <button 
                                             onClick={() => handleStartChat(item)}
                                             className="w-[300px] h-[34px] bg-white border border-black rounded-[40px] text-sm flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
@@ -266,8 +262,6 @@ export default function LentPage() {
                                         >
                                             반납 확인
                                         </button>
-                                        
-                                        {/* 💬 2. 대여중 상태 채팅하기 버튼 */}
                                         <button 
                                             onClick={() => handleStartChat(item)}
                                             className="w-[300px] h-[34px] bg-white border border-black rounded-[40px] text-[14px] mt-0.5 flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
@@ -294,8 +288,6 @@ export default function LentPage() {
                                                 거절
                                             </button>
                                         </div>
-                                        
-                                        {/* 💬 3. 요청중 상태 채팅하기 버튼 */}
                                         <button 
                                             onClick={() => handleStartChat(item)}
                                             className="w-[304px] h-[40px] bg-white border border-black rounded-[40px] text-[14px] flex items-center justify-center mt-0.5 mb-1 gap-2 active:bg-gray-50 transition-colors"

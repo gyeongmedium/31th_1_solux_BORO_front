@@ -1,14 +1,14 @@
 // 대여현황 (빌린 탭)
 
-import { useState, useEffect } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom"; // useNavigate 활성화
+import { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { mockBorrowedRentals } from "../../api/mockRental";
 import type { BorrowedRentalResponse, RequestStatus } from "../../types/rental";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
 
 // 팝업 컴포넌트 (취소/확인)
-function ConfirmModal({ 
+function ConfirmModal({
     message, 
     subMessage,
     onConfirm, 
@@ -75,7 +75,6 @@ function getStatusStyle(status: RequestStatus) {
 
 export default function BorrowedPage() {
     const navigate = useNavigate(); // navigate 훅 초기화
-    const { lentCount } = useOutletContext<{ lentCount: number }>();
 
     // roomId 식별을 위해 목데이터에 가상의 roomId 부여
     const [rentals, setRentals] = useState<(BorrowedRentalResponse & { roomId?: number; category?: string; isReturnWaiting?: boolean })[]>([
@@ -98,9 +97,6 @@ export default function BorrowedPage() {
     }>({ show: false, index: null })
 
     const [toast, setToast] = useState<string | null>(null)
-
-    useEffect(() => {
-    }, []);
 
     const handleReturn = (index: number) => {
         setModalState({ show: true, index })
@@ -142,13 +138,14 @@ export default function BorrowedPage() {
                 <h1 className="text-2xl font-bold leading-none text-black">대여현황</h1>
             </div>
 
+            {/* 개수 노출 없이 탭 전환 기능에 완벽 집중 */}
             <Tab 
                 activeTab="second"
                 firstLabel="내가 빌려준 것"
-                firstCount={`(${lentCount})`}
+                firstCount=""
                 firstPath="/rental/"
                 secondLabel="내가 빌린 것"
-                secondCount={`(${rentals.length})`}
+                secondCount=""
                 secondPath="/rental/borrowed"
             />
 
@@ -229,8 +226,6 @@ export default function BorrowedPage() {
                                 >
                                     {item.isReturnWaiting ? "반납 대기" : "반납 하기"}
                                 </button>
-                                
-                                {/* 💬 채팅하기 버튼 라우팅 및 아이템 정보 연동 */}
                                 <button 
                                     onClick={() => handleStartChat(item)}
                                     className="w-[300px] h-[34px] bg-white border border-black rounded-[40px] text-[14px] flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
