@@ -1,32 +1,38 @@
-import api from "../lib/axios"
-import type { SignUpRequest, SignUpResponse, SendEmailRequest, VerifyEmailRequest, ReissueResponse } from "../types/auth"
+import axios from 'axios';
+import type { ApiResponse, SignUpRequest, SignUpResponse, SocialLoginResponse, ReissueResponse } from '../types/auth';
 
+// 프로젝트 환경에 맞는 Axios 인스턴스를 설정해 주세요.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
-// 1. 회원가입
-export const signUp = (data: SignUpRequest) =>
-    api.post<SignUpResponse>("/api/v1/auth/sign-up", data)
+const authApi = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
 
-// 소셜 로그인 안하는거 아닌가????
-// export const socialLogin = (data: any) =>
-//     api.post("/api/v1/auth/oauth2/callback", data)
+/* 1. 회원가입 API */
+export const signUp = async (data: SignUpRequest): Promise<ApiResponse<SignUpResponse>> => {
+    const response = await authApi.post<ApiResponse<SignUpResponse>>('/auth/sign-up', data);
+    return response.data;
+};
 
-// 이메일 인증 코드 발송
-export const sendEmailCode = (data: SendEmailRequest) =>
-    api.post("/api/v1/auth/email/send", data)
+/* 2. 소셜 로그인 (구글 콜백) API */
+export const googleLoginCallback = async (code: string): Promise<ApiResponse<SocialLoginResponse>> => {
+    const response = await authApi.post<ApiResponse<SocialLoginResponse>>('/auth/google/callback', { code });
+    return response.data;
+};
 
-// 이메일 인증 코드 검증
-export const verifyEmailCode = (data: VerifyEmailRequest) =>
-    api.post("/api/v1/auth/email/verify", data)
-
-// 액세스 토큰 재발급
-export const reissueToken = () =>
-    api.post<ReissueResponse>("/api/v1/auth/reissue")
-
-
-// 로그아웃
-export const logout = () =>
-    api.post("/api/v1/auth/logout")
-
-// 회원 탈퇴
-export const withdraw = () =>
-    api.patch("/api/v1/auth/withdraw")
+/* 3. 액세스 토큰 재발급 API */
+export const reissueToken = async (refreshToken: string): Promise<ApiResponse<ReissueResponse>> => {
+    const response = await authApi.post<ApiResponse<ReissueResponse>>(
+        '/auth/reissue',
+        {},
+        {
+        headers: {
+            Authorization: `Bearer ${refreshToken}`,
+        },
+        }
+    );
+    return response.data;
+};
