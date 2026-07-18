@@ -9,7 +9,7 @@ export interface ApiResponse<T> {
 // 1. 회원가입
 export interface SignUpRequest {
     signUpToken: string;
-    nickName: string;           // !!!! nickName인지 nickname인지 확인하기 !!!!
+    nickname: string;           // !!!! nickName인지 nickname인지 확인하기 !!!!
     studentNumber: string;
 }
 
