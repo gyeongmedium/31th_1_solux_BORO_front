@@ -3,6 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/onboarding/LoginPage";
 import SignUpPage from "./pages/onboarding/SignUpPage";
 import HomePage from "./pages/home/HomePage";
+import PostCreatePage from "./pages/home/PostCreatePage";
+import PostDetailPage from "./pages/home/PostDetailPage";
+import EmptySpotPage from "./pages/home/EmptySpotPage";
+import SpotDetailPage from "./pages/home/SpotDetailPage";
 
 import ChatListPage from "./pages/chat/ChatListPage";
 import EmptySpotChatListPage from "./pages/chat/EmptySpotChatListPage";
@@ -13,6 +17,8 @@ import BorrowedPage from "./pages/rental/BorrowedPage";
 import RentalLayout from "./pages/rental/RentalLayout";
 
 import MyPage from "./pages/mypage/MyPage";
+import LikedPostsPage from "./pages/mypage/LikedPostsPage";
+import ProfileEditPage from "./pages/mypage/ProfileEditPage";
 
 
 function MobileLayout({ children }: { children: React.ReactNode }) {
@@ -23,7 +29,8 @@ function MobileLayout({ children }: { children: React.ReactNode }) {
         - max-w-[440px]: 피그마 시안 비율대로 가로폭 제한
         - flex flex-col: 상단헤더 - 메인콘텐츠 - 바텀네비 정렬용 구조
       */}
-      <div className="flex-1 overflow-y-auto w-full h-full">
+      <div className="flex-1 overflow-y-scroll w-full h-full vertical-scroll"
+          style={{ scrollbarGutter: "stable" }}>
         {children}
       </div>
     </div>
@@ -41,9 +48,13 @@ export default function App() {
 
           {/* 메인 탭 전환 주소들 */}
           <Route path="/" element={<HomePage />} />
+          <Route path="/post/create" element={<PostCreatePage />} />
+          <Route path="/post/:postId" element={<PostDetailPage />} />
 
           <Route path="/chat" element={<ChatListPage />} />
           <Route path="/chat/spot" element={<EmptySpotChatListPage />} />
+          <Route path="/spot" element={<EmptySpotPage />} />
+          <Route path="/post/spot/:spotId" element={<SpotDetailPage />} />
           <Route path="/chat/:roomId" element={<DetailedChatPage />} />
           
           <Route element={<RentalLayout />}>
@@ -52,6 +63,8 @@ export default function App() {
           </Route>
 
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/mypage/liked" element={<LikedPostsPage />} />
+          <Route path="/mypage/edit" element={<ProfileEditPage />} />
 
           {/* 예외 처리 */}
           <Route path="*" element={<Navigate to="/" replace />} />
