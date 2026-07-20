@@ -13,6 +13,8 @@ import BorrowedPage from "./pages/rental/BorrowedPage";
 import RentalLayout from "./pages/rental/RentalLayout";
 
 import MyPage from "./pages/mypage/MyPage";
+import StorePage from "./pages/mypage/StorePage";
+import PointPage from "./pages/mypage/PointPage";
 
 
 function MobileLayout({ children }: { children: React.ReactNode }) {
@@ -47,6 +49,8 @@ export default function App() {
           </Route>
 
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/mypage/store" element={<StorePage />} />
+          <Route path="/mypage/point" element={<PointPage />} />
 
           {/* 예외 처리 */}
           <Route path="*" element={<Navigate to="/" replace />} />
