@@ -1,31 +1,17 @@
 // 로그인
 import { useState } from "react";                       // useEffect
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";                // useNavigate
 // import { googleLoginCallback } from "../api/auth";   // 실제 API 연결 시 주석 해제
-import { mockGoogleLoginCallback } from "../../api/mockAuth";
+//import { mockGoogleLoginCallback } from "../../api/mockAuth";
 // import type { SocialLoginResponse } from "../../types/auth";
 
 export default function LoginPage() {
-    const navigate = useNavigate();
+    //const navigate = useNavigate();
     const [email, setEmail] = useState("");
 
-    const handleGoogleLogin = async () => {
-        try {
-            const response = await mockGoogleLoginCallback("existing-user"); 
-            
-            if (response.isSuccess) {
-                const { authStatus, accessToken, signUpToken } = response.result;
-                
-                if (authStatus === "NEED_SIGNUP") {
-                    navigate("/signup", { state: { signUpToken } });
-                } else {
-                    if (accessToken) localStorage.setItem("accessToken", accessToken);
-                    navigate("/"); 
-                }
-            }
-        } catch (error) {
-            console.error("로그인 중 에러 발생:", error);
-        }
+    const handleGoogleLogin = () => {
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&response_type=code&scope=email%20profile&prompt=consent`;
+        window.location.href = googleAuthUrl;
     };
 
     return (
