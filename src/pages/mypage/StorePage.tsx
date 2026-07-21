@@ -103,6 +103,13 @@ const widthMap: Record<string, string> = {
     "정장": "w-[104px]",
 };
 
+// 아이템 카테고리
+const categoryNameMap: Record<string, string> = {
+    CLOTHES: "의상",
+    ACCESSORY: "악세사리",
+    ETC: "기타",
+};
+
 export default function StorePage() {
     const navigate = useNavigate();
     
@@ -220,7 +227,9 @@ export default function StorePage() {
                                 {/* 아이템 정보 */}
                                 <div className="text-center flex flex-col gap-0.5">
                                     <span className="font-bold text-[14px] text-[#1A1A1A] pt-2">{item.itemName}</span>
-                                    <span className="text-[12px] text-[#7F7F7F]">의상</span>
+                                    <span className="text-[12px] text-[#7F7F7F]">
+                                        {categoryNameMap[item.itemCategory] || "의상"}
+                                    </span>
                                 </div>
 
                                 {/* 구매 버튼 */}
