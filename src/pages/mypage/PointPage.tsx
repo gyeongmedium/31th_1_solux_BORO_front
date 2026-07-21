@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 // import { getUserProfile } from "../../api/user"; // 나중에 사용자 정보/포인트 가져올 API 임포트
+import { getMemberPoints } from "../../api/member";
+import type { PointHistoryItem } from "../../types/member";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
 
@@ -11,6 +13,9 @@ export default function PointPage() {
     
     // 나중에 실시간으로 불러온 사용자 포인트를 담을 상태 (초기값 0 또는 기본값)
     const [userPoint] = useState<number>(1250);     // setUserPoint
+
+    const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
+    const [historyList, setHistoryList] = useState<PointHistoryItem[]>([]);
 
     useEffect(() => {
         /* 나중에 백엔드와 연동할 때 아래 주석을 해제하여 서버에서 포인트 조회
@@ -22,7 +27,15 @@ export default function PointPage() {
             })
             .catch((err) => console.error("사용자 포인트 로드 실패:", err));
         */
+        getMemberPoints()
+            .then((data) => setHistoryList(data))
+            .catch((err) => console.error("포인트 이력 로드 실패:", err));
     }, []);
+
+    // 포인트 클릭 시 팝업 토글 (켜기 / 끄기)
+    const toggleHistoryModal = () => {
+        setShowHistoryModal((prev) => !prev);
+    };
 
     // 포인트 적립 조건
     const earnConditions = [
@@ -54,15 +67,18 @@ export default function PointPage() {
                     <h1 className="text-[16px] font-bold leading-none text-[#1A1A1A]">포인트 / 상점</h1>
                 </div>
                 
-                <div className="flex items-center gap-1.5">
-                    <div className="flex items-center justify-center">
+                <div
+                    onClick={toggleHistoryModal} 
+                    className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
+                >
+                    <div className="flex items-center justify-center gap-1.5">
                         <svg width="39" height="39" viewBox="0 0 39 39" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M19.5 16.25C25.961 16.25 32.5 14.0173 32.5 9.75C32.5 5.48275 25.961 3.25 19.5 3.25C13.039 3.25 6.5 5.48275 6.5 9.75C6.5 14.0173 13.039 16.25 19.5 16.25Z" fill="#9996FF"/>
                             <path d="M6.26782 16.4819C6.26782 20.7492 12.8068 22.9819 19.2678 22.9819C25.7288 22.9819 32.2678 20.7492 32.2678 16.4819V13.2319C32.2678 17.4992 25.7288 19.7319 19.2678 19.7319C12.8068 19.7319 6.26782 17.4992 6.26782 13.2319V16.4819Z" fill="#9996FF"/>
                             <path d="M6.26782 22.9819C6.26782 27.2492 12.8068 29.4819 19.2678 29.4819C25.7288 29.4819 32.2678 27.2492 32.2678 22.9819V19.7319C32.2678 23.9992 25.7288 26.2319 19.2678 26.2319C12.8068 26.2319 6.26782 23.9992 6.26782 19.7319V22.9819Z" fill="#9996FF"/>
                         </svg>
+                        <span className="text-[#9996FF] font-bold text-[16px]">{userPoint.toLocaleString()} p</span>
                     </div>
-                    <span className="text-[#9996FF] font-bold text-[16px]">{userPoint.toLocaleString()} p</span>
                 </div>
             </div>
 
@@ -134,6 +150,56 @@ export default function PointPage() {
 
             {/* 하단 공통 네비게이션 */}
             <BottomNav />
+
+            {/* 포인트 이력 조회 팝업 모달 */}
+            {showHistoryModal && (
+                <div 
+                    onClick={toggleHistoryModal}
+                    className="absolute inset-0 bg-black/45 flex items-center justify-center z-50 px-6"
+                >
+                    <div 
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white rounded-[40px] w-[350px] max-h-[401px] flex flex-col items-center pt-7 pb-6 overflow-hidden"
+                    >
+                        <h3 className="text-[20px] font-bold text-center text-black mb-7 px-5 flex-shrink-0">
+                            나의 포인트 이력 조회
+                        </h3>
+
+                        <div className="w-full flex-1 flex flex-col gap-3.5 overflow-x-hidden overflow-y-auto px-5 pb-5 vertical-scroll">
+                            {historyList.map((item, idx) => {
+                                const isNegative = item.point < 0;
+
+                                return (
+                                    <div 
+                                        key={idx}
+                                        className={`w-full h-[60px] rounded-[40px] p-3.5 pl-5 flex items-center justify-between flex-shrink-0 ${
+                                            isNegative ? "bg-[#FFD4BB]" : "bg-[#D2FFE5]"
+                                        }`}
+                                    >
+                                        <div className="flex flex-col gap-0.5 min-w-0 pr-2">
+                                            <span className="text-[12px] text-[#7F7F7F]">
+                                                {item.createdAt}
+                                            </span>
+                                            <span className="text-[12px] text-[#1A1A1A] truncate">
+                                                {item.pointDescription}
+                                            </span>
+                                        </div>
+
+                                        <span 
+                                            className={`min-w-[68px] h-[26px] rounded-[40px] text-white font-semibold text-[12px] flex items-center justify-center flex-shrink-0 ${
+                                                isNegative ? "bg-[#FF5E00]" : "bg-[#43A860]"
+                                            }`}
+                                        >
+                                            {isNegative ? `${item.point}p` : `+${item.point}p`}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
