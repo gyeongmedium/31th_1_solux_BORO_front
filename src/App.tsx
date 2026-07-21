@@ -15,6 +15,7 @@ import RentalLayout from "./pages/rental/RentalLayout";
 import MyPage from "./pages/mypage/MyPage";
 import StorePage from "./pages/mypage/StorePage";
 import PointPage from "./pages/mypage/PointPage";
+import NoonsongDecoPage from "./pages/mypage/NoonsongDecoPage";
 
 
 function MobileLayout({ children }: { children: React.ReactNode }) {
@@ -36,21 +37,25 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
 
-          {/* 메인 탭 전환 주소들 */}
+          {/* 홈 */}
           <Route path="/" element={<HomePage />} />
 
+          {/* 채팅 */}
           <Route path="/chat" element={<ChatListPage />} />
           <Route path="/chat/spot" element={<EmptySpotChatListPage />} />
           <Route path="/chat/:roomId" element={<DetailedChatPage />} />
           
+          {/* 대여 현황 */}
           <Route element={<RentalLayout />}>
             <Route path="/rental" element={<LentalPage />} />
             <Route path="/rental/borrowed" element={<BorrowedPage />} />
           </Route>
 
+          {/* 마이페이지 */}
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/store" element={<StorePage />} />
           <Route path="/mypage/point" element={<PointPage />} />
+          <Route path="/mypage/noonsong" element={<NoonsongDecoPage />} />
 
           {/* 예외 처리 */}
           <Route path="*" element={<Navigate to="/" replace />} />
