@@ -122,7 +122,7 @@ export default function LentPage() {
             setRentals(newRentals)
             setModalState({ show: false, index: null, action: null })
 
-            setToast('요청자 처리시 마이페이지에서 확인 가능합니다.')
+            setToast('대여자 처리시 마이페이지에서 확인 가능합니다.')
             setTimeout(() => setToast(null), 2000)
         } else {
             const newStatus: RequestStatus = modalState.action === 'approve' ? '대여중' : '대여가능'
@@ -225,7 +225,7 @@ export default function LentPage() {
                                                 {item.title}
                                             </h2>
                                             <p className="text-[12px] text-[#000000]-600 mb-2.5">
-                                                요청자 : {item.borrower}
+                                                대여자 : {item.borrower}
                                             </p>
                                             <p className="text-[12px] text-[#43A860]">
                                                 대여 신청일 : {item.rentalStartTime}
@@ -321,7 +321,7 @@ export default function LentPage() {
                         ? '승인 후 거래가 시작됩니다.' 
                         : modalState.action === 'reject' 
                         ? '거절 후 상태가 대여 가능으로 변경됩니다.' 
-                        : '요청자의 상호 확인 후 정상처리되며,\n완료 후 상대방에세 후기를 남길 수 있습니다.'
+                        : '대여자의 상호 확인 후 정상처리되며,\n완료 후 상대방에세 후기를 남길 수 있습니다.'
                     }
                     onConfirm={confirmAction}
                     onCancel={cancelAction}

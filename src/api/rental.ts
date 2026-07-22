@@ -18,10 +18,6 @@ export const updateRentalRequest = () =>
 export const completeRentalReturn = () =>
     api.patch("/api/v1/rental")
 
-// 5. 거래 내역 조회
-export const getRentalHistory = () =>
-    api.get("/api/v1/rental")
-
 // 6. 대여 후기 작성
 export const createReview = (rentalId: string | number, data: CreateReviewRequest) =>
     api.post(`/api/v1/rental/${rentalId}/review`, data);
