@@ -1,6 +1,6 @@
 import api from "../lib/axios"
-import type { BorrowedRentalResponse, LentRentalResponse, CreateReviewRequest, ReviewResponse } from "../types/rental"
-
+import type { BorrowedRentalResponse, LentRentalResponse } from "../types/rental"
+import type { ReviewCreateRequest } from "../types/rental";
 
 // 1. 대여 현황 조회 - 빌린 것
 export const getBorrowedRentals = () =>
@@ -19,9 +19,17 @@ export const completeRentalReturn = () =>
     api.patch("/api/v1/rental")
 
 // 6. 대여 후기 작성
-export const createReview = (rentalId: string | number, data: CreateReviewRequest) =>
-    api.post(`/api/v1/rental/${rentalId}/review`, data);
-
-// 7. 대여 후기 조회
-export const getReview = (rentalId: string | number) =>
-    api.get<ReviewResponse>(`/api/v1/rental/${rentalId}/review`);
+export async function createRentalReview(
+    rentalId: number,
+    data: ReviewCreateRequest
+): Promise<void> {
+    // 실제 API 요청 구현 (예: axios 또는 fetch 사용)
+    // const response = await fetch(`/api/v1/rentals/${rentalId}/review`, {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(data),
+    // });
+    // if (!response.ok) throw new Error("리뷰 작성 실패");
+    
+    console.log(`POST /api/v1/rentals/${rentalId}/review`, data);
+}

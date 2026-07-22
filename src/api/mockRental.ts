@@ -1,4 +1,4 @@
-import type { BorrowedRentalResponse, LentRentalResponse, ReviewResponse } from "../types/rental";
+import type { BorrowedRentalResponse, LentRentalResponse } from "../types/rental";
 
 
 // 1. 빌려준 것 mock 데이터
@@ -18,12 +18,4 @@ export const mockBorrowedRentals: BorrowedRentalResponse = {
     lender: "책벌레99",
     title: "데이터구조 전공서적 빌릴 수 있을까요",
     //category: "전공서적"
-};
-
-// 7. 대여 후기 mock 데이터
-export const mockReview: ReviewResponse = {
-    author: "새송이",
-    title: "우산 빌려주실 분 있나요",
-    createdAt: "2026.3.20",
-    reviewSentiment: "GOOD"
 };

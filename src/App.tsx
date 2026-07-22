@@ -16,6 +16,7 @@ import MyPage from "./pages/mypage/MyPage";
 import StorePage from "./pages/mypage/StorePage";
 import PointPage from "./pages/mypage/PointPage";
 import NoonsongDecoPage from "./pages/mypage/NoonsongDecoPage";
+import ReviewCreatePage from "./pages/mypage/ReviewCreatePage";
 
 
 function MobileLayout({ children }: { children: React.ReactNode }) {
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="/mypage/store" element={<StorePage />} />
           <Route path="/mypage/point" element={<PointPage />} />
           <Route path="/mypage/noonsong" element={<NoonsongDecoPage />} />
+          <Route path="/mypage/review-create" element={<ReviewCreatePage />} />
 
           {/* 예외 처리 */}
           <Route path="*" element={<Navigate to="/" replace />} />

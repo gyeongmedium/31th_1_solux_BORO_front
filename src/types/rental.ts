@@ -21,13 +21,7 @@ export interface BorrowedRentalResponse {
     //category: string              // 백엔드에게 요청 필요
 }
 
-export interface CreateReviewRequest {
-    reviewSentiment: ReviewSentiment
-}
-
-export interface ReviewResponse {
-    author: string
-    title: string
-    createdAt: string
-    reviewSentiment: ReviewSentiment
+export interface ReviewCreateRequest {
+    reviewSentiment: ReviewSentiment;
+    content: string;
 }
