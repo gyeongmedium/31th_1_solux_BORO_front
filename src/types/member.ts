@@ -32,3 +32,18 @@ export interface MemberAssetsResponse {
     message: string;
     result: CharacterItem[];
 }
+
+// 받은 후기
+export interface ReceivedReviewItem {
+    reviewerNickname: string;
+    postTitle: string;
+    createdAt: string; // "2026-07-10"
+    content: string;
+    type?: "GOOD" | "BAD"; // 프론트 엔드 분류용
+}
+
+export interface ReceivedReviewResponse {
+    likeCount: number;
+    dislikeCount: number;
+    reviewDetailList: ReceivedReviewItem[];
+}
