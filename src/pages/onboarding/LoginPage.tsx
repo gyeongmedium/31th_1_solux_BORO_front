@@ -1,16 +1,16 @@
-// 로그인
-import { useState } from "react";                       // useEffect
-import { Link } from "react-router-dom";                // useNavigate
-// import { googleLoginCallback } from "../api/auth";   // 실제 API 연결 시 주석 해제
-//import { mockGoogleLoginCallback } from "../../api/mockAuth";
-// import type { SocialLoginResponse } from "../../types/auth";
+// 로그인 페이지
+
+import { useState } from "react";
 
 export default function LoginPage() {
-    //const navigate = useNavigate();
     const [email, setEmail] = useState("");
 
     const handleGoogleLogin = () => {
-        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&response_type=code&scope=email%20profile&prompt=consent`;
+        const baseUrl = import.meta.env.VITE_API_URL;
+        const redirectUri = encodeURIComponent(`${baseUrl}/api/v1/auth/google/callback`);
+
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&prompt=consent`;
+
         window.location.href = googleAuthUrl;
     };
 
@@ -63,7 +63,7 @@ export default function LoginPage() {
                         alt="Google"
                         className="h-[17px] w-[17px]"
                         />
-                        <span className="text-[12px] text-[#1A1A1A]">구글 계정으로 로그인하기</span>
+                        <span className="text-[12px] text-[#1A1A1A]">구글 계정으로 로그인 / 회원가입</span>
                     </button>
 
                     {/* 일반 로그인 버튼 */}
@@ -74,17 +74,9 @@ export default function LoginPage() {
                         로그인
                     </button>
                 </div>
-
-                {/* 3. 회원가입 유도 링크 섹션 (비율 조정) */}
-                <div className="flex items-center justify-center gap-2 text-center text-[12px] text-[#7F7F7F] mt-6">
-                    <span>계정이 없으신가요?</span>
-                    <Link to="/signup" className="font-semibold text-[#0077FF]">
-                        회원가입
-                    </Link>
-                </div>
             </div>
 
-            {/* 4. 하단 서비스 소개 카드 섹션 (디자인 비율 조정) */}
+            {/* 3. 하단 서비스 소개 카드 섹션 */}
             <div className="flex flex-col w-[370px] h-[162px] gap-3 rounded-[40px] bg-[#F0F0FF] p-6 mt-6">
                 <h3 className="text-[16px] font-bold text-[#1A1A1A] pl-2">‘바로’ 는?</h3>
                 

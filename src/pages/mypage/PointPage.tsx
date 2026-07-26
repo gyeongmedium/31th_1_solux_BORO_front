@@ -49,6 +49,7 @@ export default function PointPage() {
     // 포인트 차감 조건
     const loseConditions = [
         { label: "거래 완료 후 '별로였어요' 후기 받음", value: "-350p" },
+        { label: "노쇼 (약속 불이행)", value: "-500p" },
         { label: "물품 파손/훼손", value: "-400p" },
         { label: "신고 누적 (3회)", value: "-1000p" },
     ];
