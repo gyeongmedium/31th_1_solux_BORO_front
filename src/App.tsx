@@ -5,7 +5,6 @@ import SignUpPage from "./pages/onboarding/SignUpPage";
 import HomePage from "./pages/home/HomePage";
 import PostCreatePage from "./pages/home/PostCreatePage";
 import PostDetailPage from "./pages/home/PostDetailPage";
-import EmptySpotPage from "./pages/home/EmptySpotPage";
 import SpotDetailPage from "./pages/home/SpotDetailPage";
 
 import ChatListPage from "./pages/chat/ChatListPage";
@@ -19,18 +18,14 @@ import RentalLayout from "./pages/rental/RentalLayout";
 import MyPage from "./pages/mypage/MyPage";
 import LikedPostsPage from "./pages/mypage/LikedPostsPage";
 import ProfileEditPage from "./pages/mypage/ProfileEditPage";
+import MyPostsPage from "./pages/mypage/MyPostsPage";
+import TradeHistoryPage from "./pages/mypage/TradeHistoryPage";
 
 
 function MobileLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto h-dvh w-full max-w-[440px] bg-white shadow-lg flex flex-col overflow-hidden select-none">
-      {/* - mx-auto: PC로 볼 때 화면 가운데 정렬
-        - h-dvh: 모바일 상/하단 주소창 변동에 대응하는 동적 높이 100%
-        - max-w-[440px]: 피그마 시안 비율대로 가로폭 제한
-        - flex flex-col: 상단헤더 - 메인콘텐츠 - 바텀네비 정렬용 구조
-      */}
-      <div className="flex-1 overflow-y-scroll w-full h-full vertical-scroll"
-          style={{ scrollbarGutter: "stable" }}>
+      <div className="flex-1 w-full h-full vertical-scroll">
         {children}
       </div>
     </div>
@@ -49,11 +44,12 @@ export default function App() {
           {/* 메인 탭 전환 주소들 */}
           <Route path="/" element={<HomePage />} />
           <Route path="/post/create" element={<PostCreatePage />} />
+          <Route path="/post/edit/:postId" element={<PostCreatePage />} />
+          <Route path="/spot/edit/:spotId" element={<PostCreatePage />} />
           <Route path="/post/:postId" element={<PostDetailPage />} />
 
           <Route path="/chat" element={<ChatListPage />} />
           <Route path="/chat/spot" element={<EmptySpotChatListPage />} />
-          <Route path="/spot" element={<EmptySpotPage />} />
           <Route path="/post/spot/:spotId" element={<SpotDetailPage />} />
           <Route path="/chat/:roomId" element={<DetailedChatPage />} />
           
@@ -65,6 +61,8 @@ export default function App() {
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/liked" element={<LikedPostsPage />} />
           <Route path="/mypage/edit" element={<ProfileEditPage />} />
+          <Route path="/mypage/my-posts" element={<MyPostsPage />} />
+          <Route path="/mypage/history" element={<TradeHistoryPage />} />
 
           {/* 예외 처리 */}
           <Route path="*" element={<Navigate to="/" replace />} />

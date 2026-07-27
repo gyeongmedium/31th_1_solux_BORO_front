@@ -1,274 +1,1091 @@
 import { ArrowLeft, ImagePlus, ChevronDown, Calendar, Clock } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { categoryLabel } from "../../utils/postMapper"
+import type { PostCategory } from "../../types/post"
+import { createPost } from "../../api/post"
+
 
 export default function PostCreatePage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<"post" | "spot">("post")
   const [hasOutlet, setHasOutlet] = useState(false)
   const [hasWindow, setHasWindow] = useState(true)
+  const [category, setCategory] = useState<PostCategory>("DEPARTMENT_JACKET")
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false)
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [rentalStartTime, setRentalStartTime] = useState("")
+  const [rentalPrice, setRentalPrice] = useState("")
+  const [location, setLocation] = useState("")
+  const [floor, setFloor] = useState("")
+  const [seatNumber, setSeatNumber] = useState("")
+  const [checkoutTime, setCheckoutTime] = useState("")
+  const { postId, spotId } = useParams()
+  const isEditMode = !!postId || !!spotId  // postId나 spotId가 있으면 true (수정 모드)
+
+  const postCategoryList: PostCategory[] = [
+    "DEPARTMENT_JACKET",
+    "MAJOR_BOOKS",
+    "ELECTRONICS",
+    "LIVING_SUPPLIES",
+    "ETC",
+  ]
+
+  useEffect(() => {
+  if (isEditMode) {
+    // TODO: 실제로는 GET /api/v1/post/{postId} 호출해서 데이터 가져오기
+    // 지금은 mock으로 테스트
+    setTitle("미분적분학 교재 빌리고 싶어요.")
+    setDescription("스튜어트 8판 입니다.\n한 학기 대여 희망합니다.")
+    setCategory("MAJOR_BOOKS")
+    setRentalPrice("10000")
+  }
+}, [postId, spotId])
+const handleSubmit = async () => {
+  if (!title || !description || !rentalStartTime || !rentalPrice) {
+    alert("필수 항목을 모두 입력해주세요!")
+    return
+  }
+
+  try {
+    if (isEditMode) {
+      // TODO: 실제 수정 API PATCH /api/v1/post/{postId} 연결 필요
+      console.log("수정할 게시글 ID:", postId)
+    } else {
+      await createPost({
+        imageUrlList: [],
+        category,
+        title,
+        description,
+        rentalStartTime,
+        rentalEndTime: rentalStartTime,
+        rentalPrice: Number(rentalPrice),
+        rentalPriceUnit: "DAY",
+      })
+    }
+    navigate("/")
+  } catch (err) {
+    console.error("처리 실패:", err)
+    alert("처리에 실패했어요. 다시 시도해주세요!")
+  }
+}
 
   return (
-    <div className="flex flex-col h-full bg-white overflow-y-auto pb-10 vertical-scroll">
-      {/* 헤더 */}
-      <div className="flex items-center gap-3 px-4 pt-5 pb-4">
-        <button onClick={() => navigate(-1)}>
-          <ArrowLeft size={22} className="text-[#1A1A1A]" />
-        </button>
-        <span className="text-[17px] font-bold text-[#1A1A1A]">게시글 작성</span>
-      </div>
+  <div className="flex flex-col bg-white pb-10">
+  {/* 상단 고정 헤더 (402x80, 스크롤해도 고정) */}
+  <div
+    className="sticky top-0 bg-white z-30 w-full"
+    style={{ height: "80px" }}
+  >
+    <button onClick={() => navigate(-1)} style={{ position: "absolute", top: "35px", left: "30px" }}>
+      <ArrowLeft size={20} strokeWidth={2} className="text-black" />
+    </button>
+    <span
+      style={{
+      position: "absolute",
+      top: "35px",
+      left: "60px",
+      fontFamily: "Pretendard",
+      fontWeight: 700,
+      fontSize: "16px",
+      lineHeight: "1.2",
+      color: "#1A1A1A",
+    }}
+  >
+    {isEditMode ? "게시글 수정" : "게시글 작성"}
+  </span>
+</div>
 
-      {/* 게시글 작성 / 빈자리 작성 탭 */}
-      <div className="w-full px-4 mb-5 flex justify-center">
-        <div className="bg-[#E6E6E6] w-full h-[44px] rounded-[40px] flex items-center justify-between p-[4px]">
-          <button
-            onClick={() => setActiveTab("post")}
-            className={`flex-1 h-[34px] text-sm font-semibold rounded-[40px] transition-colors ${
-              activeTab === "post" ? "bg-[#9996FF] text-white shadow-sm" : "text-[#7F7F7F]"
-            }`}
-          >
-            게시글 작성
-          </button>
-          <button
-            onClick={() => setActiveTab("spot")}
-            className={`flex-1 h-[34px] text-sm font-semibold rounded-[40px] transition-colors ${
-              activeTab === "spot" ? "bg-[#9996FF] text-white shadow-sm" : "text-[#7F7F7F]"
-            }`}
-          >
-            빈자리 작성
-          </button>
-        </div>
-      </div>
+{/* 고정 헤더만큼 아래 여백 확보 */}
+<div style={{ height: "5px" }} />
+
+{/* 게시글 작성 / 빈자리 작성 탭 (359x44, radius 40) */}
+<div className="w-full mb-5 flex justify-center">
+  <div
+    className="relative"
+    style={{
+      width: "359px",
+      height: "44px",
+      borderRadius: "40px",
+      backgroundColor: "#E6E6E6",
+    }}
+  >
+    {/* 움직이는 보라색 배경 */}
+    <div
+      className="absolute transition-all"
+      style={{
+        width: "175px",
+        height: "34px",
+        top: "5px",
+        left: activeTab === "post" ? "5px" : "179px",
+        borderRadius: "40px",
+        backgroundColor: "#9996FF",
+      }}
+    />
+
+    <button
+      onClick={() => setActiveTab("post")}
+      className="absolute flex items-center justify-center"
+      style={{
+        top: "5px",
+        left: "5px",
+        width: "175px",
+        height: "34px",
+        fontFamily: "Pretendard",
+        fontWeight: 400,
+        fontSize: "14px",
+        lineHeight: "1.2",
+        color: activeTab === "post" ? "#FFFFFF" : "#7F7F7F",
+      }}
+    >
+      게시글 작성
+    </button>
+
+    <button
+      onClick={() => setActiveTab("spot")}
+      className="absolute flex items-center justify-center"
+      style={{
+        top: "5px",
+        left: "179px",
+        width: "175px",
+        height: "34px",
+        fontFamily: "Pretendard",
+        fontWeight: 400,
+        fontSize: "14px",
+        lineHeight: "1.2",
+        color: activeTab === "spot" ? "#FFFFFF" : "#7F7F7F",
+      }}
+    >
+      빈자리 작성
+    </button>
+  </div>
+</div>
 
       {activeTab === "post" ? (
         <>
-          {/* 사진 추가하기 */}
-          <div className="px-4 mb-5">
-            <button className="w-full h-[220px] bg-[#E6E6E6] rounded-3xl flex flex-col items-center justify-center gap-2">
-              <ImagePlus size={48} className="text-[#7F7F7F]" strokeWidth={1.5} />
-              <span className="text-sm font-bold text-[#1A1A1A] mt-1">사진 추가하기</span>
-              <span className="text-xs text-[#7F7F7F]">최대 10장</span>
-            </button>
-          </div>
+      {/* 사진 추가하기 (334x295, radius 40, 배경 #E6E6E6) */}
+<div className="w-full flex justify-center mb-5">
+  <button
+    className="flex flex-col items-center justify-center gap-3"
+    style={{
+      width: "334px",
+      height: "295px",
+      borderRadius: "40px",
+      backgroundColor: "#E6E6E6",
+    }}
+  >
+    <ImagePlus size={80} className="text-[#7F7F7F]" strokeWidth={1.5} />
+    <span
+      style={{
+        fontFamily: "Pretendard",
+        fontWeight: 700,
+        fontSize: "16px",
+        color: "#000000",
+      }}
+    >
+      사진 추가하기
+    </span>
+    <span
+      style={{
+        fontFamily: "Pretendard",
+        fontWeight: 400,
+        fontSize: "13px",
+        color: "#7F7F7F",
+      }}
+    >
+      최대 10장
+    </span>
+  </button>
+</div>
 
-          {/* 카테고리 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                카테고리 <span className="text-[#9996FF]">*</span>
-              </p>
-              <button className="bg-[#E6E6E6] rounded-[40px] w-[110px] h-[36px] flex items-center justify-center gap-2 text-sm">
-                과잠 <ChevronDown size={16} />
-              </button>
-            </div>
-          </div>
+   {/* 카테고리 (334x107, radius 40, border 1px #CCCCCC) */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      카테고리 *
+    </p>
 
-          {/* 제목 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                제목 <span className="text-[#9996FF]">*</span>
-              </p>
-              <input
-                className="bg-[#E6E6E6] rounded-[40px] w-full h-[40px] px-4 text-sm outline-none placeholder:text-[#7F7F7F]"
-                placeholder="예 : 컴퓨터 공학과 과잠 빌리고 싶습니다"
-              />
-            </div>
-          </div>
+    {/* 드롭다운 박스 (138x46, radius 40, border 1px) */}
+    <button
+      onClick={() => setShowCategoryMenu(!showCategoryMenu)}
+      className="absolute flex items-center"
+      style={{
+        width: "138px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        border: "1px solid #CCCCCC",
+        paddingLeft: "26px",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          lineHeight: "1.2",
+          color: "#1A1A1A",
+        }}
+      >
+        {categoryLabel[category]}
+      </span>
+      <svg
+        width="12"
+        height="7"
+        viewBox="0 0 12 7"
+        fill="none"
+        style={{ position: "absolute", top: "20px", left: "107px" }}
+      >{/* 제목 (334x107, radius 40, border 1px #CCCCCC) */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      제목 {!title && <span style={{ color: "#1A1A1A" }}>*</span>}
+    </p>
 
-          {/* 설명 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                설명 <span className="text-[#9996FF]">*</span>
-              </p>
-              <input
-                className="bg-[#E6E6E6] rounded-[40px] w-full h-[40px] px-4 text-sm outline-none placeholder:text-[#7F7F7F]"
-                placeholder="대여 조건 등을 자세히 설명해주세요"
-              />
-            </div>
-          </div>
+    {/* 입력 바 (284x46, radius 40, 배경 #E6E6E6) */}
+    <div
+      className="absolute flex items-center"
+      style={{
+        width: "284px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        backgroundColor: "#E6E6E6",
+        paddingLeft: "26px",
+      }}
+    >
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="bg-transparent outline-none w-full"
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          lineHeight: "1.2",
+          color: "#1A1A1A",
+        }}
+        placeholder="예 : 컴퓨터 공학과 과잠 빌리고 싶습니다"
+      />
+    </div>
+  </div>
+</div>
+        <path d="M1 1L6 6L11 1" stroke="#7F7F7F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
 
-          {/* 대여 신청 날짜 및 기간 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                대여 신청 날짜 및 기간 <span className="text-[#9996FF]">*</span>
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="bg-[#E6E6E6] rounded-[40px] flex-1 h-[40px] px-4 flex items-center justify-between">
-                  <span className="text-sm text-[#7F7F7F]">연도. 월. 일</span>
-                  <Calendar size={16} className="text-[#1A1A1A]" />
-                </div>
-                <button className="bg-[#E6E6E6] rounded-[40px] w-[110px] h-[40px] flex items-center justify-center gap-1 text-sm text-[#7F7F7F]">
-                  대여 기간 <ChevronDown size={16} />
-                </button>
-              </div>
-              <p className="text-[11px] text-[#7F7F7F] mt-3">
-                언제부터 언제까지 대여를 원하는지 알려주세요
-              </p>
-            </div>
-          </div>
+    {/* 드롭다운 메뉴 */}
+    {showCategoryMenu && (
+      <div
+        className="absolute bg-white shadow-md z-10"
+        style={{
+          top: "92px",
+          left: "px",
+          width: "138px",
+          borderRadius: "30px",
+          border: "1px solid #CCCCCC",
+          overflow: "hidden",
+        }}
+      >
+        {postCategoryList.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => {
+              setCategory(cat)
+              setShowCategoryMenu(false)
+            }}
+            className="w-full text-left px-6.5 py-2 hover:bg-gray-100"
+            style={{
+              fontFamily: "Pretendard",
+              fontWeight: 400,
+              fontSize: "12px",
+              color: "#1A1A1A",
+            }}
+          >
+            {categoryLabel[cat]}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
 
-          {/* 대여 비용 */}
-          <div className="px-4 mb-5">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                대여 비용 <span className="text-[#9996FF]">*</span>
-              </p>
-              <div className="flex items-center gap-2">
-                <input
-                  className="bg-[#E6E6E6] rounded-[40px] w-[150px] h-[40px] px-4 text-sm outline-none placeholder:text-[#7F7F7F]"
-                  placeholder="예 : 3000"
-                />
-                <span className="text-sm text-[#1A1A1A]">원</span>
-              </div>
-              <p className="text-[11px] text-[#7F7F7F] mt-3">
-                최대 5,000원 까지 설정 가능합니다 (숫자만 입력)
-              </p>
-            </div>
-          </div>
+          {/* 제목 (334x107, radius 40, border 1px #CCCCCC) */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      제목 *
+    </p>
 
+    {/* 입력 바 (284x46, radius 40, 배경 #E6E6E6) */}
+    <div
+      className="absolute flex items-center"
+      style={{
+        width: "284px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        backgroundColor: "#E6E6E6",
+        paddingLeft: "26px",
+      }}
+    >
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="bg-transparent outline-none w-full"
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          lineHeight: "1.2",
+          color: "#1A1A1A",
+        }}
+        placeholder="예 : 컴퓨터 공학과 과잠 빌리고 싶습니다"
+      />
+    </div>
+  </div>
+</div>
+
+          {/* 설명 (334x107, radius 40, border 1px #CCCCCC) */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      설명 <span style={{ color: "#1A1A1A" }}>*</span>
+    </p>
+
+    <div
+      className="absolute flex items-center"
+      style={{
+        width: "284px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        backgroundColor: "#E6E6E6",
+        paddingLeft: "26px",
+      }}
+    >
+      <input
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        className="bg-transparent outline-none w-full"
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          lineHeight: "1.2",
+          color: "#1A1A1A",
+        }}
+        placeholder="대여 조건 등을 자세히 설명해주세요"
+      />
+    </div>
+  </div>
+</div>
+         {/* 대여 신청 날짜 및 기간 (334x107, radius 40, border 1px #CCCCCC) */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "135px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      대여 신청 날짜 및 기간 <span style={{ color: "#1A1A1A" }}>*</span>
+    </p>
+
+    <div className="absolute flex items-center gap-2" style={{ top: "44px", left: "25px" }}>
+      <div
+  className="relative flex items-center justify-between"
+  style={{
+    width: "157px",
+    height: "46px",
+    borderRadius: "40px",
+    backgroundColor: "#E6E6E6",
+    paddingLeft: "20px",
+    paddingRight: "16px",
+  }}
+>
+  <span
+    style={{
+      fontFamily: "Pretendard",
+      fontWeight: 400,
+      fontSize: "12px",
+      color: rentalStartTime ? "#1A1A1A" : "#7E7E7E",
+    }}
+  >
+    {rentalStartTime
+      ? new Date(rentalStartTime).toLocaleDateString("ko-KR", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })
+      : "연도, 월, 일"}
+  </span>
+  <button
+    onClick={() => document.getElementById("rental-date-input")?.showPicker()}
+    className="flex items-center justify-center"
+    style={{ marginRight: "5px" }}
+  >
+    <Calendar size={16} className="text-[#1A1A1A]" style={{ transform: "scaleX(1.1)" }}/>
+  
+  </button>
+  <input
+    id="rental-date-input"
+    type="date"
+    value={rentalStartTime}
+    onChange={(e) => setRentalStartTime(e.target.value)}
+    className="absolute opacity-0 pointer-events-none"
+    style={{ width: "1px", height: "1px" }}
+  />
+</div>
+      <button
+        className="flex items-center justify-center gap-1"
+        style={{
+          width: "105px",
+          height: "46px",
+          borderRadius: "40px",
+          backgroundColor: "#E6E6E6",
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          color: "#7F7F7F",
+        }}
+      >
+        대여 기간 <ChevronDown size={23} />
+      </button>
+    </div>
+ <p
+      className="absolute"
+      style={{
+        top: "102px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 400,
+        fontSize: "11px",
+        color: "#7F7F7F",
+      }}
+    >
+      언제부터 언제까지 대여를 원하는지 알려주세요
+    </p>
+    
+  </div>
+</div>
+
+       {/* 대여 비용 (334x107, radius 40, border 1px #CCCCCC) */}
+<div className="w-full flex justify-center mb-6">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "135px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      대여 비용 <span style={{ color: "#1A1A1A" }}>*</span>
+    </p>
+
+    <div className="absolute flex items-center gap-2" style={{ top: "44px", left: "25px" }}>
+      <div
+        className="flex items-center"
+        style={{
+          width: "150px",
+          height: "46px",
+          borderRadius: "40px",
+          backgroundColor: "#E6E6E6",
+          paddingLeft: "20px",
+        }}
+      >
+        <input
+          value={rentalPrice}
+          onChange={(e) => setRentalPrice(e.target.value)}
+          className="bg-transparent outline-none w-full"
+          style={{
+            fontFamily: "Pretendard",
+            fontWeight: 400,
+            fontSize: "12px",
+            color: "#1A1A1A",
+          }}
+          placeholder="예 : 3000"
+        />
+      </div>
+      <span
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          color: "#1A1A1A",
+        }}
+      >
+        원
+      </span>
+    </div>
+    <p
+      className="absolute"
+      style={{
+        top: "102px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 400,
+        fontSize: "11px",
+        color: "#7F7F7F",
+      }}
+    >
+      최대 5,000원 까지 설정 가능합니다 (숫자만 입력)
+    </p>
+  </div>
+</div>
           {/* 작성 가이드 */}
-          <div className="px-4 mb-6">
-            <div className="bg-[#EFEFFE] rounded-2xl p-4">
-              <p className="text-[13px] font-bold text-[#9996FF] mb-2">작성 가이드</p>
-              <ul className="text-[12px] text-[#1A1A1A] space-y-1">
-                <li>• 대여 물품을 정확히 설명해주세요</li>
-                <li>• 대여 신청 기간을 명확히 해주세요</li>
-                <li>• 보증금은 거래 시 채팅으로 협의해주세요</li>
-              </ul>
-            </div>
-          </div>
+<div className="w-full flex justify-center mb-6">
+  <div
+    style={{
+      width: "334px",
+      minHeight: "139px",
+      borderRadius: "40px",
+      backgroundColor: "#E4E4FF",
+      padding: "20px 24px",
+    }}
+  >
+    <p className="text-[13px] font-bold text-[#9996FF] mb-3">작성 가이드</p>
+    <ul className="text-[11px] text-[#1A1A1A] space-y-1.5">
+      <li>• 대여 물품을 정확히 설명해주세요</li>
+      <li>• 대여 신청 기간을 명확히 해주세요</li>
+      <li>• 보증금은 거래 시 채팅으로 협의해주세요</li>
+    </ul>
+  </div>
+</div>
         </>
       ) : (
         <>
-          {/* 빈자리 카테고리 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                카테고리 <span className="text-[#9996FF]">*</span>
-              </p>
-              <button className="bg-[#E6E6E6] rounded-[40px] w-[110px] h-[36px] flex items-center justify-center gap-2 text-sm">
-                빈자리 <ChevronDown size={16} />
-              </button>
-            </div>
-          </div>
 
-          {/* 장소 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                장소 <span className="text-[#9996FF]">*</span>
-              </p>
-              <input
-                className="bg-[#E6E6E6] rounded-[40px] w-full h-[40px] px-4 text-sm outline-none placeholder:text-[#7F7F7F]"
-                placeholder="예 : 중앙도서관"
-              />
-            </div>
-          </div>
+        
+         {/* 빈자리 카테고리 */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      카테고리 <span style={{ color: "#1A1A1A" }}>*</span>
+    </p>
+    <div
+      className="absolute flex items-center"
+      style={{
+        width: "138px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        border: "1px solid #CCCCCC",
+        paddingLeft: "16px",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          color: "#1A1A1A",
+        }}
+      >
+        빈자리
+      </span>
+    </div>
+  </div>
+</div>
 
-          {/* 층 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                층 <span className="text-[#9996FF]">*</span>
-              </p>
-              <input
-                className="bg-[#E6E6E6] rounded-[40px] w-full h-[40px] px-4 text-sm outline-none placeholder:text-[#7F7F7F]"
-                placeholder="예 : 2"
-              />
-            </div>
-          </div>
+{/* 장소 */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      장소 {!location && <span style={{ color: "#1A1A1A" }}>*</span>}
+    </p>
+    <div
+      className="absolute flex items-center"
+      style={{
+        width: "284px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        backgroundColor: "#E6E6E6",
+        paddingLeft: "26px",
+      }}
+    >
+      <input
+        value={location}
+        onChange={(e) => setLocation(e.target.value)}
+        className="bg-transparent outline-none w-full"
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          color: "#1A1A1A",
+        }}
+        placeholder="예 : 중앙도서관"
+      />
+    </div>
+  </div>
+</div>
 
-          {/* 좌석 번호 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                좌석 번호 <span className="text-[#9996FF]">*</span>
-              </p>
-              <input
-                className="bg-[#E6E6E6] rounded-[40px] w-full h-[40px] px-4 text-sm outline-none placeholder:text-[#7F7F7F]"
-                placeholder="예 : DICA 28번"
-              />
-            </div>
-          </div>
+{/* 층 */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      층 {!floor && <span style={{ color: "#1A1A1A" }}>*</span>}
+    </p>
+    <div
+      className="absolute flex items-center"
+      style={{
+        width: "284px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        backgroundColor: "#E6E6E6",
+        paddingLeft: "26px",
+      }}
+    >
+      <input
+        value={floor}
+        onChange={(e) => setFloor(e.target.value)}
+        className="bg-transparent outline-none w-full"
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          color: "#1A1A1A",
+        }}
+        placeholder="예 : 2"
+      />
+    </div>
+  </div>
+</div>
 
-          {/* 콘센트 여부 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                콘센트 여부 <span className="text-[#9996FF]">*</span>
-              </p>
-              <button
-                onClick={() => setHasOutlet(!hasOutlet)}
-                className={`w-11 h-6 rounded-full relative transition-colors ${
-                  hasOutlet ? "bg-[#9996FF]" : "bg-[#E6E6E6]"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${
-                    hasOutlet ? "right-0.5" : "left-0.5"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
+{/* 좌석 번호 */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      좌석 번호 {!seatNumber && <span style={{ color: "#1A1A1A" }}>*</span>}
+    </p>
+    <div
+      className="absolute flex items-center"
+      style={{
+        width: "157px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        backgroundColor: "#E6E6E6",
+        paddingLeft: "26px",
+      }}
+    >
+      <input
+        value={seatNumber}
+        onChange={(e) => setSeatNumber(e.target.value)}
+        className="bg-transparent outline-none w-full"
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          color: "#1A1A1A",
+        }}
+        placeholder="예 : DICA 28번"
+      />
+    </div>
+  </div>
+</div>
 
-          {/* 창가자리 여부 */}
-          <div className="px-4 mb-4">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                창가자리 여부 <span className="text-[#9996FF]">*</span>
-              </p>
-              <button
-                onClick={() => setHasWindow(!hasWindow)}
-                className={`w-11 h-6 rounded-full relative transition-colors ${
-                  hasWindow ? "bg-[#9996FF]" : "bg-[#E6E6E6]"
-                }`}
-              >
-                <div
-                  className={`w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all ${
-                    hasWindow ? "right-0.5" : "left-0.5"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
+{/* 콘센트 여부 */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "80px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      콘센트 여부 <span style={{ color: "#1A1A1A" }}>*</span>
+    </p>
+    <button
+      onClick={() => setHasOutlet(!hasOutlet)}
+      className="absolute rounded-full relative transition-colors"
+      style={{
+        top: "42px",
+        left: "30px",
+        width: "44px",
+        height: "24px",
+        borderRadius: "40px",
+        backgroundColor: hasOutlet ? "#9996FF" : "#E6E6E6",
+      }}
+    >
+      <div
+        className="absolute bg-white rounded-full transition-all"
+        style={{
+          width: "18px",
+          height: "18px",
+          top: "3px",
+          left: hasOutlet ? "23px" : "3px",
+        }}
+      />
+    </button>
+  </div>
+</div>
 
-          {/* 퇴실 예정 시간 */}
-          <div className="px-4 mb-5">
-            <div className="border border-[#E6E6E6] rounded-3xl p-4">
-              <p className="text-[13px] font-bold text-[#1A1A1A] mb-3">
-                퇴실 예정 시간 <span className="text-[#9996FF]">*</span>
-              </p>
-              <div className="bg-[#E6E6E6] rounded-[40px] w-full h-[40px] px-4 flex items-center justify-between">
-                <span className="text-sm text-[#7F7F7F]">Time</span>
-                <Clock size={16} className="text-[#1A1A1A]" />
-              </div>
-            </div>
-          </div>
+{/* 창가자리 여부 */}
+<div className="w-full flex justify-center mb-4">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "80px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      창가자리 여부 <span style={{ color: "#1A1A1A" }}>*</span>
+    </p>
+    <button
+      onClick={() => setHasWindow(!hasWindow)}
+      className="absolute rounded-full relative transition-colors"
+      style={{
+        top: "42px",
+        left: "30px",
+        width: "44px",
+        height: "24px",
+        borderRadius: "40px",
+        backgroundColor: hasWindow ? "#9996FF" : "#E6E6E6",
+      }}
+    >
+      <div
+        className="absolute bg-white rounded-full transition-all"
+        style={{
+          width: "18px",
+          height: "18px",
+          top: "3px",
+          left: hasWindow ? "23px" : "3px",
+        }}
+      />
+    </button>
+  </div>
+</div>
 
-          {/* 빈자리 작성 가이드 */}
-          <div className="px-4 mb-6">
-            <div className="bg-[#EFEFFE] rounded-2xl p-4">
-              <p className="text-[13px] font-bold text-[#9996FF] mb-2">작성 가이드</p>
-              <ul className="text-[12px] text-[#1A1A1A] space-y-1">
-                <li>• 자리 양도는 가격 설정 및 영리 거래가 절대 불가합니다.</li>
-                <li>• 퇴실 시간은 실 퇴실시간으로 부터 5분 이내로 설정해주세요.</li>
-                <li>• 양도자에게는 자리 양도 한정 아이템이 지급됩니다.</li>
-              </ul>
-            </div>
-          </div>
-        </>
+{/* 퇴실 예정 시간 */}
+<div className="w-full flex justify-center mb-6">
+  <div
+    className="relative"
+    style={{
+      width: "334px",
+      height: "107px",
+      borderRadius: "40px",
+      border: "1px solid #CCCCCC",
+    }}
+  >
+    <p
+      className="absolute"
+      style={{
+        top: "18px",
+        left: "30px",
+        fontFamily: "Pretendard",
+        fontWeight: 600,
+        fontSize: "12px",
+        lineHeight: "1.2",
+        color: "#1A1A1A",
+      }}
+    >
+      퇴실 예정 시간 {!checkoutTime && <span style={{ color: "#1A1A1A" }}>*</span>}
+    </p>
+
+    <div
+      className="relative flex items-center justify-between"
+      style={{
+        width: "157px",
+        height: "46px",
+        top: "44px",
+        left: "25px",
+        borderRadius: "40px",
+        backgroundColor: "#E6E6E6",
+        paddingLeft: "20px",
+        paddingRight: "16px",
+        position: "absolute",
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "Pretendard",
+          fontWeight: 400,
+          fontSize: "12px",
+          color: checkoutTime ? "#1A1A1A" : "#7E7E7E",
+        }}
+      >
+        {checkoutTime || "Time"}
+      </span>
+      <button
+        onClick={() => document.getElementById("checkout-time-input")?.showPicker()}
+        className="flex items-center justify-center"
+        style={{ marginRight: "5px" }}
+      >
+        <Calendar
+          size={16}
+          className="text-[#1A1A1A]"
+          style={{ transform: "scaleX(1.1)" }}
+        />
+      </button>
+      <input
+        id="checkout-time-input"
+        type="time"
+        value={checkoutTime}
+        onChange={(e) => setCheckoutTime(e.target.value)}
+        className="absolute opacity-0 pointer-events-none"
+        style={{ width: "1px", height: "1px" }}
+      />
+    </div>
+  </div>
+</div>
+
+{/* 빈자리 작성 가이드 */}
+<div className="w-full flex justify-center mb-6">
+  <div
+    style={{
+      width: "350px",
+      minHeight: "139px",
+      borderRadius: "40px",
+      backgroundColor: "#E4E4FF",
+      padding: "20px 24px",
+    }}
+  >
+    <p className="text-[13px] font-bold text-[#9996FF] mb-3">작성 가이드</p>
+    <ul className="text-[11px] text-[#1A1A1A] space-y-1.5"
+      style={{ letterSpacing: "-0.2px" }}
+    >
+      <li>• 자리 양도는 가격 설정 및 영리 거래가 절대 불가합니다.</li>
+      <li>• 퇴실 시간은 실 퇴실시간으로 부터 5분 이내로 설정해주세요.</li>
+      <li>• 양도자에게는 자리 양도 한정 아이템이 지급됩니다.</li>
+    </ul>
+  </div>
+</div></>
       )}
 
-      {/* 등록하기 버튼 (공통) */}
-      <div className="px-4 mb-6">
-        <button className="w-full h-[48px] bg-[#9996FF] text-white text-sm font-bold rounded-[40px]">
-          등록하기
-        </button>
-      </div>
+      {/* 등록하기 버튼 */}
+<div className="w-full flex justify-center mb-6">
+  <button
+  onClick={handleSubmit}
+  style={{
+    width: "304px",
+    height: "40px",
+    borderRadius: "35.9px",
+    backgroundColor: "#9996FF",
+  }}
+  className="text-white text-sm font-bold"
+>
+  {isEditMode ? "수정하기" : "등록하기"}
+</button>
+</div>
     </div>
   )
 }

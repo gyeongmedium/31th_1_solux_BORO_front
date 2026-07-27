@@ -49,7 +49,7 @@ export default function PostDetailPage() {
       <div className="px-4 mb-5">
         <div className="w-[370px] min-h-[421px] border border-[#9996FF] rounded-[40px] px-6 pt-5 pb-5">
           {/* 작성자 (사진 45x45, 이름 font16 bold) */}
-<div className="flex items-center gap-3 mb-5">
+<div className="flex items-center gap-3 mb-5 my-4">
   <div className="w-[45px] h-[45px] bg-gradient-to-br from-[#3A3A5C] to-[#1A1A2E] rounded-full flex-shrink-0" />
   <span 
     className="text-[16px] text-[#1A1A1A]"
@@ -103,7 +103,7 @@ export default function PostDetailPage() {
 
          {/* 대여 비용 (Rectangle 109: 368x68, 그라데이션 배경) */}
 <div 
-  className="w-[352px] h-[68px] flex items-center justify-between px-4 -mx-2"
+  className="w-[352px] h-[68px] flex items-center justify-between px-4 -mx-2 mb-4"
   style={{ background: "linear-gradient(90deg, #FFFFFF 0%, #E4E4FF 100%)" }}
 >
   <span 
@@ -167,27 +167,13 @@ export default function PostDetailPage() {
 </div>
 
       {/* 하단 고정 채팅하기 바 (Group 37: 402x61, border 1px #B3B3B3) */}
-<div 
-  className="fixed bottom-0 left-0 right-0 max-w-[402px] mx-auto bg-white flex items-center justify-center z-20"
-  style={{ height: "61px", borderTop: "1px solid #B3B3B3" }}
->
-  {/* 채팅하기 버튼 (Rectangle 91: 304x40, radius 35.9, bg #D3D3FF) */}
-  <button 
-    className="flex items-center justify-center gap-2"
-    style={{ 
-      width: "304px", 
-      height: "40px", 
-      borderRadius: "35.9px", 
-      backgroundColor: "#D3D3FF" 
-    }}
+<div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto bg-white border-t border-[#EDEDED] px-5 py-3 z-20">
+  <button
+    onClick={() => navigate(`/chat/${spotId}`)}
+    className="w-full h-[48px] bg-[#9996FF] text-white text-[14px] font-bold rounded-[40px] flex items-center justify-center gap-1.5"
   >
-    <MessageCircle size={19} strokeWidth={1.5} style={{ height: "18px" }} className="text-[#1A1A1A]" />
-    <span 
-      className="text-[14px] text-[#1A1A1A]"
-      style={{ fontFamily: "Pretendard", fontWeight: 400 }}
-    >
-      채팅하기
-    </span>
+    <MessageCircle size={17} />
+    채팅하기
   </button>
 </div>
     </div>

@@ -1,99 +1,124 @@
 import { Search, Zap, ChevronDown, Heart, MapPin } from "lucide-react"
 import BottomNav from "../../components/BottomNav"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
+import { getPosts, likePost } from "../../api/post"
+import { categoryLabel, statusLabel, priceUnitLabel } from "../../utils/postMapper"
+import type { PostSummary, PostCategory } from "../../types/post"
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"all" | "spot">("all")
   const [sortType, setSortType] = useState<"latest" | "popular">("latest")
   const [showSortMenu, setShowSortMenu] = useState(false)
-  const [likedPosts, setLikedPosts] = useState<number[]>([])
-  const [selectedCategory, setSelectedCategory] = useState("전체")
+  const [selectedCategory, setSelectedCategory] = useState<PostCategory | "전체">("전체")
   const [showAvailableOnly, setShowAvailableOnly] = useState(true)
+  const [searchKeyword, setSearchKeyword] = useState("")
+
+  const [posts, setPosts] = useState<PostSummary[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   const navigate = useNavigate()
 
-  const toggleLike = (postId: number) => {
-    const isLiked = likedPosts.includes(postId)
+  // 게시글 목록 불러오기(API 연동)
+  /*useEffect(() => {
+    const fetchPosts = async () => {
+      setIsLoading(true)
+      try {
+        const res = await getPosts(showAvailableOnly)
+        setPosts(res.data.result)
+      } catch (err) {
+        console.error("게시글 목록 조회 실패:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchPosts()
+  }, [showAvailableOnly])*/
 
-    setLikedPosts((prev) =>
-      isLiked ? prev.filter((id) => id !== postId) : [...prev, postId]
-    )
+  useEffect(() => {
+  // 임시 테스트용 mock 데이터
+  setPosts([
+    {
+      postId: 1,
+      status: "ACTIVE",
+      imageUrlList: [],
+      category: "DEPARTMENT_JACKET",
+      title: "컴퓨터 공학과 과잠 대여하고 싶어요",
+      description: "23학번 과잠 대여 가능하신 분 있나요? 은걸로 하루만 빌리고 싶습니다! 금방 돌려드릴게요 정말 너무너무 급해요!!!!!!!!!!!!!!",
+      rentalStartTime: "2026-04-08",
+      rentalEndTime: "2026-04-09",
+      rentalPrice: 5000,
+      rentalPriceUnit: "HOUR",
+      authorNickname: "코딩왕",
+      likeCount: 2,
+      liked: false,
+    },
+    {
+      postId: 2,
+      status: "ACTIVE",
+      imageUrlList: [],
+      category: "LIVING_SUPPLIES",
+      title: "미니 선풍기 대여합니다",
+      description: "여름 한정 미니 선풍기 대여해요",
+      rentalStartTime: "2026-04-01",
+      rentalEndTime: "2026-04-02",
+      rentalPrice: 2000,
+      rentalPriceUnit: "DAY",
+      authorNickname: "생활왕",
+      likeCount: 8,
+      liked: false,
+    },
+    {
+      postId: 3,
+      status: "ACTIVE",
+      imageUrlList: [],
+      category: "LIVING_SUPPLIES",
+      title: "미니 선풍기 대여합니다",
+      description: "여름 한정 미니 선풍기 대여해요",
+      rentalStartTime: "2026-04-01",
+      rentalEndTime: "2026-04-02",
+      rentalPrice: 2000,
+      rentalPriceUnit: "DAY",
+      authorNickname: "생활왕",
+      likeCount: 8,
+      liked: false,
+    }
+  ])
+}, [])
 
+  // 좋아요 토글
+  const toggleLike = async (postId: number) => {
     setPosts((prev) =>
       prev.map((post) =>
-        post.id === postId
-          ? { ...post, likes: isLiked ? post.likes - 1 : post.likes + 1 }
+        post.postId === postId
+          ? {
+              ...post,
+              liked: !post.liked,
+              likeCount: post.liked ? post.likeCount - 1 : post.likeCount + 1,
+            }
           : post
       )
     )
+
+    try {
+      await likePost(postId)
+    } catch (err) {
+      console.error("좋아요 처리 실패:", err)
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.postId === postId
+            ? {
+                ...post,
+                liked: !post.liked,
+                likeCount: post.liked ? post.likeCount - 1 : post.likeCount + 1,
+              }
+            : post
+        )
+      )
+    }
   }
 
-  //mockdata
-  const [posts, setPosts] = useState([
-    {
-      id: 1,
-      imageUrl: null,
-      status: "대여가능",
-      category: "과잠",
-      title: "컴퓨터 공학과 과잠 대여하고 싶어요",
-      description: "23학번 과잠 대여 가능하신 분 있나요?\n상세 옵션들을 하루만 빨리고 싶습니다!",
-      likes: 2,
-      author: "코딩왕",
-      date: "2026. 4. 8",
-      price: "5,000원 / 일",
-    },
-    {
-      id: 2,
-      imageUrl: null,
-      status: "대여가능",
-      category: "전공서적",
-      title: "경영학원론 교재 빌리고 싶어요",
-      description: "경영학원론 최신판 필요합니다.\n한 학기만 빌릴 수 있을까요?",
-      likes: 6,
-      author: "경영광",
-      date: "2026. 4. 3",
-      price: "20,000원 / 학기",
-    },
-    {
-      id: 3,
-      imageUrl: null,
-      status: "대여중",
-      category: "전자기기",
-      title: "노트북 충전기 빌려주실 분",
-      description: "C타입 충전기 급하게 필요합니다.\n하루만 빌려주세요!",
-      likes: 4,
-      author: "전자킹",
-      date: "2026. 4. 5",
-      price: "3,000원 / 일",
-    },
-    {
-      id: 4,
-      imageUrl: null,
-      status: "대여가능",
-      category: "생활용품",
-      title: "미니 선풍기 대여합니다",
-      description: "여름 한정 미니 선풍기 대여해요.\n상태 좋습니다!",
-      likes: 8,
-      author: "생활왕",
-      date: "2026. 4. 1",
-      price: "2,000원 / 일",
-    },
-    {
-      id: 5,
-      imageUrl: null,
-      status: "대여완료",
-      category: "기타",
-      title: "우산 빌려드려요",
-      description: "장우산 하나 있는데 필요하신 분 계신가요?\n비오는 날만 빌려드립니다.",
-      likes: 3,
-      author: "우산맨",
-      date: "2026. 3. 28",
-      price: "1,000원 / 일",
-    },
-  ])
-
-  // 빈자리 mock 데이터
+  // 빈자리 mock 데이터 (아직 API 미연동)
   const [spotPosts] = useState([
     {
       id: 1,
@@ -117,282 +142,550 @@ export default function HomePage() {
     },
   ])
 
-  // 선택된 카테고리 + 대여가능 여부 + 정렬 기준에 맞게 처리
+  // 빈자리 검색 필터링
+const filteredSpotPosts = spotPosts.filter((spot) => {
+  if (searchKeyword.trim() === "") return true
+  const keyword = searchKeyword.toLowerCase()
+  return (
+    spot.title.toLowerCase().includes(keyword) ||
+    spot.location.toLowerCase().includes(keyword)
+  )
+})
+
+  // 선택된 카테고리 + 검색어 + 정렬 기준에 맞게 처리
   const filteredPosts = posts
     .filter((post) => selectedCategory === "전체" || post.category === selectedCategory)
-    .filter((post) => !showAvailableOnly || post.status === "대여가능")
+    .filter((post) => {
+      if (searchKeyword.trim() === "") return true
+      const keyword = searchKeyword.toLowerCase()
+      return (
+        post.title.toLowerCase().includes(keyword) ||
+        post.description.toLowerCase().includes(keyword)
+      )
+    })
     .sort((a, b) => {
       if (sortType === "popular") {
-        return b.likes - a.likes
+        return b.likeCount - a.likeCount
       }
-      return new Date(b.date.replace(/\./g, "-")).getTime() - new Date(a.date.replace(/\./g, "-")).getTime()
+      return new Date(b.rentalStartTime).getTime() - new Date(a.rentalStartTime).getTime()
     })
 
+  const categoryList: PostCategory[] = [
+    "DEPARTMENT_JACKET",
+    "MAJOR_BOOKS",
+    "ELECTRONICS",
+    "LIVING_SUPPLIES",
+    "EMPTY_SPOTS",
+    "ETC",
+  ]
+
   return (
-    <div className="flex flex-col bg-white pb-20">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between px-5 mt-3 pt-4 pb-3">
-        <img src="/logo1.png" alt="BORO" className="h-8" />
-        <button 
-          onClick={() => navigate("/post/create")}
-          className="bg-[#9996FF] text-white text-sm font-semibold px-4 py-2 rounded-full flex items-center gap-1"
-        >
-          <span>+</span> 글 쓰기
-        </button>
-      </div>
+    <div className="w-full h-full relative bg-white flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden vertical-scroll">
+        <div className="w-[402px] flex flex-col bg-white pb-24">
 
-      {/* 검색창 */}
-      <div className="px-2 mt-1 mb-3 flex justify-center">
-        <div className="bg-[#E6E6E6] rounded-[35.9px] w-full h-[36px] px-4 flex items-center gap-2">
-          <Search className="text-[#7F7F7F]" size={18} />
-          <input
-            className="bg-transparent flex-1 text-sm outline-none"
-            placeholder="검색어를 입력해주세요."
-          />
-        </div>
-      </div>
-
-      {/* 전체대여 / 빈자리 핫클립 탭 */}
-      <div className="w-full mt-2.5 px-4 mb-5 flex justify-center">
-        <div className="bg-[#E6E6E6] w-full h-[44px] rounded-[40px] flex items-center justify-between p-[4px]">
-          <button
-            onClick={() => setActiveTab("all")}
-            className={`w-[175px] h-[34px] text-sm font-semibold rounded-[40px] transition-colors ${
-              activeTab === "all" ? "bg-[#9996FF] text-white shadow-sm" : "text-[#7F7F7F]"
-            }`}
-          >
-            전체 대여
-          </button>
-          <button
-            onClick={() => setActiveTab("spot")}
-            className={`w-[175px] h-[34px] text-sm font-semibold rounded-[40px] transition-colors flex items-center justify-center gap-1 ${
-              activeTab === "spot" ? "bg-[#9996FF] text-white shadow-sm" : "text-[#7F7F7F]"
-            }`}
-          >
-            <Zap size={16} /> 빈자리 핫클립
-          </button>
-        </div>
-      </div>
-
-      {activeTab === "all" ? (
-        <>
-          {/* 카테고리 타이틀 */}
-          <div className="px-4 mt-1 mb-0 flex items-center gap-2 h-[24px] w-full">
-            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 h-[18px] w-[18px] -translate-y-0.5">
-              <rect y="2" width="20" height="2" fill="#1A1A1A" />
-              <rect y="6" width="20" height="2" fill="#1A1A1A" />
-              <rect y="10" width="20" height="2" fill="#1A1A1A" />
-              <rect y="14" width="20" height="2" fill="#1A1A1A" />
-            </svg>
-            <span className="text-[15px] text-[#1A1A1A] leading-none">카테고리</span>
-          </div>
-
-          {/* 카테고리 */}
-          <div className="flex px-4 gap-2 overflow-x-auto overflow-y-hidden mb-6 pt-3 pb-4 w-full category-scroll">
+          {/* 헤더: 로고 (116x29) + 글쓰기 버튼*/}
+          <div className="flex items-center justify-between px-[22px] pt-[30px] pb-4">
+            <img src="/logo1.png" alt="BORO" style={{ width: "116.09px", height: "29px" }} />
             <button
-              onClick={() => setSelectedCategory("전체")}
-              className={`text-sm font-medium w-[75px] h-[36px] rounded-[40px] flex-shrink-0 transition-colors border ${
-                selectedCategory === "전체"
-                  ? "bg-[#9996FF] text-white font-semibold shadow-sm border-[#9996FF]"
-                  : "bg-[#E6E6E6] text-[#000000] border-[#E6E6E6]"
-              }`}
+              onClick={() => navigate("/post/create")}
+              className="bg-[#9996FF] text-white text-sm font-semibold px-4 py-2 rounded-full flex items-center gap-1"
             >
-              전체
+              <span
+  style={{
+    fontFamily: "Pretendard",
+    fontWeight: 400,
+    fontSize: "14px",
+    lineHeight: "1.7",
+    linwidth: "2px",
+  }}
+>
+  + 글 쓰기
+</span>
             </button>
-
-            {["과잠", "전공서적", "전자기기", "생활용품", "빈자리", "기타"].map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`text-sm font-medium w-[75px] h-[36px] rounded-[40px] flex-shrink-0 transition-colors border ${
-                  selectedCategory === category
-                    ? "bg-[#9996FF] text-white font-semibold shadow-sm border-[#9996FF]"
-                    : "bg-[#E6E6E6] text-[#000000] border-[#E6E6E6]"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
           </div>
 
-          {/* 필터 & 정렬 */}
-          <div className="flex items-center justify-between px-5 mb-1">
-            <div className="flex items-center gap-2">
+          {/* 검색창 (370x36, radius 35.9) */}
+          <div className="px-4 mb-4 flex justify-center">
+            <div
+              className="flex items-center gap-2 px-[20px]"
+              style={{
+                width: "370px",
+                height: "36px",
+                borderRadius: "35.9px",
+                backgroundColor: "#E6E6E6",
+              }}
+            >
+              <Search className="text-[#7F7F7F] flex-shrink-0" size={13} />
+              <input
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className="bg-transparent flex-1 outline-none"
+                style={{
+                  fontFamily: "Pretendard",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "1.2",
+                  color: "#1A1A1A",
+                }}
+                placeholder="검색어를 입력해주세요."
+              />
+            </div>
+          </div>
+
+          {/* 전체대여 / 빈자리 핫클립 탭 (359x44, radius 40) */}
+          <div className="mb-5 flex justify-center">
+            <div
+              className="relative flex items-center"
+              style={{
+                width: "359px",
+                height: "44px",
+                borderRadius: "40px",
+                backgroundColor: "#E6E6E6",
+              }}
+            >
               <button
-                onClick={() => setShowAvailableOnly(!showAvailableOnly)}
-                className={`w-11 h-6 rounded-full relative transition-colors ${
-                  showAvailableOnly ? "bg-[#9996FF]" : "bg-[#E6E6E6]"
-                }`}
+                onClick={() => setActiveTab("all")}
+                className="absolute flex items-center justify-center text-sm font-semibold transition-colors"
+                style={{
+                  width: "175px",
+                  height: "34px",
+                  top: "5px",
+                  left: "10px",
+                  borderRadius: "40px",
+                  backgroundColor: activeTab === "all" ? "#9996FF" : "transparent",
+                  color: activeTab === "all" ? "#FFFFFF" : "#7F7F7F",
+                  fontFamily: "Pretendard",
+                  fontWeight: 400,
+                }}
               >
-                <div
-                  className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
-                    showAvailableOnly ? "right-1" : "left-1"
+                전체 대여
+              </button>
+              <button
+                onClick={() => setActiveTab("spot")}
+                className="absolute flex items-center justify-center gap-1 text-sm font-semibold transition-colors"
+                style={{
+                  width: "175px",
+                  height: "34px",
+                  top: "5px",
+                  right: "10px",
+                  borderRadius: "40px",
+                  backgroundColor: activeTab === "spot" ? "#9996FF" : "transparent",
+                  color: activeTab === "spot" ? "#FFFFFF" : "#7F7F7F",
+                  fontFamily: "Pretendard",
+                  fontWeight: 400,
+                }}
+              >
+                <Zap size={15} 
+                fill={activeTab === "spot" ? "#FFFFFF" : "none"}/> 빈자리 핫클립
+              </button>
+            </div>
+          </div>
+
+          {activeTab === "all" ? (
+            <>
+              {/* 카테고리 타이틀 */}
+              <div className="px-4 mt-1 mb-0 flex items-center gap-2 h-[24px] w-full">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 h-[18px] w-[18px] -translate-y-0.5">
+                  <rect y="2" width="20" height="2" fill="#1A1A1A" />
+                  <rect y="6" width="20" height="2" fill="#1A1A1A" />
+                  <rect y="10" width="20" height="2" fill="#1A1A1A" />
+                  <rect y="14" width="20" height="2" fill="#1A1A1A" />
+                </svg>
+                <span className="text-[15px] text-[#1A1A1A] leading-none">카테고리</span>
+              </div>
+
+              {/* 카테고리 */}
+              <div className="flex px-4 gap-2 overflow-x-auto overflow-y-hidden mb-4 pt-3 pb-4 w-full category-scroll">
+                <button
+                  onClick={() => setSelectedCategory("전체")}
+                  className={`text-sm font-medium w-[75px] h-[36px] rounded-[40px] flex-shrink-0 transition-colors border ${
+                    selectedCategory === "전체"
+                      ? "bg-[#9996FF] text-white font-semibold shadow-sm border-[#9996FF]"
+                      : "bg-[#E6E6E6] text-[#000000] border-[#E6E6E6]"
                   }`}
-                />
-              </button>
-              <span className="text-xs text-[#000000]">대여 가능한 항목만 보기</span>
-            </div>
-            <div className="flex items-center gap-2 relative">
-              <span className="text-xs text-[#000000]">정렬</span>
-              <button
-                onClick={() => setShowSortMenu(!showSortMenu)}
-                className="bg-[#E6E6E6] rounded-[40px] w-[102px] h-[29px] flex items-center justify-center gap-1 text-xs font-semibold"
-              >
-                {sortType === "latest" ? "최신순" : "인기순"} <ChevronDown size={14} />
-              </button>
-
-              {showSortMenu && (
-                <div className="absolute top-[34px] right-0 bg-[#E6E6E6] rounded-2xl shadow-md overflow-hidden z-10 w-[102px]">
-                  <button
-                    onClick={() => {
-                      setSortType("latest")
-                      setShowSortMenu(false)
-                    }}
-                    className={`w-full py-2 text-xs text-center transition-colors ${
-                      sortType === "latest" ? "bg-[#E6E6E6] text-black !font-extrabold" : "text-[#000000]"
-                    }`}
-                  >
-                    최신순
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSortType("popular")
-                      setShowSortMenu(false)
-                    }}
-                    className={`w-full py-2 text-xs text-center transition-colors ${
-                      sortType === "popular" ? "bg-[#E6E6E6] text-black !font-extrabold" : "text-[#000000]"
-                    }`}
-                  >
-                    인기순
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 게시글 카드 목록 */}
-          <div className="flex flex-col px-4 py-4 gap-4">
-            {filteredPosts.length === 0 ? (
-              <p className="text-center text-sm text-[#7F7F7F] py-10">
-                해당 카테고리의 게시글이 없어요
-              </p>
-            ) : (
-              filteredPosts.map((post) => (
-                <div
-                  key={post.id}
-                  onClick={() => navigate(`/post/${post.id}`)}
-                  className="border border-gray-200 rounded-3xl p-4 flex items-center gap-3 w-full h-[203px] bg-gradient-to-tl from-[#efeffe] via-white to-white cursor-pointer"
+                  style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "14px" }}
                 >
-                  {/* 왼쪽: 이미지 + 작성자 */}
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="w-23 h-23 bg-[#E6E6E6] rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden">
-                      <img
-                        src={post.imageUrl || "/logo3.png"}
-                        alt={post.title}
-                        className={post.imageUrl ? "w-full h-full object-cover" : "w-10 h-10 object-contain"}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 mt-10">
-                      <div className="w-6 h-6 bg-gray-300 rounded-full flex-shrink-0"></div>
-                      <span className="text-[12px] text-[#000000]">{post.author}</span>
-                    </div>
-                  </div>
+                  전체
+                </button>
 
-                  {/* 오른쪽: 내용 */}
-                  <div className="flex flex-col gap-1.5 flex-1">
-                    <div className="flex justify-between items-start">
-                      <div className="flex gap-1.5">
-                        <span
-                          className={`text-[12px] px-2.5 py-1 rounded-full ${
-                            post.status === "대여가능"
-                              ? "bg-[#E9F5EE] text-black"
-                              : post.status === "대여중"
-                              ? "bg-[#FFF3CD] text-[#8A6D00]"
-                              : "bg-[#FFE1E1] text-[#C93333]"
-                          }`}
-                        >
-                          {post.status}
-                        </span>
-                        <span className="text-[12px] bg-[#E4E4FF] text-[#000000] px-2.5 py-1 rounded-full">{post.category}</span>
+                {categoryList.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`text-sm font-medium w-[75px] h-[36px] rounded-[40px] flex-shrink-0 transition-colors border ${
+                      selectedCategory === category
+                        ? "bg-[#9996FF] text-white font-semibold shadow-sm border-[#9996FF]"
+                        : "bg-[#E6E6E6] text-[#000000] border-[#E6E6E6]"
+                    }`}
+                    style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "14px" }}
+                  >
+                    {categoryLabel[category]}
+                  </button>
+                ))}
+              </div>
+
+              {/* 필터 & 정렬 */}
+              <div className="flex items-center justify-between px-5 mb-1">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAvailableOnly(!showAvailableOnly)}
+                    className={`w-11 h-6 rounded-full relative transition-colors ${
+                      showAvailableOnly ? "bg-[#9996FF]" : "bg-[#E6E6E6]"
+                    }`}
+                  >
+                    <div
+                      className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
+                        showAvailableOnly ? "right-1" : "left-1"
+                      }`}
+                    />
+                  </button>
+                  <span className="text-xs text-[#000000]">대여 가능한 항목만 보기</span>
+                </div>
+                <div className="flex items-center gap-2 relative">
+                  <span className="text-xs text-[#000000]">정렬</span>
+                  <button
+                    onClick={() => setShowSortMenu(!showSortMenu)}
+                    className="bg-[#E6E6E6] rounded-[40px] w-[102px] h-[29px] flex items-center justify-center gap-1 text-xs font-semibold"
+                  >
+                    {sortType === "latest" ? "최신순" : "인기순"} <ChevronDown size={14} />
+                  </button>
+
+                  {showSortMenu && (
+                    <div className="absolute top-[34px] right-0 bg-[#E6E6E6] rounded-2xl shadow-md overflow-hidden z-10 w-[102px]">
+                      <button
+                        onClick={() => {
+                          setSortType("latest")
+                          setShowSortMenu(false)
+                        }}
+                        className={`w-full py-2 text-xs text-center transition-colors ${
+                          sortType === "latest" ? "bg-[#E6E6E6] text-black !font-extrabold" : "text-[#000000]"
+                        }`}
+                      >
+                        최신순
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSortType("popular")
+                          setShowSortMenu(false)
+                        }}
+                        className={`w-full py-2 text-xs text-center transition-colors ${
+                          sortType === "popular" ? "bg-[#E6E6E6] text-black !font-extrabold" : "text-[#000000]"
+                        }`}
+                      >
+                        인기순
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 게시글 카드 목록 */}
+              <div className="flex flex-col px-4 py-2 gap-4">
+                {isLoading ? (
+                  <p className="text-center text-sm text-[#7F7F7F] py-10">불러오는 중...</p>
+                ) : filteredPosts.length === 0 ? (
+                  <p className="text-center text-sm text-[#7F7F7F] py-10">
+                    해당 조건의 게시글이 없어요
+                  </p>
+                ) : (
+                  filteredPosts.map((post) => (
+                    <div
+                      key={post.postId}
+                      onClick={() => navigate(`/post/${post.postId}`)}
+                      className="relative mx-auto cursor-pointer"
+                      style={{
+                        width: "370px",
+                        height: "203px",
+                        borderRadius: "40px",
+                        border: "1px solid #CCCCCC",
+                        background: "linear-gradient(90deg, #FFFFFF 51.91%, #E4E4FF 114.12%)",
+                      }}
+                    >
+                      {/* 물건 사진 (90x90, radius 20, top 23 left 18) */}
+                      <div
+                        className="absolute bg-[#E6E6E6] overflow-hidden flex items-center justify-center"
+                        style={{ width: "90px", height: "90px", top: "23px", left: "18px", borderRadius: "20px" }}
+                      >
+                        <img
+                          src={post.imageUrlList[0] || "/logo3.png"}
+                          alt={post.title}
+                          className={post.imageUrlList[0] ? "w-full h-full object-cover" : "w-10 h-10 object-contain"}
+                        />
                       </div>
+
+                      {/* 대여가능 뱃지 (62x30, top 23 left 116) */}
+                      <div
+                        className={`absolute flex items-center justify-center text-[12px] ${
+                          post.status === "ACTIVE"
+                            ? "bg-[#E9F5EE] text-black"
+                            : post.status === "RENTED"
+                            ? "bg-[#FFF3CD] text-[#8A6D00]"
+                            : "bg-[#FFE1E1] text-[#C93333]"
+                        }`}
+                        style={{ width: "65px", height: "30px", top: "23px", left: "116px", borderRadius: "40px" }}
+                      >
+                        {statusLabel[post.status]}
+                      </div>
+
+                      {/* 카테고리 뱃지 (내용에 따라 너비 자동) */}
+<div
+  className="absolute flex items-center justify-center text-[12px] bg-[#E4E4FF] text-[#000000] px-2.5 whitespace-nowrap"
+  style={{ height: "30px", top: "23px", left: "186px", borderRadius: "40px" }}
+>
+  {categoryLabel[post.category]}
+</div>
+
+                      {/* 좋아요 버튼 (우측 상단 배치) */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          toggleLike(post.id)
+                          toggleLike(post.postId)
                         }}
-                        className="flex items-center gap-0.5"
+                        className="absolute flex items-center gap-0.5"
+                        style={{ top: "23px", right: "20px" }}
                       >
-                        <Heart
-                          size={20}
-                          className={likedPosts.includes(post.id) ? "fill-[#9996FF] text-[#9996FF]" : "text-[#9996FF]"}
-                        />
-                        <span className="text-xs text-[#000000]">{post.likes}</span>
+                        <Heart size={20} className={post.liked ? "fill-[#9996FF] text-[#9996FF]" : "text-[#9996FF]"} />
+                        <span className="text-xs text-[#000000]">{post.likeCount}</span>
                       </button>
+
+                      {/* 제목 (226x18, top 61 left 121, font14 bold) */}
+                      <p
+                        className="absolute overflow-hidden text-ellipsis whitespace-nowrap"
+                        style={{
+                          width: "226px",
+                          height: "18px",
+                          top: "61px",
+                          left: "121px",
+                          fontFamily: "Pretendard",
+                          fontWeight: 700,
+                          fontSize: "14px",
+                          lineHeight: "1.2",
+                          color: "#1A1A1A",
+                        }}
+                      >
+                        {post.title}
+                      </p>
+
+                      {/* 설명 (193x34, top 84 left 122, font12 regular) */}
+                      <p
+                        className="absolute whitespace-pre-line overflow-hidden"
+                        style={{
+                          width: "193px",
+                          height: "34px",
+                          top: "84px",
+                          left: "122px",
+                          fontFamily: "Pretendard",
+                          fontWeight: 400,
+                          fontSize: "12px",
+                          lineHeight: "1.4",
+                          color: "#000000",
+                        }}
+                      >
+                        {post.description}
+                      </p>
+
+                      {/* 대여 신청일 (하단 고정) */}
+<p
+  className="absolute"
+  style={{
+    width: "200px",
+    left: "122px",
+    bottom: "55px",
+    fontFamily: "Pretendard",
+    fontWeight: 400,
+    fontSize: "12px",
+    lineHeight: "1.2",
+    color: "#43A860",
+  }}
+>
+  대여 신청일 : {post.rentalStartTime}
+</p>
+
+                      {/* 사용자 사진 (25x25, radius 15, top 154 left 26) */}
+                      <div
+                        className="absolute bg-gray-300"
+                        style={{ width: "25px", height: "25px", top: "154px", left: "26px", borderRadius: "15px" }}
+                      />
+
+                      {/* 사용자 이름 (32x14, top 160 left 62, font12 regular) */}
+                      <p
+                        className="absolute overflow-hidden text-ellipsis whitespace-nowrap"
+                        style={{
+                          width: "40px",
+                          height: "14px",
+                          top: "160px",
+                          left: "62px",
+                          fontFamily: "Pretendard",
+                          fontWeight: 400,
+                          fontSize: "12px",
+                          lineHeight: "1.2",
+                          color: "#000000",
+                        }}
+                      >
+                        {post.authorNickname}
+                      </p>
+
+                      {/* 가격 (97x17, top 158 left 244, font14 bold, text-right) */}
+                      <p
+                        className="absolute text-right"
+                        style={{
+                          width: "97px",
+                          height: "17px",
+                          top: "158px",
+                          left: "244px",
+                          fontFamily: "Pretendard",
+                          fontWeight: 700,
+                          fontSize: "14px",
+                          lineHeight: "1.2",
+                          color: "#1A1A1A",
+                        }}
+                      >
+                        {post.rentalPrice.toLocaleString()}원 / {priceUnitLabel[post.rentalPriceUnit]}
+                      </p>
                     </div>
-                    <p className="text-sm font-bold mt-0.5">{post.title}</p>
-                    <p className="text-[12px] text-[#000000] leading-tight whitespace-pre-line">
-                      {post.description}
-                    </p>
-                    <p className="text-[12px] text-[#43A860] mt-3">대여 신청일: {post.date}</p>
-                    <p className="text-sm font-bold mt-2 text-right">{post.price}</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </>
-      ) : (
-        <>
-          {/* 빈자리 핫클립 안내 문구 */}
-          <div className="px-5 mb-4 flex items-center gap-1.5">
-            <span>🔥</span>
-            <span className="text-[13px] text-[#1A1A1A] font-medium">
-              실시간으로 자리를 양도하는 게시글입니다
-            </span>
-          </div>
-
-          {/* 빈자리 카드 목록 */}
-          <div className="flex flex-col px-4 gap-4">
-            {spotPosts.map((spot) => (
-              <div
-                key={spot.id}
-                onClick={() => navigate(`/post/spot/${spot.id}`)}
-                className="relative border-2 border-orange-400 rounded-3xl p-4 cursor-pointer"
-              >
-                {/* 시간 뱃지 */}
-                <div className="absolute top-4 right-4 bg-orange-500 text-white text-[11px] font-bold px-3 py-1 rounded-full">
-                  {spot.timeLeft}
-                </div>
-
-                {/* 제목 */}
-                <div className="flex items-center gap-2 mb-3">
-                  <Zap size={18} className="text-orange-500 fill-orange-500" />
-                  <span className="text-[15px] font-bold text-[#1A1A1A]">{spot.title}</span>
-                </div>
-
-                {/* 정보 */}
-                <p className="text-[13px] text-[#4A4A4A] mb-3">
-                  {spot.floor}층 / {spot.window ? "창가 자리" : "복도 자리"} / 콘센트 {spot.outlet ? "있음" : "없음"}
-                </p>
-
-                {/* 위치 */}
-                <div className="flex items-center gap-1 mb-4">
-                  <MapPin size={14} className="text-[#43A860]" />
-                  <span className="text-[13px] text-[#43A860] font-medium">{spot.location}</span>
-                </div>
-
-                {/* 작성자 */}
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-gray-700 rounded-full flex-shrink-0" />
-                  <span className="text-[12px] text-[#000000]">{spot.author}</span>
-                </div>
+                  ))
+                )}
               </div>
-            ))}
-          </div>
-        </>
-      )}
+            </>
+          ) : (
+  <>
+  {/* 빈자리 핫클립 안내 문구 */}
+<div className="px-3 -my-1 mb-3 flex items-center gap-0.5">
+  <img src="/fire-icon.png" alt="불꽃" className="w-[25px] h-[30px]" />
+  <span className="text-[13px] text-[#7F7F7F] font-medium">
+    실시간으로 자리를 양도하는 게시글입니다
+  </span>
+</div>
 
-      {/* 하단 네비게이션 */}
+    {/* 빈자리 카드 목록 */}
+    <div className="flex flex-col px-4 gap-4">
+      {filteredSpotPosts.length === 0 ? (
+  <p className="text-center text-sm text-[#7F7F7F] py-10">
+    해당 조건의 게시글이 없어요
+  </p>
+) : (
+  filteredSpotPosts.map((spot) => (
+    <div
+  key={spot.id}
+  onClick={() => navigate(`/post/spot/${spot.id}`)}
+  className="relative mx-auto cursor-pointer"
+  style={{
+    width: "370px",
+    minHeight: "191px",
+    borderRadius: "40px",
+    border: "2px solid #FF5E00",
+    paddingTop: "30px",
+    paddingLeft: "30px",
+    paddingRight: "18px",
+    paddingBottom: "18px",
+  }}
+>
+      {/* 시간 뱃지 (80x25, radius 7) */}
+      <div
+        className="absolute flex items-center justify-center whitespace-nowrap"
+        style={{
+          width: "80px",
+          height: "24px",
+          top: "0px",
+          right: "25px",
+          borderRadius: "7px",
+          backgroundColor: "#FF5E00",
+        }}
+      >
+        <span
+          style={{
+            fontFamily: "Pretendard",
+            fontWeight: 500,
+            fontSize: "14px",
+            lineHeight: "1.2",
+            color: "#FFFFFF",
+          }}
+        >
+          {spot.timeLeft}
+        </span>
+      </div>
+
+      {/* 번개 아이콘 + 제목 (22x24 아이콘, 226x18 제목 font14 bold) */}
+      <div className="flex items-start gap-3 mb-3" style={{ paddingRight: "0px" }}>
+        <Zap size={22} style={{ color: "#FF5E00", fill: "#FF5E00", flexShrink: 0 }} />
+        <p
+          style={{
+            fontFamily: "Pretendard",
+            fontWeight: 700,
+            fontSize: "14px",
+            lineHeight: "1.2",
+            color: "#1A1A1A",
+          }}
+        >
+          {spot.title}
+        </p>
+      </div>
+
+      {/* 설명 (226x34, font12 regular) */}
+      <p
+        className="mb-4"
+        style={{
+          marginLeft: "34px",
+          fontFamily: "Pretendard",
+          fontWeight: 500,
+          fontSize: "12px",
+          lineHeight: "1.4",
+          color: "#4A4A4A",
+        }}
+      >
+        {spot.floor}층 / {spot.window ? "창가 자리" : "복도 자리"} / 콘센트 {spot.outlet ? "있음" : "없음"}
+      </p>
+
+      {/* 위치 (아이콘 12x15, 텍스트 font12 semibold) */}
+      <div className="flex items-center gap-1 mb-6" style={{ marginLeft: "34px" }}>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+  <path
+    d="M12 2C7.58 2 4 5.58 4 10C4 16 12 22 12 22C12 22 20 16 20 10C20 5.58 16.42 2 12 2Z"
+    fill="#43A860"
+  />
+  <circle cx="12" cy="10" r="4" fill="white" />
+</svg>
+<span
+          style={{
+            fontFamily: "Pretendard",
+            fontWeight: 500,
+            fontSize: "12px",
+            lineHeight: "1.2",
+            color: "#43A860",
+          }}
+        >
+          {spot.location}
+        </span>
+      </div>
+
+      {/* 작성자 (원 25x25, 이름 font12 regular) */}
+      <div className="flex items-center gap-2">
+        <div
+          className="bg-gray-700 flex-shrink-0"
+          style={{ width: "25px", height: "25px", borderRadius: "15px" }}
+        />
+        <span
+          style={{
+            fontFamily: "Pretendard",
+            fontWeight: 400,
+            fontSize: "12px",
+            lineHeight: "1.2",
+            color: "#000000",
+          }}
+        >
+          {spot.author}
+        </span>
+      </div>
+    </div>
+  ))
+)}
+    </div>
+  </>
+)}
+        </div>
+      </div>
+
       <BottomNav />
     </div>
   )
