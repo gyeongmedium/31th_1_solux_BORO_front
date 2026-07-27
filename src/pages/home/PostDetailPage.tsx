@@ -19,7 +19,7 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="flex flex-col bg-white pb-24">
+    <div className="flex flex-col bg-white pb-24 vertical-scroll">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-5 pt-5 pb-4">
         <button onClick={() => navigate(-1)}>
@@ -167,13 +167,32 @@ export default function PostDetailPage() {
 </div>
 
       {/* 하단 고정 채팅하기 바 (Group 37: 402x61, border 1px #B3B3B3) */}
-<div className="fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto bg-white border-t border-[#EDEDED] px-5 py-3 z-20">
+<div
+  className="fixed bottom-0 bg-white flex items-center justify-center z-20"
+  style={{
+    width: "402px",
+    height: "61px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    borderTop: "1px solid #B3B3B3",
+  }}
+>
   <button
-    onClick={() => navigate(`/chat/${spotId}`)}
-    className="w-full h-[48px] bg-[#9996FF] text-white text-[14px] font-bold rounded-[40px] flex items-center justify-center gap-1.5"
+    className="flex items-center justify-center gap-2"
+    style={{
+      width: "304px",
+      height: "40px",
+      borderRadius: "35.9px",
+      backgroundColor: "#D3D3FF",
+    }}
   >
-    <MessageCircle size={17} />
-    채팅하기
+    <MessageCircle size={19} strokeWidth={1.5} style={{ height: "18px" }} className="text-[#1A1A1A]" />
+    <span
+      className="text-[14px] text-[#1A1A1A]"
+      style={{ fontFamily: "Pretendard", fontWeight: 400 }}
+    >
+      채팅하기
+    </span>
   </button>
 </div>
     </div>
