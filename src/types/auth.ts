@@ -1,38 +1,53 @@
-export type University = "숙명여자대학교"
-export type Active = "활성" | "비활성" | "정지" | "영구탈퇴"
+// 공통 API 응답 구조
+export interface ApiResponse<T> {
+    isSuccess: boolean;
+    code: string;
+    message: string;
+    result: T;
+}
 
-
+// 1. 회원가입
+// request body
 export interface SignUpRequest {
-    email: string
-    name: string
-    university: University
-    studentNumber: string
-    password: string
-    nickName: string
-    active: Active
+    signUpToken: string;
+    nickname: string;
+    studentNumber: string;
 }
 
-
-export interface SignUpResponse {
-    name: string
-    email: string
-    socialId: string
-    accessToken: string
-    refreshToken: string
+// responses
+export interface TokenResult {
+    memberId: number;
+    accessToken: string;
+    refreshToken: string;
 }
 
-export interface SendEmailRequest {
-    email: string
+export type SignUpResponse = ApiResponse<TokenResult>;
+
+// 2. 토큰 재발급 Response
+// responses
+export interface AccessTokenResult {
+    memberId: number;
+    accessToken: string;
 }
 
+export type ReissueResponse = ApiResponse<AccessTokenResult>;
 
-export interface VerifyEmailRequest {
-    email: string
-    code: string
+// 3. 구글 소셜 로그인
+
+export interface GoogleCallbackRequest {
+    code: string;
 }
 
+// responses
+export type AuthStatus = 'LOGIN' | 'NEED_SIGNUP';
 
-export interface ReissueResponse {
-    memberId: number
-    accessToken: string
+export interface LoginResult {
+    authStatus: AuthStatus;
+    accessToken?: string;
+    refreshToken?: string;
+    signUpToken?: string;
+    email?: string;
+    name?: string;
 }
+
+export type GoogleCallbackResponse = ApiResponse<LoginResult>;

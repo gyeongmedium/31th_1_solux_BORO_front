@@ -137,7 +137,7 @@ export default function MyPage() {
               {user.nickname}
             </span>
             <button
-              onClick={() => navigate("/mypage/deco")}
+              onClick={() => navigate("/mypage/noonsong")}
               className="text-[15px] text-[#8E8E93] flex items-center gap-0.5"
               style={{ width: "80px", marginTop: "8px" }}
             >

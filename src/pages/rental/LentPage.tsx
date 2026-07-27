@@ -1,11 +1,12 @@
 // 대여현황 (빌려준 탭)
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom"; 
-import { mockLentRentals } from "../../api/mockRental";
-import type { LentRentalResponse, RequestStatus } from "../../types/rental";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
+//import { getLentRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";      // 여기!
+import { getMockLentRentalRequests, decideMockRentalRequest, completeMockRentalReturn } from "../../api/rental";
+import type { RentalRequestPreview, RentalRequestStatus } from "../../types/rental";
 
 // 팝업 컴포넌트 (취소/확인)
 function ConfirmModal({ 
@@ -62,93 +63,153 @@ function Toast({ message }: { message: string }) {
     )
 }
 
-// 상태별 배경색 반환
-function getStatusStyle(status: RequestStatus) {
-    const styles = {
-        "요청중": { bg: "bg-[#FFF4AB]", text: "text-[#1A1A1A]" },
-        "대여중": { bg: "bg-[#FFD4BB]", text: "text-[#1A1A1A]" },
-        "대여가능": { bg: "bg-[#E9F5EE]", text: "text-[#1A1A1A]" },
-        "반납완료": { bg: "bg-[#E4E4FF]", text: "text-[#1A1A1A]" }
+// 카테고리 한글 라벨 맵핑
+const CATEGORY_LABEL_MAP: Record<string, string> = {
+    DEPARTMENT_JACKET: "과잠",
+    MAJOR_BOOKS: "전공서적",
+    ELECTRONICS: "전자기기",
+    LIVING_SUPPLIES: "생활용품",
+    ETC: "기타",
+    EMPTY_SPOTS: "빈자리",
+};
+
+// UI 레이블용 대여 상태
+type UIStatus = "요청중" | "대여중" | "대여가능" | "반납완료";
+
+function getStatusInfo(status: RentalRequestStatus): { label: UIStatus; bg: string; text: string } {
+    switch (status) {
+        case 'PENDING':
+            return { label: "요청중", bg: "bg-[#FFF4AB]", text: "text-[#1A1A1A]" };
+        case 'APPROVED':
+            return { label: "대여중", bg: "bg-[#FFD4BB]", text: "text-[#1A1A1A]" };
+        case 'REJECTED':
+            return { label: "대여가능", bg: "bg-[#E9F5EE]", text: "text-[#1A1A1A]" };
+        case 'COMPLETED':
+            return { label: "반납완료", bg: "bg-[#E4E4FF]", text: "text-[#1A1A1A]" };
+        default:
+            return { label: "요청중", bg: "bg-[#FFF4AB]", text: "text-[#1A1A1A]" };
     }
-    return styles[status] || styles["요청중"]
+}
+
+// 날짜 포맷 변환 함수 (YYYY-MM-DD -> YY.MM.DD)
+function formatDateShort(dateStr?: string) {
+    if (!dateStr) return "";
+    const cleanStr = dateStr.split("T")[0];
+    const parts = cleanStr.split("-");
+    if (parts.length === 3) {
+        return `${parts[0].slice(2)}.${parts[1]}.${parts[2]}`;
+    }
+    return dateStr;
 }
 
 export default function LentPage() {
-    const navigate = useNavigate(); // navigate 훅 초기화
-
-    // roomId 매핑을 위해 목데이터 개별 고유 ID 설정
-    const [rentals, setRentals] = useState<(LentRentalResponse & { roomId?: number; category?: string; isReturnWaiting?: boolean })[]>([
-        { ...mockLentRentals, roomId: 101, category: "과잠", title: "컴퓨터 공학과 과잠 대여하고 싶어요", borrower: "코딩왕" },
-        { ...mockLentRentals, roomId: 101, category: "과잠", title: "컴퓨터 공학과 과잠 대여하고 싶어요", borrower: "코딩왕" },
-        { 
-            ...mockLentRentals, 
-            roomId: 202,
-            category: "빈자리", 
-            title: "중앙도서관", 
-            borrower: "스터디마스터", 
-            rentalStartTime: "4층 / A- 23",
-            requestStatus: "요청중"
-        },
-        { ...mockLentRentals, roomId: 203, category: "전공서적", title: "데이터구조 전공서적 빌릴 수 있을까요", borrower: "책벌레99" }
-    ]);
+    const navigate = useNavigate();
+    const [rentals, setRentals] = useState<(RentalRequestPreview & { isReturnWaiting?: boolean })[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [modalState, setModalState] = useState<{
-        show: boolean
-        index: number | null
-        action: 'approve' | 'reject' | 'confirmReturn' | null
-    }>({ show: false, index: null, action: null })
+        show: boolean;
+        item: (RentalRequestPreview & { isReturnWaiting?: boolean }) | null;
+        action: 'approve' | 'reject' | 'confirmReturn' | null;
+    }>({ show: false, item: null, action: null });
 
-    const [toast, setToast] = useState<string | null>(null)
+    const [toast, setToast] = useState<string | null>(null);
 
-    const handleApprove = (index: number) => {
-        setModalState({ show: true, index, action: 'approve' })
-    }
-
-    const handleReject = (index: number) => {
-        setModalState({ show: true, index, action: 'reject' })
-    }
-
-    const handleConfirmReturn = (index: number) => {
-        setModalState({ show: true, index, action: 'confirmReturn' })
-    }
-
-    const confirmAction = () => {
-        if (modalState.index === null) return
-
-        const newRentals = [...rentals]
-        
-        if (modalState.action === 'confirmReturn') {
-            newRentals[modalState.index].isReturnWaiting = true;
-            setRentals(newRentals)
-            setModalState({ show: false, index: null, action: null })
-
-            setToast('요청자 처리시 마이페이지에서 확인 가능합니다.')
-            setTimeout(() => setToast(null), 2000)
-        } else {
-            const newStatus: RequestStatus = modalState.action === 'approve' ? '대여중' : '대여가능'
-            newRentals[modalState.index].requestStatus = newStatus
-
-            setRentals(newRentals)
-            setModalState({ show: false, index: null, action: null })
-
-            setToast(`상태가 "${newStatus}"으로 변경되었습니다.`)
-            setTimeout(() => setToast(null), 2000)
+    // 대여 목록 로드 (useCallback으로 메모이제이션)
+    const fetchRentals = useCallback(async () => {
+        try {
+            //const res = await getLentRentalRequests();    // 여기!
+            const res = await getMockLentRentalRequests();  // 여기! 이거 삭제
+            await decideMockRentalRequest(rentalId, decide);    // 여기! 이거 삭제
+            if (res.isSuccess) {
+                setRentals(res.result);
+            }
+        } catch (error) {
+            console.error("빌려준 목록 로딩 실패:", error);
+        } finally {
+            setIsLoading(false);
         }
-    }
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        (async () => {
+            try {
+                //const res = await getLentRentalRequests();        // 여기!
+                const res = await getMockLentRentalRequests();
+                if (res.isSuccess && isMounted) {
+                    setRentals(res.result);
+                }
+            } catch (error) {
+                console.error("빌려준 목록 로딩 실패:", error);
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        })();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const handleApprove = (item: RentalRequestPreview) => {
+        setModalState({ show: true, item, action: 'approve' });
+    };
+
+    const handleReject = (item: RentalRequestPreview) => {
+        setModalState({ show: true, item, action: 'reject' });
+    };
+
+    const handleConfirmReturn = (item: RentalRequestPreview) => {
+        setModalState({ show: true, item, action: 'confirmReturn' });
+    };
+
+    const confirmAction = async () => {
+        if (!modalState.item || !modalState.action) return;
+        const currentItem = modalState.item;
+
+        try {
+            if (modalState.action === 'confirmReturn') {
+                //const res = await completeRentalReturn(currentItem.rentalRequestId);  // 여기!
+                const res = await completeMockRentalReturn(currentItem.rentalRequestId);
+                if (res.isSuccess) {
+                    setModalState({ show: false, item: null, action: null });
+                    setToast('대여자 처리시 마이페이지에서 확인 가능합니다.');
+                    setTimeout(() => setToast(null), 2000);
+                    fetchRentals();
+                }
+            } else {
+                const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
+                //const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
+                const res = await decideMockRentalRequest(currentItem.rentalRequestId, decideType);
+                if (res.isSuccess) {
+                    const newStatusLabel = modalState.action === 'approve' ? '대여중' : '대여가능';
+                    setModalState({ show: false, item: null, action: null });
+                    setToast(`상태가 "${newStatusLabel}"으로 변경되었습니다.`);
+                    setTimeout(() => setToast(null), 2000);
+                    fetchRentals();
+                }
+            }
+        } catch (error) {
+            console.error("요청 처리 실패:", error);
+            setModalState({ show: false, item: null, action: null });
+        }
+    };
 
     const cancelAction = () => {
-        setModalState({ show: false, index: null, action: null })
-    }
+        setModalState({ show: false, item: null, action: null });
+    };
 
-    // 상세 채팅방 페이지로 이동 핸들러
-    const handleStartChat = (item: typeof rentals[0]) => {
-        const targetRoomId = item.roomId || 999;
-        const chatType = item.category === "빈자리" ? "SPACE" : "TRADE";
-        
-        navigate(`/chat/${targetRoomId}`, {
+    const handleStartChat = (item: RentalRequestPreview) => {
+        const chatType = item.postCategory === "EMPTY_SPOTS" ? "SPACE" : "TRADE";
+        const title = item.itemDetail?.title || item.seatDetail?.location || "상세 대여건";
+
+        navigate(`/chat/${item.rentalRequestId}`, {
             state: {
                 type: chatType,
-                title: item.title
+                title: title
             }
         });
     };
@@ -159,7 +220,6 @@ export default function LentPage() {
                 <h1 className="text-2xl font-bold leading-none text-black">대여현황</h1>
             </div>
 
-            {/* 개수 노출을 포기하고 군더더기 없는 이동 패스만 전달 */}
             <Tab 
                 activeTab="first"
                 firstLabel="내가 빌려준 것"
@@ -170,141 +230,172 @@ export default function LentPage() {
                 secondPath="/rental/borrowed"
             />
 
-            <div className="flex-1 overflow-x-hidden overflow-y-auto px-4 space-y-4 pt-2 pb-[75px]">                
-                {rentals.map((item, index) => {
-                    const isBlankCategory = item.category === "빈자리";
-                    const statusStyle = getStatusStyle(item.requestStatus);
+            <div className="flex-1 overflow-x-hidden overflow-y-scroll vertical-scroll px-4 space-y-4 pt-2 pb-[75px]">
+                {isLoading ? (
+                    <div className="text-center py-10 text-gray-400">불러오는 중...</div>
+                ) : rentals.length === 0 ? (
+                    <div className="text-center py-10 text-gray-400">빌려준 내역이 없습니다.</div>
+                ) : (
+                    rentals.map((item) => {
+                        const isBlankCategory = item.postCategory === "EMPTY_SPOTS";
+                        const statusInfo = getStatusInfo(item.rentalRequestStatus);
+                        const categoryLabel = CATEGORY_LABEL_MAP[item.postCategory] || item.postCategory;
 
-                    return (
-                        <div 
-                            key={index} 
-                            className={`w-[370px] ${isBlankCategory ? 'h-[282px]' : 'h-[254px]'} border ${isBlankCategory ? 'border-[#FF5E00]' : 'border-[#CCCCCC]'} rounded-[40px] p-5 bg-white mb-5`}
-                        >
-                            <div className="flex gap-4 mb-4">
-                                <div className="w-[90px] h-[90px] bg-[#E6E6E6] rounded-[20px] flex items-center justify-center flex-shrink-0">
-                                    <div className="" />
-                                </div>
+                        // 태그 존재 여부 확인
+                        const hasTags = item.seatDetail?.hasPowerOutlet || item.seatDetail?.hasWindowSeat;
 
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex gap-2 mb-1.5 items-center">
-                                        <span className={`text-[12px] px-3 py-1.5 rounded-[40px] ${statusStyle.bg} ${statusStyle.text}`}>
-                                            {item.requestStatus}
-                                        </span>
-                                        <span className="text-[12px] px-3 py-1.5 rounded-[40px] bg-[#E4E4FF] text-[#000000]">
-                                            {item.category || "과잠"}
-                                        </span>
-                                        {isBlankCategory && (
-                                            <span className="text-[14px] px-4 py-0.5 bg-[#FF5E00] text-white rounded-[7px] font-bold">
-                                                5분 후
-                                            </span>
+                        return (
+                            <div 
+                                key={item.rentalRequestId} 
+                                className={`w-[370px] h-auto border ${isBlankCategory ? 'border-[#FF5E00]' : 'border-[#CCCCCC]'} rounded-[40px] p-5 bg-white mb-5 flex flex-col justify-between`}
+                            >
+                                <div className="flex gap-4 mb-4">
+                                    <div className="w-[90px] h-[90px] bg-[#E6E6E6] rounded-[20px] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                        {item.imageUrl ? (
+                                            <img src={item.imageUrl} alt="물품/자리 이미지" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <img 
+                                                src="/logo187.png" 
+                                                alt="기본 로고"
+                                                className="w-12 h-12 object-contain" 
+                                            />
                                         )}
                                     </div>
 
-                                    {isBlankCategory ? (
-                                        <>
-                                            <div className="flex items-center gap-2 mt-2.5 mb-1">
-                                                <svg width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                    <path d="M7 0C3.13 0 0 3.13 0 7C0 12.25 7 18 7 18C7 18 14 12.25 14 7C14 3.13 10.87 0 7 0ZM7 9.5C5.62 9.5 4.5 8.38 4.5 7C4.5 5.62 5.62 4.5 7 4.5C8.38 4.5 9.5 5.62 9.5 7C9.5 8.38 8.38 9.5 7 9.5Z" fill="#43A860"/>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex gap-2 mb-1.5 items-center">
+                                            <span className={`text-[12px] px-3 py-1.5 rounded-[40px] ${statusInfo.bg} ${statusInfo.text}`}>
+                                                {statusInfo.label}
+                                            </span>
+                                            <span className="text-[12px] px-3 py-1.5 rounded-[40px] bg-[#E4E4FF] text-[#000000]">
+                                                {categoryLabel}
+                                            </span>
+                                        </div>
+
+                                        {isBlankCategory ? (
+                                            <>
+                                                <div className="flex items-center gap-2 mt-2 mb-1">
+                                                    <svg width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M7 0C3.13 0 0 3.13 0 7C0 12.25 7 18 7 18C7 18 14 12.25 14 7C14 3.13 10.87 0 7 0ZM7 9.5C5.62 9.5 4.5 8.38 4.5 7C4.5 5.62 5.62 4.5 7 4.5C8.38 4.5 9.5 5.62 9.5 7C9.5 8.38 8.38 9.5 7 9.5Z" fill="#43A860"/>
+                                                    </svg>
+                                                    <span className="text-[16px] font-bold text-[#43A860] truncate">
+                                                        {item.seatDetail?.location || "도서관 좌석"}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[12px] text-black mb-0.5">
+                                                    요청자 : {item.ownerNickname}
+                                                </p>
+                                                <p className="text-[12px] text-black mb-1">
+                                                    {item.seatDetail?.floor}층
+                                                </p>
+                                                {hasTags && (
+                                                    <div className="flex gap-2 ml-[-2px] mt-1">
+                                                        {item.seatDetail?.hasPowerOutlet && (
+                                                            <span className="text-[12px] px-2.5 py-1 bg-[#E6E6E6] rounded-[40px] text-[#000000]">콘센트</span>
+                                                        )}
+                                                        {item.seatDetail?.hasWindowSeat && (
+                                                            <span className="text-[12px] px-2.5 py-1 bg-[#E6E6E6] rounded-[40px] text-[#000000]">창가</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <h2 className="text-[14px] font-bold text-black mt-3 mb-2.5 truncate leading-none">
+                                                    {item.itemDetail?.title || "대여 물품"}
+                                                </h2>
+                                                <p className="text-[12px] text-black mb-2">
+                                                    대여자 : {item.ownerNickname}
+                                                </p>
+
+                                                <p className="text-[12px] text-[#43A860] leading-[16px]">
+                                                    <span>
+                                                        대여 신청일 : {formatDateShort(item.itemDetail?.rentalStartTime) || formatDateShort(item.createdAt)}
+                                                    </span>
+                                                    <br />
+                                                    {item.rentalRequestStatus === "APPROVED" 
+                                                        ? `반납 예정: ${formatDateShort(item.itemDetail?.rentalEndTime)}`
+                                                        : `제안 가격: ${item.itemDetail?.rentalPrice ? item.itemDetail.rentalPrice.toLocaleString() : 0}원`
+                                                    }
+                                                </p>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* 하단 버튼 영역 */}
+                                <div className="flex flex-col gap-2 items-center w-full">
+                                    {item.isReturnWaiting ? (
+                                        <div className="flex flex-col gap-2 items-center w-full">
+                                            <button 
+                                                disabled
+                                                className="w-[304px] h-[34px] bg-[#CCCCCC] text-white rounded-[40px] text-[14px] font-bold cursor-not-allowed"
+                                            >
+                                                반납 대기
+                                            </button>
+                                            <button 
+                                                onClick={() => handleStartChat(item)}
+                                                className="w-[304px] h-[34px] bg-white border border-black rounded-[40px] text-sm flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
+                                            >
+                                                <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
+                                                    <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
                                                 </svg>
-                                                <span className="text-[16px] font-bold text-[#43A860]">{item.title}</span>
-                                            </div>
-                                            <p className="text-[12px] text-black mb-1">
-                                                요청자 : {item.borrower}
-                                            </p>
-                                            <p className="text-[12px] text-black mt-[-6px] mb-2">
-                                                {item.rentalStartTime}
-                                            </p>
-                                            <div className="flex gap-2 ml-[-5px]">
-                                                <span className="text-[12px] px-2.5 py-1.5 bg-[#E6E6E6] rounded-[40px] text-[#000000]">콘센트</span>
-                                                <span className="text-[12px] px-2.5 py-1.5 bg-[#E6E6E6] rounded-[40px] text-[#000000]">창가</span>
-                                            </div>
-                                        </>
+                                                채팅하기
+                                            </button>
+                                        </div>
+                                    ) : item.rentalRequestStatus === "APPROVED" ? (
+                                        <div className="flex flex-col gap-2 items-center w-full">
+                                            <button 
+                                                onClick={() => handleConfirmReturn(item)}
+                                                className="w-[304px] h-[34px] bg-[#9996FF] text-white rounded-[40px] text-[14px] font-bold active:bg-[#8582eb] transition-colors"
+                                            >
+                                                반납 확인
+                                            </button>
+                                            <button 
+                                                onClick={() => handleStartChat(item)}
+                                                className="w-[304px] h-[34px] bg-white border border-black rounded-[40px] text-[14px] flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
+                                            >
+                                                <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
+                                                    <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                                채팅하기
+                                            </button>
+                                        </div>
                                     ) : (
-                                        <>
-                                            <h2 className="text-[14px] font-bold text-black mt-3.5 mb-3 truncate leading-none">
-                                                {item.title}
-                                            </h2>
-                                            <p className="text-[12px] text-[#000000]-600 mb-2.5">
-                                                요청자 : {item.borrower}
-                                            </p>
-                                            <p className="text-[12px] text-[#43A860]">
-                                                대여 신청일 : {item.rentalStartTime}
-                                            </p>
-                                        </>
+                                        <div className="flex flex-col gap-2 items-center w-full">
+                                            <div className="flex gap-4 w-full justify-center">
+                                                <button 
+                                                    onClick={() => handleApprove(item)}
+                                                    className="w-[144px] h-[34px] py-1 bg-[#9996FF] text-white rounded-[40px] text-[14px] font-bold active:bg-[#8e7dd1] transition-colors"
+                                                >
+                                                    {isBlankCategory ? "승인" : "대여 승인"}
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleReject(item)}
+                                                    className="w-[144px] h-[34px] py-1 bg-white border border-[#7F7F7F] text-[#1A1A1A] text-[14px] rounded-[40px] active:bg-gray-50 transition-colors"
+                                                >
+                                                    거절
+                                                </button>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleStartChat(item)}
+                                                className="w-[304px] h-[34px] bg-white border border-black rounded-[40px] text-[14px] flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
+                                            >
+                                                <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
+                                                    <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                                채팅하기
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
-
-                            <div className="flex flex-col gap-2 items-center">
-                                {item.isReturnWaiting ? (
-                                    <div className="flex flex-col gap-2 items-center w-full">
-                                        <button 
-                                            disabled
-                                            className="w-[300px] h-[34px] bg-[#CCCCCC] text-white rounded-[40px] text-[14px] font-bold cursor-not-allowed"
-                                        >
-                                            반납 대기
-                                        </button>
-                                        <button 
-                                            onClick={() => handleStartChat(item)}
-                                            className="w-[300px] h-[34px] bg-white border border-black rounded-[40px] text-sm flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
-                                        >
-                                            <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
-                                                <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                                            </svg>
-                                            채팅하기
-                                        </button>
-                                    </div>
-                                ) : item.requestStatus === "대여중" ? (
-                                    <div className="flex flex-col gap-2 items-center w-full">
-                                        <button 
-                                            onClick={() => handleConfirmReturn(index)}
-                                            className="w-[300px] h-[34px] bg-[#9996FF] text-white rounded-[40px] text-[14px] font-bold active:bg-[#8582eb] transition-colors"
-                                        >
-                                            반납 확인
-                                        </button>
-                                        <button 
-                                            onClick={() => handleStartChat(item)}
-                                            className="w-[300px] h-[34px] bg-white border border-black rounded-[40px] text-[14px] mt-0.5 flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
-                                        >
-                                            <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
-                                                <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                                            </svg>
-                                            채팅하기
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col gap-2 items-center">
-                                        <div className="flex gap-4">
-                                            <button 
-                                                onClick={() => handleApprove(index)}
-                                                className="w-[142px] h-[34px] py-1 bg-[#9996FF] text-white rounded-[40px] text-[14px] font-bold active:bg-[#8e7dd1] transition-colors"
-                                            >
-                                                {isBlankCategory ? "승인" : "대여 승인"}
-                                            </button>
-                                            <button 
-                                                onClick={() => handleReject(index)}
-                                                className="w-[142px] h-[34px] py-1 bg-white border border-[#7F7F7F] text-[#1A1A1A] text-[14px] rounded-[40px] active:bg-gray-50 transition-colors"
-                                            >
-                                                거절
-                                            </button>
-                                        </div>
-                                        <button 
-                                            onClick={() => handleStartChat(item)}
-                                            className="w-[304px] h-[40px] bg-white border border-black rounded-[40px] text-[14px] flex items-center justify-center mt-0.5 mb-1 gap-2 active:bg-gray-50 transition-colors"
-                                        >
-                                            <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
-                                                <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                                            </svg>
-                                            채팅하기
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )
-                })}
+                        );
+                    })
+                )}
             </div>
 
+            {/* 하단 공통 네비게이션 */}
             <BottomNav />
 
             {modalState.show && (
@@ -321,7 +412,7 @@ export default function LentPage() {
                         ? '승인 후 거래가 시작됩니다.' 
                         : modalState.action === 'reject' 
                         ? '거절 후 상태가 대여 가능으로 변경됩니다.' 
-                        : '요청자의 상호 확인 후 정상처리되며,\n완료 후 상대방에세 후기를 남길 수 있습니다.'
+                        : '대여자의 상호 확인 후 정상처리되며,\n완료 후 상대방에세 후기를 남길 수 있습니다.'
                     }
                     onConfirm={confirmAction}
                     onCancel={cancelAction}
