@@ -230,7 +230,7 @@ export default function LentPage() {
                 secondPath="/rental/borrowed"
             />
 
-            <div className="flex-1 overflow-x-hidden overflow-y-auto px-4 space-y-4 pt-2 pb-[75px]">
+            <div className="flex-1 overflow-x-hidden overflow-y-scroll vertical-scroll px-4 space-y-4 pt-2 pb-[75px]">
                 {isLoading ? (
                     <div className="text-center py-10 text-gray-400">불러오는 중...</div>
                 ) : rentals.length === 0 ? (
