@@ -3,6 +3,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/onboarding/LoginPage";
 import SignUpPage from "./pages/onboarding/SignUpPage";
 import HomePage from "./pages/home/HomePage";
+import PostCreatePage from "./pages/home/PostCreatePage";
+import PostDetailPage from "./pages/home/PostDetailPage";
+import SpotDetailPage from "./pages/home/SpotDetailPage";
 
 import ChatListPage from "./pages/chat/ChatListPage";
 import EmptySpotChatListPage from "./pages/chat/EmptySpotChatListPage";
@@ -18,6 +21,10 @@ import PointPage from "./pages/mypage/PointPage";
 import NoonsongDecoPage from "./pages/mypage/NoonsongDecoPage";
 import ReviewCreatePage from "./pages/mypage/ReviewCreatePage";
 import ReviewPage from "./pages/mypage/ReviewPage";
+import LikedPostsPage from "./pages/mypage/LikedPostsPage";
+import ProfileEditPage from "./pages/mypage/ProfileEditPage";
+import MyPostsPage from "./pages/mypage/MyPostsPage";
+import TradeHistoryPage from "./pages/mypage/TradeHistoryPage";
 
 
 function MobileLayout({ children }: { children: React.ReactNode }) {
@@ -41,10 +48,15 @@ export default function App() {
 
           {/* 홈 */}
           <Route path="/" element={<HomePage />} />
+          <Route path="/post/create" element={<PostCreatePage />} />
+          <Route path="/post/edit/:postId" element={<PostCreatePage />} />
+          <Route path="/spot/edit/:spotId" element={<PostCreatePage />} />
+          <Route path="/post/:postId" element={<PostDetailPage />} />
 
           {/* 채팅 */}
           <Route path="/chat" element={<ChatListPage />} />
           <Route path="/chat/spot" element={<EmptySpotChatListPage />} />
+          <Route path="/post/spot/:spotId" element={<SpotDetailPage />} />
           <Route path="/chat/:roomId" element={<DetailedChatPage />} />
           
           {/* 대여 현황 */}
@@ -60,6 +72,10 @@ export default function App() {
           <Route path="/mypage/noonsong" element={<NoonsongDecoPage />} />
           <Route path="/mypage/review-create" element={<ReviewCreatePage />} />
           <Route path="/mypage/review" element={<ReviewPage />} />
+          <Route path="/mypage/liked" element={<LikedPostsPage />} />
+          <Route path="/mypage/edit" element={<ProfileEditPage />} />
+          <Route path="/mypage/my-posts" element={<MyPostsPage />} />
+          <Route path="/mypage/history" element={<TradeHistoryPage />} />
 
           {/* 예외 처리 */}
           <Route path="*" element={<Navigate to="/" replace />} />
