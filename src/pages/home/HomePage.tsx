@@ -180,12 +180,11 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
   ]
 
   return (
-    <div className="w-full h-full relative bg-white flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden vertical-scroll">
-        <div className="w-[402px] flex flex-col bg-white pb-24">
+    <div className="w-full min-h-full bg-white flex flex-col justify-between vertical-scroll">
+  <div className="w-full flex flex-col bg-white pb-10">
 
-          {/* 헤더: 로고 (116x29) + 글쓰기 버튼*/}
-          <div className="flex items-center justify-between px-[22px] pt-[30px] pb-4">
+    {/* 헤더: 로고 (116x29) + 글쓰기 버튼*/}
+    <div className="flex items-center justify-between px-[22px] pt-[30px] pb-4">
             <img src="/logo1.png" alt="BORO" style={{ width: "116.09px", height: "29px" }} />
             <button
               onClick={() => navigate("/post/create")}
@@ -683,7 +682,7 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
     </div>
   </>
 )}
-        </div>
+    
       </div>
 
       <BottomNav />
