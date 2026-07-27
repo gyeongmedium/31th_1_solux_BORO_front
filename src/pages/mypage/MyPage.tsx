@@ -31,7 +31,7 @@ export default function MyPage() {
   }
 
   return (
-    <div className="flex flex-col bg-white pb-24">
+    <div className="flex flex-col bg-white pb-24 vertical-scroll">
       {/* 헤더: 마이페이지 (font 24 bold) */}
       <div className="px-[30px] pt-[30px] pb-3">
         <span
