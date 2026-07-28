@@ -318,7 +318,7 @@ export default function TradeHistoryPage() {
                     )}
                     {trade.showReviewButton && (
                       <button
-                        onClick={() => navigate(`/mypage/review/create/${trade.id}`)}
+                        onClick={() => navigate(`/mypage/review-create/${trade.id}`)}
                         className="flex items-center justify-center"
                         style={{
                           width: "94px",

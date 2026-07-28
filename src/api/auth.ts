@@ -1,3 +1,4 @@
+import axios from 'axios';
 import api from '../lib/axios';
 import type {
     SignUpRequest,
@@ -7,6 +8,8 @@ import type {
     GoogleCallbackResponse,
 } from '../types/auth';
 
+const BASE_URL = import.meta.env.VITE_API_URL;
+
 // 1. [POST] 회원가입 API
 export const signUp = async (data: SignUpRequest): Promise<SignUpResponse> => {
     const response = await api.post<SignUpResponse>('/api/v1/auth/sign-up', data);
@@ -15,7 +18,11 @@ export const signUp = async (data: SignUpRequest): Promise<SignUpResponse> => {
 
 // 2. [POST] Access Token 재발급 API
 export const reissueToken = async (): Promise<ReissueResponse> => {
-    const response = await api.post<ReissueResponse>('/api/v1/auth/reissue');
+    const response = await axios.post<ReissueResponse>(
+        `${BASE_URL}/api/v1/auth/reissue`,
+        {},
+        { withCredentials: true } // 쿠키의 refreshToken 전달
+    );
     return response.data;
 };
 

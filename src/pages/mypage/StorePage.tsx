@@ -199,7 +199,7 @@ export default function StorePage() {
                 </div>
 
                 {/* 상품 리스트 */}
-                <div className="grid grid-cols-2 gap-4 pr-1">
+                <div className="grid grid-cols-2 gap-x-0 gap-y-2 pr-1">
                     {assets.map((item) => {
                         const isSelected = selectedItemId === item.itemId;
                         const isPurchased = purchasedItems.includes(item.itemId);

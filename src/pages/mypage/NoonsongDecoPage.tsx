@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getMemberAssets } from "../../api/member";
-import type { CharacterItem } from "../../types/member";
+import { getMemberAssets, equipMemberAsset } from "../../api/member-gm";
+import type { MemberAsset, ItemCategory } from "../../types/member-gm";
 import baseNoonsong from "../../assets/noonsong.png";
 
 import bagImg from "../../assets/bag.png";
@@ -16,6 +16,14 @@ import maskImg from "../../assets/mask.png";
 import princessSongImg from "../../assets/princess_song.png";
 import suitSongImg from "../../assets/suit_song.png";
 import suitImg from "../../assets/suit.png";
+
+// UI 표시용 확장 아이템 타입
+interface DisplayItem {
+    itemId: number;
+    itemName: string;
+    itemCategory: ItemCategory;
+    isPurchased: boolean; // 보유 여부
+}
 
 // 1. 아이템 이름 - 이미지 매칭
 const imageMap: Record<string, string> = {
@@ -43,59 +51,105 @@ const positionMap: Record<string, React.CSSProperties> = {
     "커피": { top: "65%", left: "35%", transform: "translate(-50%, -50%) rotate(-20deg)", width: "25px", zIndex: 25 },
 };
 
-// 3. 순서
-const CATEGORY_ORDER: Record<string, string[]> = {
-    CLOTHES: ["기본 의상", "후드티", "정장", "프린세스 송이", "정장 송이"],
-    ACCESSORY: ["헤드셋", "모자", "안경", "가방"],
-    ETC: ["마스크", "커피"],
-};
+// 3. 전체 아이템 정적 데이터 (기본 의상은 항상 보유중=true)
+const INITIAL_ITEMS: DisplayItem[] = [
+    // 의상 (CLOTHING)
+    { itemId: 0, itemName: "기본 의상", itemCategory: "CLOTHING", isPurchased: true },
+    { itemId: -1, itemName: "후드티", itemCategory: "CLOTHING", isPurchased: false },
+    { itemId: -2, itemName: "정장", itemCategory: "CLOTHING", isPurchased: false },
+    { itemId: -3, itemName: "프린세스 송이", itemCategory: "CLOTHING", isPurchased: false },
+    { itemId: -4, itemName: "정장 송이", itemCategory: "CLOTHING", isPurchased: false },
+    
+    // 악세사리 (ACCESSORY)
+    { itemId: -5, itemName: "헤드셋", itemCategory: "ACCESSORY", isPurchased: false },
+    { itemId: -6, itemName: "모자", itemCategory: "ACCESSORY", isPurchased: false },
+    { itemId: -7, itemName: "안경", itemCategory: "ACCESSORY", isPurchased: false },
+    { itemId: -8, itemName: "가방", itemCategory: "ACCESSORY", isPurchased: false },
+    
+    // 기타 (ETC)
+    { itemId: -9, itemName: "마스크", itemCategory: "ETC", isPurchased: false },
+    { itemId: -10, itemName: "커피", itemCategory: "ETC", isPurchased: false },
+];
 
 export default function NoonsongDecoPage() {
     const navigate = useNavigate();
-    const userPoint = 1250;
+    const userPoint = 1250;             // 여기!
 
-    const [itemList, setItemList] = useState<CharacterItem[]>([]);
+    // 하드코딩된 목록을 초기값으로 설정하여 화면이 텅 비는 것 방지
+    const [itemList, setItemList] = useState<DisplayItem[]>(INITIAL_ITEMS);
     
-    // 초기 선택값을 localStorage에서 가져오고, 없으면 ["안경"] 기본값 적용
+    // 초기 선택값을 localStorage에서 가져오고, 없으면 [""] 기본값 적용
     const [selectedItemNames, setSelectedItemNames] = useState<string[]>(() => {
         const saved = localStorage.getItem("equippedItems");
         return saved ? JSON.parse(saved) : [""];
     });
 
-    // 선택된 아이템 변경 시 localStorage에 저장 (/mypage에서 참조 가능)
+    // 선택된 아이템 변경 시 localStorage에 저장
     useEffect(() => {
         localStorage.setItem("equippedItems", JSON.stringify(selectedItemNames));
     }, [selectedItemNames]);
 
+    // API 통신: 보유한 아이템 목록을 받아와 isPurchased 및 실제 itemId만 동기화
     useEffect(() => {
-        getMemberAssets().then((data) => {
-            // 기본 의상이 데이터에 없으면 목록 최상단에 자동 추가
-            const hasDefaultClothes = data.some((item) => item.itemName === "기본 의상");
-            const fullList: CharacterItem[] = hasDefaultClothes
-                ? data
-                : [{ itemId: 0, itemName: "기본 의상", itemCategory: "CLOTHES" as const, equipped: true }, ...data];
-            setItemList(fullList);
-        });
+        getMemberAssets()
+            .then((res) => {
+                if (res.isSuccess && Array.isArray(res.result)) {
+                    const ownedAssets: MemberAsset[] = res.result;
+
+                    setItemList((prevList) =>
+                        prevList.map((item) => {
+                            if (item.itemName === "기본 의상") return item; // 기본 의상은 항상 유지
+
+                            const matchedAsset = ownedAssets.find(
+                                (owned) => owned.itemName === item.itemName
+                            );
+
+                            if (matchedAsset) {
+                                return {
+                                    ...item,
+                                    itemId: matchedAsset.itemId, // 실제 서버 아이템 ID 저장
+                                    isPurchased: true,          // 보유 상태로 변경
+                                };
+                            }
+
+                            return item;
+                        })
+                    );
+                }
+            })
+            .catch((err) => {
+                console.error("보유 아이템 조회 실패:", err);
+            });
     }, []);
 
-    // 지정된 순서대로 정렬해주는 함수
-    const getSortedItems = (category: keyof typeof CATEGORY_ORDER) => {
-        const order = CATEGORY_ORDER[category];
-        return itemList
-            .filter((item) => item.itemCategory === category)
-            .sort((a, b) => order.indexOf(a.itemName) - order.indexOf(b.itemName));
-    };
-
-    const clothesItems = getSortedItems("CLOTHES");
-    const accessoryItems = getSortedItems("ACCESSORY");
-    const etcItems = getSortedItems("ETC");
+    // 카테고리별 필터링
+    const clothesItems = itemList.filter((item) => item.itemCategory === "CLOTHING");
+    const accessoryItems = itemList.filter((item) => item.itemCategory === "ACCESSORY");
+    const etcItems = itemList.filter((item) => item.itemCategory === "ETC");
 
     // 풀세트 캐릭터 검사 헬퍼
     const isFullSetItem = (name: string) => name === "프린세스 송이" || name === "정장 송이";
 
     // 클릭 이벤트
-    const handleItemClick = (item: CharacterItem) => {
-        if (!item.equipped) return; // 미보유 시 동작 안 함
+    const handleItemClick = async (item: DisplayItem) => {
+        if (!item.isPurchased) return; // 미보유 아이템 클릭 불가
+
+        const isSelected = selectedItemNames.includes(item.itemName);
+        const nextEquippedState = !isSelected;
+
+        // 실제 서버에 있는 아이템(itemId > 0)일 경우 장착 PATCH API 호출
+        if (item.itemId > 0) {
+            try {
+                const res = await equipMemberAsset(item.itemId, { equipped: nextEquippedState });
+                if (!res.isSuccess) {
+                    console.error("아이템 장착 상태 변경 실패:", res.message);
+                    return;
+                }
+            } catch (err) {
+                console.error("아이템 장착 상태 변경 중 오류 발생:", err);
+                return;
+            }
+        }
 
         // 기본 의상 선택 시 풀세트 해제
         if (item.itemName === "기본 의상") {
@@ -129,7 +183,7 @@ export default function NoonsongDecoPage() {
     const activeFullSet = selectedItemNames.find(isFullSetItem);
 
     // 아이템 카드 렌더링
-    const renderItemCard = (item: CharacterItem) => {
+    const renderItemCard = (item: DisplayItem) => {
         const isSelected =
             item.itemName === "기본 의상"
                 ? !activeFullSet
@@ -139,12 +193,12 @@ export default function NoonsongDecoPage() {
 
         return (
             <button
-                key={item.itemId}
+                key={item.itemName}
                 type="button"
-                disabled={!item.equipped} // 미보유 시 버튼 비활성화
+                disabled={!item.isPurchased} // 미보유 시 비활성화
                 onClick={() => handleItemClick(item)}
                 className={`w-[90px] h-[138px] rounded-[10px] bg-white flex flex-col items-center justify-between p-2.5 border transition-all flex-shrink-0 ${
-                    !item.equipped ? "opacity-90" : "cursor-pointer"
+                    !item.isPurchased ? "opacity-90" : "cursor-pointer"
                 } ${
                     isSelected
                         ? "border-[#9996FF] border-[2px] !bg-[#F0F0FF]"
@@ -160,7 +214,7 @@ export default function NoonsongDecoPage() {
                             src={itemImg}
                             alt={item.itemName}
                             className={`w-[60px] max-h-[50px] object-contain ${
-                                !item.equipped ? "opacity-30 grayscale" : ""
+                                !item.isPurchased ? "opacity-30 grayscale" : ""
                             }`}
                         />
                     ) : (
@@ -176,14 +230,14 @@ export default function NoonsongDecoPage() {
                 {/* 보유 / 착용 / 미보유 버튼 */}
                 <div
                     className={`w-[73px] h-[34px] rounded-[40px] flex items-center justify-center text-[12px] transition-colors ${
-                        !item.equipped
+                        !item.isPurchased
                             ? "bg-[#B3B3B3] text-white"
                             : isSelected
                             ? "bg-[#9996FF] text-white font-semibold"
                             : "bg-[#F0F0FF] border border-[#9996FF] text-[#1A1A1A]"
                     }`}
                 >
-                    {!item.equipped ? "미보유" : isSelected ? "착용중" : "보유중"}
+                    {!item.isPurchased ? "미보유" : isSelected ? "착용중" : "보유중"}
                 </div>
             </button>
         );
@@ -219,9 +273,10 @@ export default function NoonsongDecoPage() {
                 
                 {/* 캐릭터 미리보기 영역 */}
                 <div className="flex flex-col items-center">
-                    <h2 className="text-[16px] font-bold text-black mb-3">눈송이</h2>
+                    {/* 사용자 아이디 */}
+                    <h2 className="text-[16px] font-bold text-black mb-3">눈송이</h2>       {/* 여기! */}
 
-                    <div className="w-[370px] h-[305px] ml-2 bg-gradient-to-b from-[#9996FF]/30 to-[#E4E4FF]/15 rounded-[40px] relative flex items-center justify-center overflow-hidden">
+                    <div className="w-[370px] h-[305px] bg-gradient-to-b from-[#9996FF]/30 to-[#E4E4FF]/15 rounded-[40px] relative flex items-center justify-center overflow-hidden">
                         {activeFullSet ? (
                             /* 프린세스 송이 또는 정장 송이 선택 시 baseNoonsong을 완전히 대체 */
                             <img

@@ -108,7 +108,6 @@ export default function BorrowedPage() {
         try {
             //const res = await getBorrowedRentalRequests();        // 여기!
             const res = await getMockBorrowedRentalRequests();      // 여기! 이거 삭제
-            await completeMockRentalReturn(rentalId);               // 여기! 이거 삭제
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -150,7 +149,7 @@ export default function BorrowedPage() {
         if (!modalState.item) return;
 
         try {
-            //const res = await completeRentalReturn(modalState.item.rentalRequestId);
+            //const res = await completeRentalReturn(modalState.item.rentalRequestId);      // 여기!
             const res = await completeMockRentalReturn(modalState.item.rentalRequestId);
             if (res.isSuccess) {
                 setModalState({ show: false, item: null });

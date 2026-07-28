@@ -6,9 +6,9 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
 
     const handleGoogleLogin = () => {
-        const baseUrl = import.meta.env.VITE_API_URL;
-        const redirectUri = encodeURIComponent(`${baseUrl}/api/v1/auth/google/callback`);
-
+        // - 로컬일 때: http://localhost:5173
+        // - 배포일 때: https://boro-app.com
+        const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
         const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&prompt=consent`;
 
         window.location.href = googleAuthUrl;

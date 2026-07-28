@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "./pages/onboarding/LoginPage";
 import SignUpPage from "./pages/onboarding/SignUpPage";
+import GoogleCallbackPage from "./pages/onboarding/GoogleCallbackPage";
+
 import HomePage from "./pages/home/HomePage";
 import PostCreatePage from "./pages/home/PostCreatePage";
 import PostDetailPage from "./pages/home/PostDetailPage";
@@ -45,6 +47,7 @@ export default function App() {
           {/* 온보딩 */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
 
           {/* 홈 */}
           <Route path="/" element={<HomePage />} />

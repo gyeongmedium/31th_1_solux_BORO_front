@@ -119,8 +119,7 @@ export default function LentPage() {
     const fetchRentals = useCallback(async () => {
         try {
             //const res = await getLentRentalRequests();    // 여기!
-            const res = await getMockLentRentalRequests();  // 여기! 이거 삭제
-            await decideMockRentalRequest(rentalId, decide);    // 여기! 이거 삭제
+            const res = await getMockLentRentalRequests();  // 여기!
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -213,6 +212,36 @@ export default function LentPage() {
             }
         });
     };
+
+    // 모달 멘트 세팅 함수
+    const getModalText = () => {
+        if (!modalState.item || !modalState.action) return { message: "", subMessage: "" };
+
+        const isBlankCategory = modalState.item.postCategory === "EMPTY_SPOTS";
+
+        if (modalState.action === 'approve') {
+            return isBlankCategory
+                ? { message: "양도를 승인하시겠어요?", subMessage: "양도 후 빈자리 거래가 시작됩니다." }
+                : { message: "대여를 승인하시겠어요?", subMessage: "승인 후 거래가 시작됩니다." };
+        }
+
+        if (modalState.action === 'reject') {
+            return isBlankCategory
+                ? { message: "양도 요청을 거절하시겠어요?", subMessage: "거절 후 상태가 대여 가능으로 변경됩니다." }
+                : { message: "대여 요청을 거절하시겠어요?", subMessage: "거절 후 상태가 대여 가능으로 변경됩니다." };
+        }
+
+        if (modalState.action === 'confirmReturn') {
+            return {
+                message: "반납 완료 처리하시겠어요?",
+                subMessage: "대여자의 상호 확인 후 정상처리되며,\n완료 후 상대방에세 후기를 남길 수 있습니다."
+            };
+        }
+
+        return { message: "", subMessage: "" };
+    };
+
+    const { message: modalMessage, subMessage: modalSubMessage } = getModalText();
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-height-[874px] max-height-[874px] w-[402px] h-[874px] overflow-hidden flex flex-col bg-white">
@@ -400,20 +429,8 @@ export default function LentPage() {
 
             {modalState.show && (
                 <ConfirmModal
-                    message={
-                        modalState.action === 'approve' 
-                        ? '대여를 승인하시겠어요?' 
-                        : modalState.action === 'reject' 
-                        ? '대여 요청을 거절하시겠어요?' 
-                        : '반납 완료 처리하시겠어요?'
-                    }
-                    subMessage={
-                        modalState.action === 'approve' 
-                        ? '승인 후 거래가 시작됩니다.' 
-                        : modalState.action === 'reject' 
-                        ? '거절 후 상태가 대여 가능으로 변경됩니다.' 
-                        : '대여자의 상호 확인 후 정상처리되며,\n완료 후 상대방에세 후기를 남길 수 있습니다.'
-                    }
+                    message={modalMessage}
+                    subMessage={modalSubMessage}
                     onConfirm={confirmAction}
                     onCancel={cancelAction}
                 />

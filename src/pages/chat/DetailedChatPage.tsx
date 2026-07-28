@@ -189,11 +189,9 @@ export default function DetailedChatPage() {
                             </span>
                             <div className="w-[10px] h-[10px] rounded-full bg-[#43A860] flex-shrink-0 ml-0.5" />
                         </div>
-                        {roomInfo?.postName && (
-                            <p className="text-[14px] text-[#7F7F7F] line-clamp-1">
-                                {roomInfo.postName || "게시글 제목"}
-                            </p>
-                        )}
+                        <p className="text-[14px] text-[#7F7F7F] line-clamp-1">
+                            {roomInfo?.postName || "게시글 제목"}
+                        </p>
                     </div>
                 </div>
 
