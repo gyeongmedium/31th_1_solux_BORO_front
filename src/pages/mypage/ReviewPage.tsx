@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Tab from "../../components/Tab";
-import { getReceivedReviews } from "../../api/member";
-import type { ReceivedReviewItem } from "../../types/member";
+//import { getReceivedReviews } from "../../api/member-gm";       // 여기!
+import { getMockReceivedReviews } from "../../api/member-gm";     // 여기! 나중에 삭제하기
+import type { Review, ReviewSentiment } from "../../types/member-gm";
+
 
 // Toast 컴포넌트
 function Toast({ message }: { message: string }) {
@@ -59,7 +60,7 @@ function AppealModal({
                     <textarea
                         value={appealReason}
                         onChange={(e) => setAppealReason(e.target.value)}
-                        placeholder="신청 내용 컴토 후 포인트 차감 내역이 취소(철회)됩니다.&#10;이의 신청 결과는 최대 1주일 이내에 시스템에 반영됩니다.&#10;아래의 문의처를 통해 신청 내용을 제출해주세요."
+                        placeholder="신청 내용 검토 후 포인트 차감 내역이 취소(철회)됩니다.&#10;이의 신청 결과는 최대 1주일 이내에 시스템에 반영됩니다.&#10;아래의 문의처를 통해 신청 내용을 제출해주세요."
                         className="w-full h-full overflow-y-auto vertical-scroll bg-transparent placeholder:text-[11px] text-[12px] text-[#1A1A1A] placeholder:text-[#666666] focus:outline-none resize-none leading-relaxed"
                     />
                 </div>
@@ -78,34 +79,65 @@ function AppealModal({
 export default function ReviewPage() {
     const navigate = useNavigate();
 
-    const [activeTab, setActiveTab] = useState<"GOOD" | "BAD">("GOOD");
+    const [activeTab, setActiveTab] = useState<ReviewSentiment>("GOOD");
+    const [reviewList, setReviewList] = useState<Review[]>([]);
+    
+    // 카운트 정보는 백엔드 개별 개수 조회 API가 별도로 없으므로 현재 리스트 길이를 기반으로 표출
     const [likeCount, setLikeCount] = useState<number>(0);
     const [dislikeCount, setDislikeCount] = useState<number>(0);
-    const [reviewList, setReviewList] = useState<ReceivedReviewItem[]>([]);
+
     const [showAppealModal, setShowAppealModal] = useState<boolean>(false);
     const [toast, setToast] = useState<string | null>(null);
 
-    useEffect(() => {
-        getReceivedReviews().then((res) => {
-            setLikeCount(res.likeCount);
-            setDislikeCount(res.dislikeCount);
-            setReviewList(res.reviewDetailList);
+    // 여기! 백엔드 연동할 때 주석 풀기
+    {/*useEffect(() => {
+        // API 요청 (reviewSentiment 쿼리파라미터 전달)
+        getReceivedReviews(activeTab).then((res) => {
+            if (res.isSuccess && res.result) {
+                // response.result 형태(단일 객체 혹은 배열) 처리
+                const resultData = Array.isArray(res.result) ? res.result : [res.result];
+                setReviewList(resultData);
+
+                if (activeTab === "GOOD") {
+                    setLikeCount(resultData.length);
+                } else {
+                    setDislikeCount(resultData.length);
+                }
+            } else {
+                setReviewList([]);
+            }
+        }).catch(() => {
+            setReviewList([]);
         });
-    }, []);
+    }, [activeTab]);*/}
+
+    // 여기! 이 useEffect 나중에 삭제하기
+    useEffect(() => {
+        Promise.all([
+            getMockReceivedReviews("GOOD"),
+            getMockReceivedReviews("BAD")
+        ]).then(([goodRes, badRes]) => {
+            const goodData = goodRes.isSuccess && Array.isArray(goodRes.result) ? goodRes.result : [];
+            const badData = badRes.isSuccess && Array.isArray(badRes.result) ? badRes.result : [];
+
+            setLikeCount(goodData.length);
+            setDislikeCount(badData.length);
+
+            setReviewList(activeTab === "GOOD" ? goodData : badData);
+        }).catch(() => {
+            setReviewList([]);
+        });
+    }, [activeTab]);
 
     const handleAppealSubmit = (reason: string) => {
         console.log("제출된 이의 신청 사유:", reason);
         setShowAppealModal(false);
-        setToast("의의신청이 제출되었습니다.");
+        setToast("이의신청이 제출되었습니다.");
 
         setTimeout(() => {
             setToast(null);
         }, 1500);
     };
-
-    const filteredReviews = reviewList.filter((item) =>
-        activeTab === "GOOD" ? item.type !== "BAD" : item.type === "BAD"
-    );
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-h-[874px] max-h-[874px] w-[402px] h-[874px] overflow-y-auto overflow-x-hidden flex flex-col bg-white mx-auto">
@@ -150,87 +182,107 @@ export default function ReviewPage() {
                 </div>
 
                 {/* 탭 영역 */}
-                <div className="-mx-6 relative">
-                    <Tab
-                        activeTab={activeTab === "GOOD" ? "first" : "second"}
-                        firstLabel="좋았어요"
-                        firstCount={`(${likeCount})`}
-                        firstPath="#"
-                        secondLabel="별로였어요"
-                        secondCount={`(${dislikeCount})`}
-                        secondPath="#"
-                    />
-                    <div className="absolute inset-0 z-20 flex px-6">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab("GOOD")}
-                            className="w-1/2 h-full opacity-0 cursor-pointer"
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab("BAD")}
-                            className="w-1/2 h-full opacity-0 cursor-pointer"
-                        />
+                <div className="mb-4 h-[44px] flex-shrink-0 relative flex justify-center">
+                    <div className="px-6 mb-4 h-[44px] flex-shrink-0 relative">
+                        <div className="absolute top-0 left-[-160px] flex items-center bg-[#E6E6E6] rounded-[40px] w-[359px] h-[44px] p-1">
+                            {/* 첫 번째 탭 (좋았어요) */}
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("GOOD")}
+                                className={`w-[175px] h-[34px] my-[1px] ml-[5px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
+                                    activeTab === "GOOD"
+                                        ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
+                                        : "text-[#7F7F7F] hover:text-gray-600 font-normal"
+                                }`}
+                            >
+                                좋았어요 ({likeCount})
+                            </button>
+
+                            {/* 두 번째 탭 (별로였어요) */}
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("BAD")}
+                                className={`w-[175px] h-[34px] my-[1px] mr-[6px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
+                                    activeTab === "BAD"
+                                        ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
+                                        : "text-[#7F7F7F] hover:text-gray-600 font-normal"
+                                }`}
+                            >
+                                별로였어요 ({dislikeCount})
+                            </button>
+
+                        </div>
                     </div>
                 </div>
 
                 {/* 후기 리스트 */}
-                <div className="space-y-6 pt-1">
-                    {filteredReviews.map((review, idx) => (
-                        <div
-                            key={idx}
-                            className={`w-[370px] h-auto border border-[2px] rounded-[32px] p-5 ml-[-5px] flex flex-col gap-2 ${
-                                activeTab === "GOOD" ? "border-[#43A860]" : "border-[#FF5E00]"
-                            }`}
-                        >
-                            <div className="flex items-start justify-between pb-5">
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`w-[55px] h-[55px] rounded-full flex items-center justify-center ${
-                                            activeTab === "GOOD" ? "bg-[#D2FFE5]" : "bg-[#FFD4BB]"
-                                        }`}
-                                    >
-                                        {activeTab === "GOOD" ? (
-                                            <svg width="23" height="21" viewBox="0 0 23 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M20.8095 6.94038C21.3937 6.94038 21.9048 7.15668 22.3429 7.58928C22.781 8.02189 23 8.52659 23 9.1034V11.2664C23 11.3926 22.9861 11.5278 22.9584 11.672C22.9306 11.8162 22.8897 11.9514 22.8357 12.0775L19.55 19.7022C19.3857 20.0627 19.1119 20.3691 18.7286 20.6215C18.3452 20.8738 17.9436 21 17.5238 21H8.7619C8.15952 21 7.64403 20.7884 7.21543 20.3652C6.78683 19.9419 6.57216 19.4325 6.57143 18.837V7.83262C6.57143 7.54422 6.63094 7.26952 6.74995 7.00851C6.86897 6.74751 7.02851 6.51751 7.22857 6.31851L13.1702 0.47836C13.444 0.226008 13.7682 0.0727939 14.1428 0.0187184C14.5174 -0.035357 14.8777 0.027731 15.2238 0.207983C15.5699 0.388234 15.8211 0.640586 15.9773 0.965039C16.1336 1.28949 16.1653 1.62296 16.0726 1.96544L14.8405 6.94038H20.8095ZM2.19048 21C1.5881 21 1.0726 20.7884 0.644 20.3652C0.215397 19.9419 0.000730159 19.4325 0 18.837V9.1034C0 8.50857 0.214667 7.99954 0.644 7.57631C1.07333 7.15308 1.58883 6.9411 2.19048 6.94038C2.79213 6.93966 3.30798 7.15163 3.73805 7.57631C4.16811 8.00098 4.38241 8.51001 4.38095 9.1034V18.837C4.38095 19.4318 4.16665 19.9412 3.73805 20.3652C3.30944 20.7891 2.79359 21.0007 2.19048 21Z" fill="#43A860"/>
-                                            </svg>
-                                        ) : (
-                                            <svg width="23" height="21" viewBox="0 0 23 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M2.19048 14.0596C1.60635 14.0596 1.09524 13.8433 0.657143 13.4107C0.219048 12.9781 0 12.4734 0 11.8966V9.73358C0 9.60741 0.0135079 9.47222 0.0405237 9.32802C0.0675396 9.18382 0.108794 9.04863 0.164286 8.92245L3.45 1.29781C3.61429 0.937308 3.88809 0.63088 4.27143 0.378528C4.65476 0.126176 5.05635 0 5.47619 0H14.2381C14.8405 0 15.3563 0.211615 15.7857 0.634846C16.215 1.05808 16.4293 1.56747 16.4286 2.16302V13.1674C16.4286 13.4558 16.3694 13.7308 16.2511 13.9926C16.1329 14.2543 15.9729 14.4839 15.7714 14.6815L9.82976 20.5216C9.55595 20.774 9.23213 20.9272 8.85828 20.9813C8.48444 21.0354 8.12375 20.9723 7.77619 20.792C7.42863 20.6118 7.17782 20.3594 7.02376 20.035C6.8697 19.7105 6.83757 19.377 6.92738 19.0346L8.15952 14.0596H2.19048ZM20.8095 0C21.4119 0 21.9278 0.211976 22.3571 0.635928C22.7864 1.05988 23.0007 1.56891 23 2.16302V11.8966C23 12.4914 22.7857 13.0008 22.3571 13.4248C21.9285 13.8487 21.4126 14.0603 20.8095 14.0596C20.2064 14.0589 19.6909 13.8473 19.263 13.4248C18.8352 13.0023 18.6205 12.4929 18.619 11.8966V2.16302C18.619 1.56819 18.8337 1.05916 19.263 0.635928C19.6924 0.212697 20.2079 0.000721006 20.8095 0Z" fill="#FF5E00"/>
-                                            </svg>
-                                        )}
+                <div className="space-y-6 pt-1 min-h-[300px] flex flex-col justify-start">
+                    {reviewList.length === 0 ? (
+                        /* 후기가 없을 때 표시되는 영역 */
+                        <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
+                            <p className="text-[14px] text-[#7F7F7F]">
+                                받은 후기가 없습니다
+                            </p>
+                        </div>
+                    ) : (
+                        /* 후기가 존재할 때 리스트 렌더링 */
+                        reviewList.map((review, idx) => (
+                            <div
+                                key={idx}
+                                className={`w-[370px] h-auto border border-[2px] rounded-[32px] p-5 ml-[-5px] flex flex-col gap-2 ${
+                                    activeTab === "GOOD" ? "border-[#43A860]" : "border-[#FF5E00]"
+                                }`}
+                            >
+                                <div className="flex items-start justify-between pb-5">
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className={`w-[55px] h-[55px] rounded-full flex items-center justify-center ${
+                                                activeTab === "GOOD" ? "bg-[#D2FFE5]" : "bg-[#FFD4BB]"
+                                            }`}
+                                        >
+                                            {activeTab === "GOOD" ? (
+                                                <svg width="23" height="21" viewBox="0 0 23 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M20.8095 6.94038C21.3937 6.94038 21.9048 7.15668 22.3429 7.58928C22.781 8.02189 23 8.52659 23 9.1034V11.2664C23 11.3926 22.9861 11.5278 22.9584 11.672C22.9306 11.8162 22.8897 11.9514 22.8357 12.0775L19.55 19.7022C19.3857 20.0627 19.1119 20.3691 18.7286 20.6215C18.3452 20.8738 17.9436 21 17.5238 21H8.7619C8.15952 21 7.64403 20.7884 7.21543 20.3652C6.78683 19.9419 6.57216 19.4325 6.57143 18.837V7.83262C6.57143 7.54422 6.63094 7.26952 6.74995 7.00851C6.86897 6.74751 7.02851 6.51751 7.22857 6.31851L13.1702 0.47836C13.444 0.226008 13.7682 0.0727939 14.1428 0.0187184C14.5174 -0.035357 14.8777 0.027731 15.2238 0.207983C15.5699 0.388234 15.8211 0.640586 15.9773 0.965039C16.1336 1.28949 16.1653 1.62296 16.0726 1.96544L14.8405 6.94038H20.8095ZM2.19048 21C1.5881 21 1.0726 20.7884 0.644 20.3652C0.215397 19.9419 0.000730159 19.4325 0 18.837V9.1034C0 8.50857 0.214667 7.99954 0.644 7.57631C1.07333 7.15308 1.58883 6.9411 2.19048 6.94038C2.79213 6.93966 3.30798 7.15163 3.73805 7.57631C4.16811 8.00098 4.38241 8.51001 4.38095 9.1034V18.837C4.38095 19.4318 4.16665 19.9412 3.73805 20.3652C3.30944 20.7891 2.79359 21.0007 2.19048 21Z" fill="#43A860"/>
+                                                </svg>
+                                            ) : (
+                                                <svg width="23" height="21" viewBox="0 0 23 21" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M2.19048 14.0596C1.60635 14.0596 1.09524 13.8433 0.657143 13.4107C0.219048 12.9781 0 12.4734 0 11.8966V9.73358C0 9.60741 0.0135079 9.47222 0.0405237 9.32802C0.0675396 9.18382 0.108794 9.04863 0.164286 8.92245L3.45 1.29781C3.61429 0.937308 3.88809 0.63088 4.27143 0.378528C4.65476 0.126176 5.05635 0 5.47619 0H14.2381C14.8405 0 15.3563 0.211615 15.7857 0.634846C16.215 1.05808 16.4293 1.56747 16.4286 2.16302V13.1674C16.4286 13.4558 16.3694 13.7308 16.2511 13.9926C16.1329 14.2543 15.9729 14.4839 15.7714 14.6815L9.82976 20.5216C9.55595 20.774 9.23213 20.9272 8.85828 20.9813C8.48444 21.0354 8.12375 20.9723 7.77619 20.792C7.42863 20.6118 7.17782 20.3594 7.02376 20.035C6.8697 19.7105 6.83757 19.377 6.92738 19.0346L8.15952 14.0596H2.19048ZM20.8095 0C21.4119 0 21.9278 0.211976 22.3571 0.635928C22.7864 1.05988 23.0007 1.56891 23 2.16302V11.8966C23 12.4914 22.7857 13.0008 22.3571 13.4248C21.9285 13.8487 21.4126 14.0603 20.8095 14.0596C20.2064 14.0589 19.6909 13.8473 19.263 13.4248C18.8352 13.0023 18.6205 12.4929 18.619 11.8966V2.16302C18.619 1.56819 18.8337 1.05916 19.263 0.635928C19.6924 0.212697 20.2079 0.000721006 20.8095 0Z" fill="#FF5E00"/>
+                                                </svg>
+                                            )}
+                                        </div>
+
+                                        {/** 여기! 하드 코딩된 부분 바꾸기 */}
+                                        <div className="mb-[-25px]">
+                                            <h4 className="text-[14px] font-bold text-[#000000]">
+                                                [작성자 닉네임 미제공]
+                                            </h4>
+                                            <p className="text-[12px] text-[#000000] mt-1.5 mb-0.5">
+                                                [게시글 제목/물품명 미제공]
+                                            </p>
+                                            <span className="text-[11px] text-[#666666]">
+                                                [작성일자 2026-00-00]
+                                            </span>
+                                        </div>
                                     </div>
 
-                                    <div className="mb-[-25px]">
-                                        <h4 className="text-[14px] font-bold text-[#000000]">
-                                            {review.reviewerNickname}
-                                        </h4>
-                                        <p className="text-[12px] text-[#000000] mt-1.5 mb-0.5">
-                                            {review.postTitle}
-                                        </p>
-                                        <span className="text-[11px] text-[#666666]">
-                                            {review.createdAt}
-                                        </span>
-                                    </div>
+                                    {activeTab === "BAD" && (
+                                        <button
+                                            onClick={() => setShowAppealModal(true)}
+                                            className="w-[73px] h-[34px] bg-[#FFD4BB] text-[#1A1A1A] text-[12px] !font-semibold px-3 py-1.5 rounded-[40px] cursor-pointer hover:bg-[#fae2d0] transition-colors"
+                                        >
+                                            이의신청
+                                        </button>
+                                    )}
                                 </div>
 
-                                {activeTab === "BAD" && (
-                                    <button
-                                        onClick={() => setShowAppealModal(true)}
-                                        className="w-[73px] h-[34px] bg-[#FFD4BB] text-[#1A1A1A] text-[12px] !font-semibold px-3 py-1.5 rounded-[40px] cursor-pointer hover:bg-[#fae2d0] transition-colors"
-                                    >
-                                        이의신청
-                                    </button>
+                                {review.content && (
+                                    <div className="w-[318px] h-auto bg-[#E6E6E6] rounded-[40px] p-6 pl-8 ml-1 text-[12px] text-[#000000] leading-relaxed whitespace-pre-line mt-1">
+                                        {review.content}
+                                    </div>
                                 )}
                             </div>
-
-                            {review.content && (
-                                <div className="w-[318px] h-auto bg-[#E6E6E6] rounded-[40px] p-6 pl-8 ml-1 text-[12px] text-[#000000] leading-relaxed whitespace-pre-line mt-1">
-                                    {review.content}
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
 

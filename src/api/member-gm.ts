@@ -64,3 +64,56 @@ export const getPointHistories = async (): Promise<ApiResponseListPointHistory> 
     );
     return response.data;
 };
+
+
+// ==========================================
+// Mock 데이터 정의 및 API 핸들러
+// ==========================================
+import type { Review } from "../types/member-gm";
+
+
+// 1. Mock 데이터 정의
+const MOCK_GOOD_REVIEWS: Review[] = [
+    {
+        //id: 1,
+        content: "약속 시간도 잘 지키시고 설명도 너무 친절하게 해주셨어요! 물건 상태도 설명하신 것이랑 똑같아서 대만족입니다 :)",
+        reviewSentiment: "GOOD",
+        //createdAt: "2026-07-15",
+    },
+    {
+        //id: 2,
+        content: "",
+        reviewSentiment: "GOOD",
+        //createdAt: "2026-07-20",
+    },
+    {
+        //id: 3,
+        content: "포장도 꼼꼼하게 해서 보내주셨고, 제품 동작도 문제없이 잘 됩니다.",
+        reviewSentiment: "GOOD",
+        //createdAt: "2026-07-25",
+    }
+];
+
+const MOCK_BAD_REVIEWS: Review[] = [
+    {
+        //id: 4,
+        content: "약속 시간에 20분 정도 늦으셨는데 미리 연락이 없으셔서 조금 아쉬웠습니다.",
+        reviewSentiment: "BAD",
+        //createdAt: "2026-06-10",
+    }
+];
+
+// Mock 데이터 바로 밑에 이 함수가 반드시 있어야 합니다!
+export const getMockReceivedReviews = async (
+    sentiment: ReviewSentiment
+): Promise<{ isSuccess: boolean; result: Review[] }> => {
+    // 실제 서버 통신처럼 0.2초 딜레이
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const data = sentiment === "GOOD" ? MOCK_GOOD_REVIEWS : MOCK_BAD_REVIEWS;
+
+    return {
+        isSuccess: true,
+        result: data,
+    };
+};
