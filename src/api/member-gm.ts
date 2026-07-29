@@ -128,3 +128,50 @@ export const getMockReceivedReviews = async (
         result: data,
     };
 };
+
+// 백엔드 연동 전 Mock 데이터를 반환하는 함수 (테스트용)
+export const getMockWrittenReviews = async (
+    reviewSentiment?: ReviewSentiment
+): Promise<ReviewResponse> => {
+    // 1초 후 Mock Response 반환
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve({
+                isSuccess: true,
+                code: "COMMON200",
+                message: "성공입니다.",
+                result: {
+                    likeCount: 2,
+                    dislikeCount: 1,
+                    reviewDetailList:
+                        reviewSentiment === "GOOD"
+                            ? [
+                                    {
+                                        memberId: 101,
+                                        memberNickname: "이웃집토토로",
+                                        postTitle: "닌텐도 스위치 OLED 풀셋 대여",
+                                        createdAt: "2026-07-20",
+                                        content: "시간 맞춰 잘 전달해주셨고 물품 상태도 깨끗해서 아주 좋았습니다! 다음에 또 거래하고 싶어요.",
+                                    },
+                                    {
+                                        memberId: 102,
+                                        memberNickname: "캠핑조아",
+                                        postTitle: "4인용 원터치 텐트 + 의자 2개",
+                                        createdAt: "2026-07-15",
+                                        content: "친절하고 빠른 응대 감사드립니다.",
+                                    },
+                                ]
+                                : [
+                                    {
+                                        memberId: 103,
+                                        memberNickname: "매너거래원함",
+                                        postTitle: "전동 킥보드 렌탈",
+                                        createdAt: "2026-06-28",
+                                        content: "약속 시간보다 20분 늦게 오셨어요.",
+                                    },
+                                ],
+                },
+            });
+        }, 200);
+    });
+};

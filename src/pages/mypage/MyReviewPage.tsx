@@ -1,63 +1,56 @@
-// 받은 후기 (좋았어요/별로였어요)
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import { getWrittenReviews } from "../../api/member-gm";        // 여기!
-import { getMockReceivedReviews } from "../../api/member-gm";     // 여기! 나중에 삭제하기
-import type { Review, ReviewSentiment } from "../../types/member-gm";
-
+// import { getWrittenReviews } from "../../api/member-gm";     // 여기!
+import { getMockWrittenReviews } from "../../api/member-gm";    // 여기! 삭제하기
+import type { ReviewDetail, ReviewSentiment } from "../../types/member-gm";
 
 export default function MyReviewPage() {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<ReviewSentiment>("GOOD");
-    const [reviewList, setReviewList] = useState<Review[]>([]);
+    const [reviewList, setReviewList] = useState<ReviewDetail[]>([]);
     
-    // 카운트 정보는 백엔드 개별 개수 조회 API가 별도로 없으므로 현재 리스트 길이를 기반으로 표출
+    // 카운트 정보
     const [likeCount, setLikeCount] = useState<number>(0);
     const [dislikeCount, setDislikeCount] = useState<number>(0);
 
-
-    // 여기! 백엔드 연동할 때 주석 풀기
-    {/*useEffect(() => {
-        // API 요청 (reviewSentiment 쿼리파라미터 전달)
-        getReceivedReviews(activeTab).then((res) => {
+    /* ---------------- 백엔드 연동 시 사용할 useEffect ----------------
+    useEffect(() => {
+        getWrittenReviews(activeTab).then((res) => {
             if (res.isSuccess && res.result) {
-                // response.result 형태(단일 객체 혹은 배열) 처리
-                const resultData = Array.isArray(res.result) ? res.result : [res.result];
-                setReviewList(resultData);
-
-                if (activeTab === "GOOD") {
-                    setLikeCount(resultData.length);
-                } else {
-                    setDislikeCount(resultData.length);
-                }
+                setLikeCount(res.result.likeCount);
+                setDislikeCount(res.result.dislikeCount);
+                setReviewList(res.result.reviewDetailList || []);
             } else {
                 setReviewList([]);
             }
         }).catch(() => {
             setReviewList([]);
         });
-    }, [activeTab]);*/}
+    }, [activeTab]);
+    ----------------------------------------------------------------- */
 
-    // 여기! 이 useEffect 나중에 삭제하기
+    // Mock 데이터 연동 useEffect       // 여기! 삭제하기
     useEffect(() => {
         Promise.all([
-            getMockReceivedReviews("GOOD"),
-            getMockReceivedReviews("BAD")
+            getMockWrittenReviews("GOOD"),
+            getMockWrittenReviews("BAD")
         ]).then(([goodRes, badRes]) => {
-            const goodData = goodRes.isSuccess && Array.isArray(goodRes.result) ? goodRes.result : [];
-            const badData = badRes.isSuccess && Array.isArray(badRes.result) ? badRes.result : [];
+            const goodResult = goodRes.result;
+            const badResult = badRes.result;
 
-            setLikeCount(goodData.length);
-            setDislikeCount(badData.length);
+            const goodCount = goodResult?.likeCount ?? (goodResult?.reviewDetailList?.length || 0);
+            const badCount = badResult?.dislikeCount ?? (badResult?.reviewDetailList?.length || 0);
 
-            setReviewList(activeTab === "GOOD" ? goodData : badData);
+            setLikeCount(goodCount);
+            setDislikeCount(badCount);
+
+            const activeResult = activeTab === "GOOD" ? goodResult : badResult;
+            setReviewList(activeResult?.reviewDetailList || []);
         }).catch(() => {
             setReviewList([]);
         });
     }, [activeTab]);
-
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-h-[874px] max-h-[874px] w-[402px] h-[874px] overflow-y-auto overflow-x-hidden flex flex-col bg-white mx-auto">
@@ -102,50 +95,47 @@ export default function MyReviewPage() {
                 </div>
 
                 {/* 탭 영역 */}
-                <div className="mb-4 h-[44px] flex-shrink-0 relative flex justify-center">
-                    <div className="px-6 mb-4 h-[44px] flex-shrink-0 relative">
-                        <div className="absolute top-0 left-[-160px] flex items-center bg-[#E6E6E6] rounded-[40px] w-[359px] h-[44px] p-1">
-                            {/* 첫 번째 탭 (좋았어요) */}
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab("GOOD")}
-                                className={`w-[175px] h-[34px] my-[1px] ml-[5px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
-                                    activeTab === "GOOD"
-                                        ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
-                                        : "text-[#7F7F7F] hover:text-gray-600 font-normal"
-                                }`}
-                            >
-                                좋았어요 ({likeCount})
-                            </button>
+                <div className="relative w-full h-[44px] flex-shrink-0 my-4">
+                    <div className="absolute left-[1px] top-0 bg-[#E6E6E6] rounded-[40px] w-[359px] h-[44px] p-1.5 flex items-center justify-between">
+                        {/* 첫 번째 탭 (좋았어요) */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("GOOD")}
+                            className={`w-[172px] h-[32px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
+                                activeTab === "GOOD"
+                                    ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
+                                    : "text-[#7F7F7F] hover:text-gray-600 font-normal"
+                            }`}
+                        >
+                            좋았어요 ({likeCount})
+                        </button>
 
-                            {/* 두 번째 탭 (별로였어요) */}
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab("BAD")}
-                                className={`w-[175px] h-[34px] my-[1px] mr-[6px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
-                                    activeTab === "BAD"
-                                        ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
-                                        : "text-[#7F7F7F] hover:text-gray-600 font-normal"
-                                }`}
-                            >
-                                별로였어요 ({dislikeCount})
-                            </button>
-
-                        </div>
+                        {/* 두 번째 탭 (별로였어요) */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("BAD")}
+                            className={`w-[172px] h-[32px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
+                                activeTab === "BAD"
+                                    ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
+                                    : "text-[#7F7F7F] hover:text-gray-600 font-normal"
+                            }`}
+                        >
+                            별로였어요 ({dislikeCount})
+                        </button>
                     </div>
                 </div>
 
                 {/* 후기 리스트 */}
                 <div className="space-y-6 pt-1 min-h-[300px] flex flex-col justify-start">
                     {reviewList.length === 0 ? (
-                        /* 후기가 없을 때 표시되는 영역 */
+                        /* 후기가 없을 때 */
                         <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
                             <p className="text-[14px] text-[#7F7F7F]">
-                                받은 후기가 없습니다
+                                보낸 후기가 없습니다
                             </p>
                         </div>
                     ) : (
-                        /* 후기가 존재할 때 리스트 렌더링 */
+                        /* 후기 리스트 렌더링 */
                         reviewList.map((review, idx) => (
                             <div
                                 key={idx}
@@ -171,16 +161,16 @@ export default function MyReviewPage() {
                                             )}
                                         </div>
 
-                                        {/** 여기! 하드 코딩된 부분 바꾸기 */}
+                                        {/* 후기 내용 */}
                                         <div className="mb-[-25px]">
                                             <h4 className="text-[14px] font-bold text-[#000000]">
-                                                [상대 닉네임 미제공]
+                                                {review.memberNickname}
                                             </h4>
                                             <p className="text-[12px] text-[#000000] mt-1.5 mb-0.5">
-                                                [게시글 제목/물품명 미제공]
+                                                {review.postTitle}
                                             </p>
                                             <span className="text-[11px] text-[#666666]">
-                                                [작성일자 2026-00-00]
+                                                {review.createdAt}
                                             </span>
                                         </div>
                                     </div>
@@ -196,7 +186,6 @@ export default function MyReviewPage() {
                     )}
                 </div>
             </div>
-
         </div>
     );
 }
