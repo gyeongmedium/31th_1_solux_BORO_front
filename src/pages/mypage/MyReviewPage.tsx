@@ -2,81 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import { getReceivedReviews } from "../../api/member-gm";       // 여기!
+//import { getWrittenReviews } from "../../api/member-gm";        // 여기!
 import { getMockReceivedReviews } from "../../api/member-gm";     // 여기! 나중에 삭제하기
 import type { Review, ReviewSentiment } from "../../types/member-gm";
 
 
-// Toast 컴포넌트
-function Toast({ message }: { message: string }) {
-    return (
-        <div className="absolute top-[755px] left-1/2 -translate-x-1/2 bg-[#1A1A1A] text-white pl-[15px] pr-4 w-[332px] h-[46px] rounded-[40px] flex items-center gap-[10px] z-50 shadow-md">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9" cy="9" r="9" fill="#FFFFFF" />
-                <path d="M5.5 9L8 11.5L12.5 6.5" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-[14px] text-[#FFFFFF] truncate leading-none flex-1 text-center">
-                {message}
-            </span>
-        </div>
-    );
-}
-
-// 이의 신청 팝업 컴포넌트
-function AppealModal({
-    onClose,
-    onSubmit,
-}: {
-    onClose: () => void;
-    onSubmit: (text: string) => void;
-}) {
-    const [appealReason, setAppealReason] = useState("");
-
-    return (
-        <div
-            onClick={onClose}
-            className="absolute inset-0 bg-black/45 flex items-center justify-center z-50 px-6 cursor-pointer"
-        >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-[40px] w-[350px] pt-8 pb-7 px-6 flex flex-col items-center justify-center relative cursor-default"
-            >
-                <div className="w-14 h-14 rounded-full bg-[#FDF0E6] flex items-center justify-center mb-4">
-                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            fillRule="evenodd"
-                            clipRule="evenodd"
-                            d="M8.25 18C8.25 20.5859 9.27723 23.0658 11.1057 24.8943C12.9342 26.7228 15.4141 27.75 18 27.75C20.5859 27.75 23.0658 26.7228 24.8943 24.8943C26.7228 23.0658 27.75 20.5859 27.75 18C27.75 15.4141 26.7228 12.9342 24.8943 11.1057C23.0658 9.27723 20.5859 8.25 18 8.25C15.4141 8.25 12.9342 9.27723 11.1057 11.1057C9.27723 12.9342 8.25 15.4141 8.25 18ZM18 6C14.8174 6 11.7652 7.26428 9.51472 9.51472C7.26428 11.7652 6 14.8174 6 18C6 21.1826 7.26428 24.2348 9.51472 26.4853C11.7652 28.7357 14.8174 30 18 30C21.1826 30 24.2348 28.7357 26.4853 26.4853C28.7357 24.2348 30 21.1826 30 18C30 14.8174 28.7357 11.7652 26.4853 9.51472C24.2348 7.26428 21.1826 6 18 6ZM16.875 24V21.75H19.125V24H16.875ZM16.875 12V19.5H19.125V12H16.875Z"
-                            fill="#FF5E00"
-                        />
-                    </svg>
-                </div>
-
-                <h3 className="text-[20px] font-bold text-center text-black mb-4">
-                    이의 신청 내용을 작성해주세요.
-                </h3>
-
-                <div className="w-[312px] h-[117px] bg-[#E6E6E6] rounded-[40px] p-5 pl-6 mb-6">
-                    <textarea
-                        value={appealReason}
-                        onChange={(e) => setAppealReason(e.target.value)}
-                        placeholder="신청 내용 검토 후 포인트 차감 내역이 취소(철회)됩니다.&#10;이의 신청 결과는 최대 1주일 이내에 시스템에 반영됩니다.&#10;아래의 문의처를 통해 신청 내용을 제출해주세요."
-                        className="w-full h-full overflow-y-auto vertical-scroll bg-transparent placeholder:text-[11px] text-[12px] text-[#1A1A1A] placeholder:text-[#666666] focus:outline-none resize-none leading-relaxed"
-                    />
-                </div>
-
-                <button
-                    onClick={() => onSubmit(appealReason)}
-                    className="w-[154px] h-[48px] bg-[#9996FF] active:bg-[#8582eb] text-white rounded-[40px] text-[14px] !font-bold transition-colors cursor-pointer"
-                >
-                    제출하기
-                </button>
-            </div>
-        </div>
-    );
-}
-
-export default function ReviewPage() {
+export default function MyReviewPage() {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<ReviewSentiment>("GOOD");
@@ -86,8 +17,6 @@ export default function ReviewPage() {
     const [likeCount, setLikeCount] = useState<number>(0);
     const [dislikeCount, setDislikeCount] = useState<number>(0);
 
-    const [showAppealModal, setShowAppealModal] = useState<boolean>(false);
-    const [toast, setToast] = useState<string | null>(null);
 
     // 여기! 백엔드 연동할 때 주석 풀기
     {/*useEffect(() => {
@@ -129,15 +58,6 @@ export default function ReviewPage() {
         });
     }, [activeTab]);
 
-    const handleAppealSubmit = (reason: string) => {
-        console.log("제출된 이의 신청 사유:", reason);
-        setShowAppealModal(false);
-        setToast("이의신청이 제출되었습니다.");
-
-        setTimeout(() => {
-            setToast(null);
-        }, 1500);
-    };
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-h-[874px] max-h-[874px] w-[402px] h-[874px] overflow-y-auto overflow-x-hidden flex flex-col bg-white mx-auto">
@@ -145,21 +65,14 @@ export default function ReviewPage() {
             <div className="pl-8 pr-8 pt-[35px] pb-[16px] flex-shrink-0 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => navigate("/mypage")}
+                        onClick={() => navigate("/mypage/review")}
                         className="cursor-pointer flex items-center justify-center"
                     >
                         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M14 8.36377C14.5523 8.36377 15 7.91605 15 7.36377C15 6.81148 14.5523 6.36377 14 6.36377V7.36377V8.36377ZM0.292893 6.65666C-0.0976315 7.04719 -0.0976315 7.68035 0.292893 8.07088L6.65685 14.4348C7.04738 14.8254 7.68054 14.8254 8.07107 14.4348C8.46159 14.0443 8.46159 13.4111 8.07107 13.0206L2.41421 7.36377L8.07107 1.70692C8.46159 1.31639 8.46159 0.683226 8.07107 0.292702C7.68054 -0.0978227 7.04738 -0.0978227 6.65685 0.292702L0.292893 6.65666ZM14 7.36377V6.36377L1 6.36377V7.36377V8.36377L14 8.36377V7.36377Z" fill="#1A1A1A"/>
                         </svg>
                     </button>
-                    <h1 className="text-[16px] font-bold leading-none text-[#1A1A1A]">받은 후기</h1>
-                </div>
-                <div className="mt-[-5px]">
-                    <button
-                        onClick={() => navigate("/mypage/my-review")}
-                        className="p-2 m-[-15px] px-3 bg-[#B3B3B3] rounded-[40px] text-[12px] text-[#FFFFFF] transition-all duration-150 active:scale-97 active:bg-[#9E9E9E] cursor-pointer select-none"                    >
-                        보낸 후기
-                    </button>
+                    <h1 className="text-[16px] font-bold leading-none text-[#1A1A1A]">보낸 후기</h1>
                 </div>
             </div>
 
@@ -261,7 +174,7 @@ export default function ReviewPage() {
                                         {/** 여기! 하드 코딩된 부분 바꾸기 */}
                                         <div className="mb-[-25px]">
                                             <h4 className="text-[14px] font-bold text-[#000000]">
-                                                [작성자 닉네임 미제공]
+                                                [상대 닉네임 미제공]
                                             </h4>
                                             <p className="text-[12px] text-[#000000] mt-1.5 mb-0.5">
                                                 [게시글 제목/물품명 미제공]
@@ -271,15 +184,6 @@ export default function ReviewPage() {
                                             </span>
                                         </div>
                                     </div>
-
-                                    {activeTab === "BAD" && (
-                                        <button
-                                            onClick={() => setShowAppealModal(true)}
-                                            className="w-[73px] h-[34px] bg-[#FFD4BB] text-[#1A1A1A] text-[12px] !font-semibold px-3 py-1.5 rounded-[40px] cursor-pointer hover:bg-[#fae2d0] transition-colors"
-                                        >
-                                            이의신청
-                                        </button>
-                                    )}
                                 </div>
 
                                 {review.content && (
@@ -293,14 +197,6 @@ export default function ReviewPage() {
                 </div>
             </div>
 
-            {showAppealModal && (
-                <AppealModal
-                    onClose={() => setShowAppealModal(false)}
-                    onSubmit={handleAppealSubmit}
-                />
-            )}
-
-            {toast && <Toast message={toast} />}
         </div>
     );
 }

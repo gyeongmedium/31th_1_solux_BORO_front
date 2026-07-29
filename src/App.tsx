@@ -23,6 +23,7 @@ import PointPage from "./pages/mypage/PointPage";
 import NoonsongDecoPage from "./pages/mypage/NoonsongDecoPage";
 import ReviewCreatePage from "./pages/mypage/ReviewCreatePage";
 import ReviewPage from "./pages/mypage/ReviewPage";
+import MyReviewPage from "./pages/mypage/MyReviewPage";
 import LikedPostsPage from "./pages/mypage/LikedPostsPage";
 import ProfileEditPage from "./pages/mypage/ProfileEditPage";
 import MyPostsPage from "./pages/mypage/MyPostsPage";
@@ -73,8 +74,9 @@ export default function App() {
           <Route path="/mypage/store" element={<StorePage />} />
           <Route path="/mypage/point" element={<PointPage />} />
           <Route path="/mypage/noonsong" element={<NoonsongDecoPage />} />
-          <Route path="/mypage/review-create" element={<ReviewCreatePage />} />
+          <Route path="/mypage/review-create/:rentalId" element={<ReviewCreatePage />} />
           <Route path="/mypage/review" element={<ReviewPage />} />
+          <Route path="/mypage/my-review" element={<MyReviewPage />} />
           <Route path="/mypage/liked" element={<LikedPostsPage />} />
           <Route path="/mypage/edit" element={<ProfileEditPage />} />
           <Route path="/mypage/my-posts" element={<MyPostsPage />} />

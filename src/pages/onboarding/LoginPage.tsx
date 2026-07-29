@@ -6,13 +6,11 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
 
     const handleGoogleLogin = () => {
-        // - 로컬일 때: http://localhost:5173
-        // - 배포일 때: https://boro-app.com
-        const redirectUri = encodeURIComponent(`${window.location.origin}/auth/google/callback`);
-        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&prompt=consent`;
-
-        window.location.href = googleAuthUrl;
-    };
+    // 백엔드에서 전달받은 구글 OAuth URL로 바로 이동
+        const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth?client_id=201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com&redirect_uri=https%3A%2F%2Fapi.boro-app.com%2Fapi%2Fv1%2Fauth%2Fgoogle%2Fcallback&response_type=code&scope=email%20profile&prompt=consent";
+        
+        window.location.href = GOOGLE_AUTH_URL;
+        };
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-h-[874px] max-height-[874px] w-[402px] h-[874px] overflow-y-auto overflow-x-hidden flex flex-col items-center bg-white">
