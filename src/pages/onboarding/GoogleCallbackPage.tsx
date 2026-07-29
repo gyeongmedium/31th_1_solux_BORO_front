@@ -1,50 +1,65 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { googleCallback } from "../../api/auth";
 
 export default function GoogleCallbackPage() {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const code = searchParams.get("code"); // URL 주소창에서 ?code=xxxx 추출
+
+    // React Strict Mode로 인한 API 중복 호출 방지용 플래그
+    const isCalled = useRef(false);
 
     useEffect(() => {
-        // 백엔드가 처리 완료 후 프론트 콜백 URL 뒤에 붙여서 보내주는 파라미터들
-        const accessToken = searchParams.get("accessToken");
-        const authStatus = searchParams.get("authStatus");
-        const signUpToken = searchParams.get("signUpToken");
-        const email = searchParams.get("email");
-        const name = searchParams.get("name");
-        const error = searchParams.get("error");
+        // code가 없거나 이미 API를 호출한 경우 실행하지 않음
+        if (!code || isCalled.current) return;
+        isCalled.current = true; // 호출 완료 상태로 변경
 
-        if (error) {
-            alert("로그인 처리 중 오류가 발생했습니다.");
-            navigate("/login");
-            return;
-        }
+        const handleAuth = async () => {
+            try {
+                // 1. 백엔드로 code를 보내고 JSON 응답 받기
+                const response = await googleCallback({ code });
 
-        // 1. 신규 회원 -> 회원가입 페이지로 이동
-        if (authStatus === "NEED_SIGNUP") {
-            navigate("/signup", {
-                state: {
-                    signUpToken,
-                    email,
-                    name,
-                },
-            });
-        } 
-        // 2. 기존 회원 -> Access Token 저장 후 메인 이동 (Refresh Token은 HttpOnly 쿠키로 이미 저장됨)
-        else if (authStatus === "LOGIN" || accessToken) {
-            if (accessToken) localStorage.setItem("accessToken", accessToken);
-            alert("로그인에 성공하였습니다.");
-            navigate("/");
-        } 
-        else {
-            alert("로그인 정보가 유효하지 않거나 인증에 실패했습니다.");
-            navigate("/login");
-        }
-    }, [searchParams, navigate]);
+                // 2. 백엔드가 보낸 JSON 결과 처리
+                if (response.isSuccess) {
+                    const { authStatus, accessToken, signUpToken, email, name } = response.result;
+
+                    // 신규 회원 -> 회원가입 페이지로 이동 (state로 토큰 전달)
+                    if (authStatus === "NEED_SIGNUP") {
+                        navigate("/signup", {
+                            state: {
+                                signUpToken,
+                                email,
+                                name,
+                            },
+                        });
+                    } 
+                    // 기존 회원 -> 토큰 저장 후 메인 페이지로 이동
+                    else if (authStatus === "LOGIN" || accessToken) {
+                        if (accessToken) {
+                            localStorage.setItem("accessToken", accessToken);
+                        }
+                        alert("로그인에 성공하였습니다.");
+                        navigate("/");
+                    }
+                } else {
+                    alert(response.message || "로그인 처리 중 오류가 발생했습니다.");
+                    navigate("/login");
+                }
+            } catch (error) {
+                console.error("로그인 API 에러:", error);
+                alert("로그인 처리 중 오류가 발생했습니다.");
+                navigate("/login");
+            }
+        };
+
+        handleAuth();
+    }, [code, navigate]);
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-white">
             <p className="text-[14px] text-gray-400">구글 로그인 처리 중입니다...</p>
+            <p className="text-[12px] text-gray-400 mt-2">잠시만 기다려 주세요.</p>
         </div>
     );
 }

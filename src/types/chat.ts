@@ -30,10 +30,9 @@ export interface ChatRoomList {
 export type ApiResponseChatRoomList = ApiResponse<ChatRoomList>;
 
 
-// 2. POST /api/v1/chat (대여 요청 및 채팅방 생성)
+// 2. POST /api/v1/chat/{postId} (대여 요청 및 채팅방 생성)
 // request body
 export interface ChatRoom {
-    postId: number;
     chatRoomType: ChatRoomType;
 }
 

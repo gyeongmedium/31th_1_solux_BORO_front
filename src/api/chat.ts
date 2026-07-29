@@ -19,12 +19,13 @@ export const getChatRooms = async (
     return response.data;
 };
 
-// 2. POST /api/v1/chat (대여 요청 및 채팅방 생성)
+// 2. POST /api/v1/chat/{postId} (대여 요청 및 채팅방 생성)
 export const createChatRoom = async (
+    postId: number,
     data: ChatRoom
 ): Promise<ApiResponseCreatedRentalRequest> => {
     const response = await api.post<ApiResponseCreatedRentalRequest>(
-        "/api/v1/chat",
+        `/api/v1/chat/${postId}`,
         data
     );
     return response.data;

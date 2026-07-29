@@ -39,16 +39,31 @@ export type ApiResponseListMemberAsset = ApiResponse<MemberAsset[]>;
 // 후기 감정 Enum
 export type ReviewSentiment = "GOOD" | "BAD";
 
-// 후기 정보
-export interface Review {
-    reviewSentiment: ReviewSentiment;
+// 개별 후기 상세 정보 타입
+export interface ReviewDetail {
+    memberId: number;
+    memberNickname: string;
+    postTitle: string;
+    createdAt: string;
     content: string;
+}
+
+// 후기 조회 결과 메인 객체 타입
+export interface Review {
+    likeCount: number;
+    dislikeCount: number;
+    reviewDetailList: ReviewDetail[];
 }
 
 // 3. GET /api/v1/members/reviews/written (작성한 후기 조회)
 // 4. GET /api/v1/members/reviews/received (받은 후기 조회)
-// responses
-export type ApiResponseReview = ApiResponse<Review>;
+// Request Query Parameter 타입 (필요 시 활용)
+export interface ReviewParams {
+    reviewSentiment?: ReviewSentiment;
+}
+
+// Responses 타입
+export type ReviewResponse = ApiResponse<Review>;
 
 
 

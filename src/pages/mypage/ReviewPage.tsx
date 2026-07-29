@@ -2,141 +2,43 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import { getReceivedReviews } from "../../api/member-gm";       // 여기!
-import { getMockReceivedReviews } from "../../api/member-gm";     // 여기! 나중에 삭제하기
-import type { Review, ReviewSentiment } from "../../types/member-gm";
+//import { getReceivedReviews } from "../../api/member-gm";       // 백엔드 연결 시 주석 해제      // 여기!
+import { getMockReceivedReviews } from "../../api/member-gm";     // Mock 데이터 함수
+import type { ReviewDetail, ReviewSentiment } from "../../types/member-gm";
 
-
-// Toast 컴포넌트
-function Toast({ message }: { message: string }) {
-    return (
-        <div className="absolute top-[755px] left-1/2 -translate-x-1/2 bg-[#1A1A1A] text-white pl-[15px] pr-4 w-[332px] h-[46px] rounded-[40px] flex items-center gap-[10px] z-50 shadow-md">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="9" cy="9" r="9" fill="#FFFFFF" />
-                <path d="M5.5 9L8 11.5L12.5 6.5" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-[14px] text-[#FFFFFF] truncate leading-none flex-1 text-center">
-                {message}
-            </span>
-        </div>
-    );
-}
-
-// 이의 신청 팝업 컴포넌트
-function AppealModal({
-    onClose,
-    onSubmit,
-}: {
-    onClose: () => void;
-    onSubmit: (text: string) => void;
-}) {
-    const [appealReason, setAppealReason] = useState("");
-
-    return (
-        <div
-            onClick={onClose}
-            className="absolute inset-0 bg-black/45 flex items-center justify-center z-50 px-6 cursor-pointer"
-        >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-[40px] w-[350px] pt-8 pb-7 px-6 flex flex-col items-center justify-center relative cursor-default"
-            >
-                <div className="w-14 h-14 rounded-full bg-[#FDF0E6] flex items-center justify-center mb-4">
-                    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            fillRule="evenodd"
-                            clipRule="evenodd"
-                            d="M8.25 18C8.25 20.5859 9.27723 23.0658 11.1057 24.8943C12.9342 26.7228 15.4141 27.75 18 27.75C20.5859 27.75 23.0658 26.7228 24.8943 24.8943C26.7228 23.0658 27.75 20.5859 27.75 18C27.75 15.4141 26.7228 12.9342 24.8943 11.1057C23.0658 9.27723 20.5859 8.25 18 8.25C15.4141 8.25 12.9342 9.27723 11.1057 11.1057C9.27723 12.9342 8.25 15.4141 8.25 18ZM18 6C14.8174 6 11.7652 7.26428 9.51472 9.51472C7.26428 11.7652 6 14.8174 6 18C6 21.1826 7.26428 24.2348 9.51472 26.4853C11.7652 28.7357 14.8174 30 18 30C21.1826 30 24.2348 28.7357 26.4853 26.4853C28.7357 24.2348 30 21.1826 30 18C30 14.8174 28.7357 11.7652 26.4853 9.51472C24.2348 7.26428 21.1826 6 18 6ZM16.875 24V21.75H19.125V24H16.875ZM16.875 12V19.5H19.125V12H16.875Z"
-                            fill="#FF5E00"
-                        />
-                    </svg>
-                </div>
-
-                <h3 className="text-[20px] font-bold text-center text-black mb-4">
-                    이의 신청 내용을 작성해주세요.
-                </h3>
-
-                <div className="w-[312px] h-[117px] bg-[#E6E6E6] rounded-[40px] p-5 pl-6 mb-6">
-                    <textarea
-                        value={appealReason}
-                        onChange={(e) => setAppealReason(e.target.value)}
-                        placeholder="신청 내용 검토 후 포인트 차감 내역이 취소(철회)됩니다.&#10;이의 신청 결과는 최대 1주일 이내에 시스템에 반영됩니다.&#10;아래의 문의처를 통해 신청 내용을 제출해주세요."
-                        className="w-full h-full overflow-y-auto vertical-scroll bg-transparent placeholder:text-[11px] text-[12px] text-[#1A1A1A] placeholder:text-[#666666] focus:outline-none resize-none leading-relaxed"
-                    />
-                </div>
-
-                <button
-                    onClick={() => onSubmit(appealReason)}
-                    className="w-[154px] h-[48px] bg-[#9996FF] active:bg-[#8582eb] text-white rounded-[40px] text-[14px] !font-bold transition-colors cursor-pointer"
-                >
-                    제출하기
-                </button>
-            </div>
-        </div>
-    );
-}
+// 이의신청 구글 폼 URL
+const APPEAL_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf2VDNrRoVJaGDTOwpwLt2lb7ynHyfa91h54QGRJyne4np8bg/viewform";
 
 export default function ReviewPage() {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<ReviewSentiment>("GOOD");
-    const [reviewList, setReviewList] = useState<Review[]>([]);
     
-    // 카운트 정보는 백엔드 개별 개수 조회 API가 별도로 없으므로 현재 리스트 길이를 기반으로 표출
+    // 개별 후기 리스트 및 통계 상태
+    const [reviewList, setReviewList] = useState<ReviewDetail[]>([]);
     const [likeCount, setLikeCount] = useState<number>(0);
     const [dislikeCount, setDislikeCount] = useState<number>(0);
 
-    const [showAppealModal, setShowAppealModal] = useState<boolean>(false);
-    const [toast, setToast] = useState<string | null>(null);
-
-    // 여기! 백엔드 연동할 때 주석 풀기
-    {/*useEffect(() => {
-        // API 요청 (reviewSentiment 쿼리파라미터 전달)
-        getReceivedReviews(activeTab).then((res) => {
-            if (res.isSuccess && res.result) {
-                // response.result 형태(단일 객체 혹은 배열) 처리
-                const resultData = Array.isArray(res.result) ? res.result : [res.result];
-                setReviewList(resultData);
-
-                if (activeTab === "GOOD") {
-                    setLikeCount(resultData.length);
-                } else {
-                    setDislikeCount(resultData.length);
-                }
-            } else {
-                setReviewList([]);
-            }
-        }).catch(() => {
-            setReviewList([]);
-        });
-    }, [activeTab]);*/}
-
-    // 여기! 이 useEffect 나중에 삭제하기
+    // Mock 데이터 조회 (백엔드 연동 시 getMockReceivedReviews -> getReceivedReviews 로 변경)
     useEffect(() => {
-        Promise.all([
-            getMockReceivedReviews("GOOD"),
-            getMockReceivedReviews("BAD")
-        ]).then(([goodRes, badRes]) => {
-            const goodData = goodRes.isSuccess && Array.isArray(goodRes.result) ? goodRes.result : [];
-            const badData = badRes.isSuccess && Array.isArray(badRes.result) ? badRes.result : [];
-
-            setLikeCount(goodData.length);
-            setDislikeCount(badData.length);
-
-            setReviewList(activeTab === "GOOD" ? goodData : badData);
-        }).catch(() => {
-            setReviewList([]);
-        });
+        getMockReceivedReviews(activeTab)           // 여기!
+            .then((res) => {
+                if (res.isSuccess && res.result) {
+                    setLikeCount(res.result.likeCount);
+                    setDislikeCount(res.result.dislikeCount);
+                    setReviewList(res.result.reviewDetailList || []);
+                } else {
+                    setReviewList([]);
+                }
+            })
+            .catch(() => {
+                setReviewList([]);
+            });
     }, [activeTab]);
 
-    const handleAppealSubmit = (reason: string) => {
-        console.log("제출된 이의 신청 사유:", reason);
-        setShowAppealModal(false);
-        setToast("이의신청이 제출되었습니다.");
-
-        setTimeout(() => {
-            setToast(null);
-        }, 1500);
+    // 이의신청 버튼 클릭 시 구글 폼 새 창 열기
+    const handleAppealClick = () => {
+        window.open(APPEAL_FORM_URL, "_blank", "noopener,noreferrer");
     };
 
     return (
@@ -157,7 +59,8 @@ export default function ReviewPage() {
                 <div className="mt-[-5px]">
                     <button
                         onClick={() => navigate("/mypage/my-review")}
-                        className="p-2 m-[-15px] px-3 bg-[#B3B3B3] rounded-[40px] text-[12px] text-[#FFFFFF] transition-all duration-150 active:scale-97 active:bg-[#9E9E9E] cursor-pointer select-none"                    >
+                        className="p-2 m-[-15px] px-3 bg-[#B3B3B3] rounded-[40px] text-[12px] text-[#FFFFFF] transition-all duration-150 active:scale-97 active:bg-[#9E9E9E] cursor-pointer select-none"
+                    >
                         보낸 후기
                     </button>
                 </div>
@@ -189,36 +92,33 @@ export default function ReviewPage() {
                 </div>
 
                 {/* 탭 영역 */}
-                <div className="mb-4 h-[44px] flex-shrink-0 relative flex justify-center">
-                    <div className="px-6 mb-4 h-[44px] flex-shrink-0 relative">
-                        <div className="absolute top-0 left-[-160px] flex items-center bg-[#E6E6E6] rounded-[40px] w-[359px] h-[44px] p-1">
-                            {/* 첫 번째 탭 (좋았어요) */}
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab("GOOD")}
-                                className={`w-[175px] h-[34px] my-[1px] ml-[5px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
-                                    activeTab === "GOOD"
-                                        ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
-                                        : "text-[#7F7F7F] hover:text-gray-600 font-normal"
-                                }`}
-                            >
-                                좋았어요 ({likeCount})
-                            </button>
+                <div className="relative w-full h-[44px] flex-shrink-0 my-4">
+                    <div className="absolute left-[1px] top-0 bg-[#E6E6E6] rounded-[40px] w-[359px] h-[44px] p-1.5 flex items-center justify-between">
+                        {/* 첫 번째 탭 (좋았어요) */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("GOOD")}
+                            className={`w-[172px] h-[32px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
+                                activeTab === "GOOD"
+                                    ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
+                                    : "text-[#7F7F7F] hover:text-gray-600 font-normal"
+                            }`}
+                        >
+                            좋았어요 ({likeCount})
+                        </button>
 
-                            {/* 두 번째 탭 (별로였어요) */}
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab("BAD")}
-                                className={`w-[175px] h-[34px] my-[1px] mr-[6px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
-                                    activeTab === "BAD"
-                                        ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
-                                        : "text-[#7F7F7F] hover:text-gray-600 font-normal"
-                                }`}
-                            >
-                                별로였어요 ({dislikeCount})
-                            </button>
-
-                        </div>
+                        {/* 두 번째 탭 (별로였어요) */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab("BAD")}
+                            className={`w-[172px] h-[32px] flex items-center justify-center text-[14px] rounded-[40px] transition-colors duration-150 cursor-pointer ${
+                                activeTab === "BAD"
+                                    ? "bg-[#9996FF] text-[#FFFFFF] !font-bold"
+                                    : "text-[#7F7F7F] hover:text-gray-600 font-normal"
+                            }`}
+                        >
+                            별로였어요 ({dislikeCount})
+                        </button>
                     </div>
                 </div>
 
@@ -235,7 +135,7 @@ export default function ReviewPage() {
                         /* 후기가 존재할 때 리스트 렌더링 */
                         reviewList.map((review, idx) => (
                             <div
-                                key={idx}
+                                key={review.memberId || idx}
                                 className={`w-[370px] h-auto border border-[2px] rounded-[32px] p-5 ml-[-5px] flex flex-col gap-2 ${
                                     activeTab === "GOOD" ? "border-[#43A860]" : "border-[#FF5E00]"
                                 }`}
@@ -258,23 +158,24 @@ export default function ReviewPage() {
                                             )}
                                         </div>
 
-                                        {/** 여기! 하드 코딩된 부분 바꾸기 */}
+                                        {/* 동적 작성자 정보 바인딩 */}
                                         <div className="mb-[-25px]">
                                             <h4 className="text-[14px] font-bold text-[#000000]">
-                                                [작성자 닉네임 미제공]
+                                                {review.memberNickname}
                                             </h4>
                                             <p className="text-[12px] text-[#000000] mt-1.5 mb-0.5">
-                                                [게시글 제목/물품명 미제공]
+                                                {review.postTitle}
                                             </p>
                                             <span className="text-[11px] text-[#666666]">
-                                                [작성일자 2026-00-00]
+                                                {review.createdAt}
                                             </span>
                                         </div>
                                     </div>
 
+                                    {/* 이의신청 버튼 -> Google Form 링크 연결 */}
                                     {activeTab === "BAD" && (
                                         <button
-                                            onClick={() => setShowAppealModal(true)}
+                                            onClick={handleAppealClick}
                                             className="w-[73px] h-[34px] bg-[#FFD4BB] text-[#1A1A1A] text-[12px] !font-semibold px-3 py-1.5 rounded-[40px] cursor-pointer hover:bg-[#fae2d0] transition-colors"
                                         >
                                             이의신청
@@ -292,15 +193,6 @@ export default function ReviewPage() {
                     )}
                 </div>
             </div>
-
-            {showAppealModal && (
-                <AppealModal
-                    onClose={() => setShowAppealModal(false)}
-                    onSubmit={handleAppealSubmit}
-                />
-            )}
-
-            {toast && <Toast message={toast} />}
         </div>
     );
 }
