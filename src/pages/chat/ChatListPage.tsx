@@ -108,7 +108,7 @@ export default function ChatListPage() {
             />
 
             {/* 거래 채팅 리스트 영역 */}
-            <div className="flex-1 overflow-y-scroll vertical-scroll pl-[30px] pr-[20px] space-y-6 pt-6 pb-[70px]">
+            <div className="flex-1 overflow-y-auto vertical-scroll pl-[30px] pr-[20px] space-y-6 pt-6 pb-[70px]">
                 {loading ? (
                     <div className="text-center py-10 text-gray-400">채팅방 목록을 불러오는 중...</div>
                 ) : rooms.length === 0 ? (
@@ -117,7 +117,7 @@ export default function ChatListPage() {
                     rooms.map((room) => (
                         <div key={room.chatRoomId}
                             onClick={() => navigate(`/chat/${room.chatRoomId}`, { state: { type: "TRADE" } })}
-                            className="flex items-stretch justify-between cursor-pointer group w-full"
+                            className="flex items-stretch justify-between cursor-pointer group w-[341px]"
                         >
                             <div className="flex items-center gap-[13px] mb-[30px] flex-1">
                                 {/* 프로필 이미지 구역 */}
@@ -134,9 +134,9 @@ export default function ChatListPage() {
 
                                 {/* 텍스트 구역 */}
                                 <div className="flex flex-col gap-[9px] flex-1 min-w-0">
-                                    <div className="flex items-center gap-3 min-w-0">
+                                    <div className="flex items-center gap-2 min-w-0">
                                         <span className="font-bold text-[16px] text-[#000000] flex-shrink-0">{room.chatName}</span>
-                                        <span className="text-[12px] text-[#9996FF] line-clamp-1 flex-1 ml-2 mb-0.5">{"게시글 제목 적기"}</span>    {/* 여기! */}
+                                        <span className="text-[12px] text-[#4843D4] line-clamp-1 flex-1 ml-2 mb-0.5">{room.postTitle}</span>
                                     </div>
                                     <span className="text-[12px] text-[#7F7F7F] line-clamp-1 pr-2">
                                         {room.lastMessageContent}
@@ -145,7 +145,7 @@ export default function ChatListPage() {
                             </div>
 
                             {/* 시간 및 알림 배지 구역 */}
-                            <div className="flex flex-col items-end gap-3 flex-shrink-0 w-[80px] text-right">
+                            <div className="flex flex-col items-end gap-3 flex-shrink-0 w-[80px] pt-1 text-right">
                                 <span 
                                     className={`text-[12px] ${
                                         new Date(room.lastMessageAt).toDateString() === new Date().toDateString()

@@ -1,14 +1,35 @@
-export type AssetCategory = 'CLOTHES' | 'ACCESSORY' | 'ETC';
-
-// 상점 상품 조회 Response
-export interface AssetItem {
-    itemId: number;             // 명세서엔 없지만 프론트엔드 컴포넌트 key나 구매 API 호출(assetId)에 필요하므로 추가
-    itemName: string;
-    itemCategory: AssetCategory;
-    itemPrice: number;
+// 공통 API 응답 구조
+export interface ApiResponse<T> {
+    isSuccess: boolean;
+    code: string;
+    message: string;
+    result: T;
 }
 
-// 상품 구매 Response
-    export interface PurchaseAssetResponse {
+// Item Category Enum
+export type ItemCategory = 'CLOTHING' | 'ACCESSORY' | 'ETC';
+
+// 1. 상점 상품 조회
+// responses
+export interface StoreAsset {
+    itemId: number;
+    itemName: string;
+    itemCategory: ItemCategory;
+    itemPrice: number;
+    owned: boolean;
+}
+
+export type GetStoreAssetsResponse = ApiResponse<StoreAsset[]>;
+
+// 2. 상점 구매
+// request path parameter
+export interface PurchaseAssetParams {
     assetId: number;
 }
+
+// responses
+export interface CreatedAsset {
+    assetId: number;
+}
+
+export type PurchaseAssetResponse = ApiResponse<CreatedAsset>;

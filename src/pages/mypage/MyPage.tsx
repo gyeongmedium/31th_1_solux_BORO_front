@@ -200,7 +200,7 @@ export default function MyPage() {
               {user.points} p
             </span>
             <button
-              onClick={() => navigate("/mypage/store")}
+              onClick={() => navigate("/mypage/point")}
               className="bg-[#9996FF] text-white text-[13px] font-medium px-4 py-1.5 rounded-full"
             >
               충전

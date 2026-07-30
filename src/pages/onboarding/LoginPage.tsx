@@ -6,13 +6,15 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
 
     const handleGoogleLogin = () => {
-        const baseUrl = import.meta.env.VITE_API_URL;
-        const redirectUri = encodeURIComponent(`${baseUrl}/api/v1/auth/google/callback`);
+        const CLIENT_ID = "201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com";
+        
+        // redirect_uri를 프론트엔드 콜백 페이지 주소로 설정
+        const REDIRECT_URI = encodeURIComponent("http://localhost:5173/auth/google/callback");
+        
+        const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=email%20profile&prompt=consent`;
 
-        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com&redirect_uri=${redirectUri}&response_type=code&scope=email%20profile&prompt=consent`;
-
-        window.location.href = googleAuthUrl;
-    };
+        window.location.href = GOOGLE_AUTH_URL;
+        };
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-h-[874px] max-height-[874px] w-[402px] h-[874px] overflow-y-auto overflow-x-hidden flex flex-col items-center bg-white">

@@ -2,33 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-// import { getUserProfile } from "../../api/user"; // 나중에 사용자 정보/포인트 가져올 API 임포트
-import { getMemberPoints } from "../../api/member";
-import type { PointHistoryItem } from "../../types/member";
+import { getPointHistories } from "../../api/member-gm";
+import type { PointHistory } from "../../types/member-gm";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
 
 export default function PointPage() {
     const navigate = useNavigate();
     
-    // 나중에 실시간으로 불러온 사용자 포인트를 담을 상태 (초기값 0 또는 기본값)
-    const [userPoint] = useState<number>(1250);     // setUserPoint
+    const [userPoint] = useState<number>(1250);     // 여기!
 
     const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
-    const [historyList, setHistoryList] = useState<PointHistoryItem[]>([]);
+    const [historyList, setHistoryList] = useState<PointHistory[]>([]);
 
     useEffect(() => {
-        /* 나중에 백엔드와 연동할 때 아래 주석을 해제하여 서버에서 포인트 조회
-        getUserProfile()
-            .then((data) => {
-                if (data && typeof data.point === "number") {
-                    setUserPoint(data.point); // 실제 사용자 포인트로 변경
+        // 백엔드 API 연동하여 포인트 이력 데이터 조회
+        getPointHistories()
+            .then((res) => {
+                if (res.isSuccess && Array.isArray(res.result)) {
+                    setHistoryList(res.result);
                 }
             })
-            .catch((err) => console.error("사용자 포인트 로드 실패:", err));
-        */
-        getMemberPoints()
-            .then((data) => setHistoryList(data))
             .catch((err) => console.error("포인트 이력 로드 실패:", err));
     }, []);
 
@@ -167,35 +161,41 @@ export default function PointPage() {
                         </h3>
 
                         <div className="w-full flex-1 flex flex-col gap-3.5 overflow-x-hidden overflow-y-auto px-5 pb-5 vertical-scroll">
-                            {historyList.map((item, idx) => {
-                                const isNegative = item.point < 0;
+                            {historyList.length === 0 ? (
+                                <div className="text-center text-gray-400 text-[12px]">
+                                    적립 / 차감된 포인트가 없습니다.
+                                </div>
+                            ) : (
+                                historyList.map((item, idx) => {
+                                    const isNegative = item.point < 0;
 
-                                return (
-                                    <div 
-                                        key={idx}
-                                        className={`w-full h-[60px] rounded-[40px] p-3.5 pl-5 flex items-center justify-between flex-shrink-0 ${
-                                            isNegative ? "bg-[#FFD4BB]" : "bg-[#D2FFE5]"
-                                        }`}
-                                    >
-                                        <div className="flex flex-col gap-0.5 min-w-0 pr-2">
-                                            <span className="text-[12px] text-[#7F7F7F]">
-                                                {item.createdAt}
-                                            </span>
-                                            <span className="text-[12px] text-[#1A1A1A] truncate">
-                                                {item.pointDescription}
-                                            </span>
-                                        </div>
-
-                                        <span 
-                                            className={`min-w-[68px] h-[26px] rounded-[40px] text-white font-semibold text-[12px] flex items-center justify-center flex-shrink-0 ${
-                                                isNegative ? "bg-[#FF5E00]" : "bg-[#43A860]"
+                                    return (
+                                        <div 
+                                            key={idx}
+                                            className={`w-full h-[60px] rounded-[40px] p-3.5 pl-5 flex items-center justify-between flex-shrink-0 ${
+                                                isNegative ? "bg-[#FFD4BB]" : "bg-[#D2FFE5]"
                                             }`}
                                         >
-                                            {isNegative ? `${item.point}p` : `+${item.point}p`}
-                                        </span>
-                                    </div>
-                                );
-                            })}
+                                            <div className="flex flex-col gap-0.5 min-w-0 pr-2">
+                                                <span className="text-[12px] text-[#7F7F7F]">
+                                                    {item.createdAt}
+                                                </span>
+                                                <span className="text-[12px] text-[#1A1A1A] truncate">
+                                                    {item.pointDescription}
+                                                </span>
+                                            </div>
+
+                                            <span 
+                                                className={`min-w-[68px] h-[26px] rounded-[40px] text-white font-semibold text-[12px] flex items-center justify-center flex-shrink-0 ${
+                                                    isNegative ? "bg-[#FF5E00]" : "bg-[#43A860]"
+                                                }`}
+                                            >
+                                                {isNegative ? `${item.point}p` : `+${item.point}p`}
+                                            </span>
+                                        </div>
+                                    );
+                                })
+                            )}
                         </div>
                     </div>
                 </div>

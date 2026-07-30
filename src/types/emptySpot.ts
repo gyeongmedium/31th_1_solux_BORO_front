@@ -1,4 +1,5 @@
 export interface EmptySpotListResponse {
+    emptySpotId: number; 
     location: string;
     floor: number;
     seatNumber: number;
@@ -6,9 +7,11 @@ export interface EmptySpotListResponse {
     hasWindowSeat: boolean;
     expectedCheckoutTime: string;
     createdAt: string;
+    authorNickname: string; 
 }
 
 export interface EmptySpotDetailResponse {
+    emptySpotId: number; 
     location: string;
     floor: number;
     seatNumber: number;
@@ -16,6 +19,7 @@ export interface EmptySpotDetailResponse {
     hasWindowSeat: boolean;
     expectedCheckoutTime: string;
     createdAt: string;
+    authorNickname: string;
 }
 
 export interface CreateEmptySpotRequest {

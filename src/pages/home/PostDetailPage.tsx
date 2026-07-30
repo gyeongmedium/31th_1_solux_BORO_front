@@ -273,6 +273,7 @@ export default function PostDetailPage() {
           </span>
         </button>
       </div>
-          </div>
-        )
-      }
+
+    </div>
+  )
+}

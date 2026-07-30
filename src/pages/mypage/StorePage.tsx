@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import { getStoreAssets, purchaseAsset } from "../../api/assets";
-import type { AssetItem } from "../../types/assets";
+import { getStoreAssets, purchaseAsset } from "../../api/assets";
+import type { StoreAsset } from "../../types/assets";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
+import { mockAssets } from "../../api/mockAssets";      // mock 데이터
 
 import bagImg from "../../assets/bag.png";
 import coffeeImg from "../../assets/coffee.png";
@@ -17,8 +18,6 @@ import maskImg from "../../assets/mask.png";
 import princessSongImg from "../../assets/princess_song.png";
 import suitSongImg from "../../assets/suit_song.png";
 import suitImg from "../../assets/suit.png";
-
-import { mockAssets } from "../../api/mockAssets";
 
 // 팝업 컴포넌트 (취소/확인)
 function ConfirmModal({ 
@@ -105,7 +104,7 @@ const widthMap: Record<string, string> = {
 
 // 아이템 카테고리
 const categoryNameMap: Record<string, string> = {
-    CLOTHES: "의상",
+    CLOTHING: "의상",
     ACCESSORY: "악세사리",
     ETC: "기타",
 };
@@ -113,43 +112,74 @@ const categoryNameMap: Record<string, string> = {
 export default function StorePage() {
     const navigate = useNavigate();
     
-    // 초기값으로 가져온 mockAssets
-    const [assets] = useState<AssetItem[]>(mockAssets);     // setAssets
-    const [userPoint, setUserPoint] = useState<number>(1250); // 임시 보유 포인트
+    // 초기값을 빈 배열로 설정하고 서버 데이터를 세팅할 수 있도록 수정
+    const [assets, setAssets] = useState<StoreAsset[]>(mockAssets);     
+    const [userPoint, setUserPoint] = useState<number>(1250);       // 여기! 포인트 하드 코딩 함
     
-    // 💡 현재 선택된(클릭된) 아이템의 ID를 관리하는 상태
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
 
-    // 💡 구매 상태 추적 및 모달/토스트를 위한 새로운 상태(State) 추가
-    const [purchasedItems, setPurchasedItems] = useState<number[]>([]);
-    const [modalState, setModalState] = useState<{ show: boolean; item: AssetItem | null }>({ show: false, item: null });
+    const [modalState, setModalState] = useState<{ show: boolean; item: StoreAsset | null }>({ show: false, item: null });
     const [toast, setToast] = useState<string | null>(null);
 
+    // 3. 백엔드 통신 시도 (성공하면 서버 데이터로 교체, 실패하면 Mock 유지)
     useEffect(() => {
-        /* 나중에 백엔드와 연동할 때 아래 주석을 해제
-        getStoreAssets()
-            .then((data) => {
-                if (Array.isArray(data)) setAssets(data);
-            })
-            .catch((err) => console.error("상품 목록 로드 실패:", err));
-        */
+        // useEffect 내부에서 비동기 함수를 선언하고 호출합니다.
+        const fetchStoreAssets = async () => {
+            try {
+                const response = await getStoreAssets();
+                if (response?.isSuccess && response.result) {
+                    // 서버 연동 성공 시 최신 목록으로 업데이트
+                    setAssets(response.result);
+                }
+            } catch (err) {
+                // err 변수를 로그에 활용하여 unused-vars 경고 해결
+                console.warn("백엔드 연결 실패: Mock 데이터를 유지합니다.", err);
+            }
+        };
+
+        fetchStoreAssets();
     }, []);
 
-    const openPurchaseModal = (item: AssetItem) => {
+    // 구매 성공 후 재조회를 위한 별도 함수가 필요하다면 외부에 정의해두거나 활용할 수 있습니다.
+    const reloadStoreAssets = async () => {
+        try {
+            const response = await getStoreAssets();
+            if (response?.isSuccess && response.result) {
+                setAssets(response.result);
+            }
+        } catch (err) {
+            console.error("상품 재조회 실패:", err);
+        }
+    };
+
+    const openPurchaseModal = (item: StoreAsset) => {
         setModalState({ show: true, item });
     };
 
-    const confirmPurchase = () => {
+    // 2. 구매 확인 시 서버로 POST 요청 전송
+    const confirmPurchase = async () => {
         if (!modalState.item) return;
         const { itemId, itemPrice, itemName } = modalState.item;
 
-        setUserPoint((prev) => prev - itemPrice);
-        setPurchasedItems((prev) => [...prev, itemId]);
-        setModalState({ show: false, item: null });
+        try {
+            const response = await purchaseAsset(itemId);
+            
+            if (response.isSuccess) {
+                setUserPoint((prev) => prev - itemPrice);
+                setModalState({ show: false, item: null });
 
-        // 토스트 팝업 (2초 후 소멸)
-        setToast(`${itemName}을(를) 구매했습니다!`);
-        setTimeout(() => setToast(null), 2000);
+                setToast(`${itemName}을(를) 구매했습니다!`);
+                setTimeout(() => setToast(null), 2000);
+
+                // 최신 상태 재조회
+                reloadStoreAssets();
+            }
+        } catch (err) {
+            console.error("상품 구매 실패:", err);
+            setToast("상품 구매에 실패했습니다.");
+            setTimeout(() => setToast(null), 2000);
+            setModalState({ show: false, item: null });
+        }
     };
 
     return (
@@ -199,10 +229,10 @@ export default function StorePage() {
                 </div>
 
                 {/* 상품 리스트 */}
-                <div className="grid grid-cols-2 gap-4 pr-1">
+                <div className="grid grid-cols-2 gap-x-0 gap-y-2 pr-1">
                     {assets.map((item) => {
                         const isSelected = selectedItemId === item.itemId;
-                        const isPurchased = purchasedItems.includes(item.itemId);
+                        const isPurchased = item.owned;
                         const isAffordable = userPoint >= item.itemPrice;
 
                         return (
