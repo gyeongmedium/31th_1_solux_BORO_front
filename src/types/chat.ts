@@ -20,6 +20,13 @@ export interface ChatRoomPreview {
     lastMessageContent: string;
     lastMessageAt: string;
     unreadCount: number;
+    postTitle?: string;
+    location?: string;
+    floor?: number;
+    seatNumber?: number;
+    hasPowerOutlet?: boolean;
+    hasWindowSeat?: boolean;
+    expectedCheckoutTime?: string;
 }
 
 export interface ChatRoomList {

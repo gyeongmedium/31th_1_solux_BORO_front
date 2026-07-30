@@ -57,7 +57,7 @@ export default function GoogleCallbackPage() {
     }, [code, navigate]);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-white">
+        <div className="flex flex-col items-center justify-center h-200 bg-white">
             <p className="text-[14px] text-gray-400">구글 로그인 처리 중입니다...</p>
             <p className="text-[12px] text-gray-400 mt-2">잠시만 기다려 주세요.</p>
         </div>
