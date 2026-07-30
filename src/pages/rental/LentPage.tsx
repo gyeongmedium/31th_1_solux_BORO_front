@@ -102,6 +102,21 @@ function formatDateShort(dateStr?: string) {
     return dateStr;
 }
 
+// 남은 시간을 계산하여 "X분 후" 배지 텍스트를 만들어주는 함수
+const getRemainingTimeBadge = (dateTimeStr?: string): string => {
+    if (!dateTimeStr) return "미정";
+
+    const target = new Date(dateTimeStr);
+    const now = new Date();
+
+    const diffMs = target.getTime() - now.getTime();
+    const diffMins = Math.ceil(diffMs / (1000 * 60));
+
+    if (diffMins <= 0) return "마감";
+
+    return `${diffMins}분 후`;
+};
+
 export default function LentPage() {
     const navigate = useNavigate();
     const [rentals, setRentals] = useState<(RentalRequestPreview & { isReturnWaiting?: boolean })[]>([]);
@@ -119,8 +134,7 @@ export default function LentPage() {
     const fetchRentals = useCallback(async () => {
         try {
             //const res = await getLentRentalRequests();    // 여기!
-            const res = await getMockLentRentalRequests();  // 여기! 이거 삭제
-            await decideMockRentalRequest(rentalId, decide);    // 여기! 이거 삭제
+            const res = await getMockLentRentalRequests();  // 여기!
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -214,6 +228,36 @@ export default function LentPage() {
         });
     };
 
+    // 모달 멘트 세팅 함수
+    const getModalText = () => {
+        if (!modalState.item || !modalState.action) return { message: "", subMessage: "" };
+
+        const isBlankCategory = modalState.item.postCategory === "EMPTY_SPOTS";
+
+        if (modalState.action === 'approve') {
+            return isBlankCategory
+                ? { message: "양도를 승인하시겠어요?", subMessage: "양도 후 빈자리 거래가 시작됩니다." }
+                : { message: "대여를 승인하시겠어요?", subMessage: "승인 후 거래가 시작됩니다." };
+        }
+
+        if (modalState.action === 'reject') {
+            return isBlankCategory
+                ? { message: "양도 요청을 거절하시겠어요?", subMessage: "거절 후 상태가 대여 가능으로 변경됩니다." }
+                : { message: "대여 요청을 거절하시겠어요?", subMessage: "거절 후 상태가 대여 가능으로 변경됩니다." };
+        }
+
+        if (modalState.action === 'confirmReturn') {
+            return {
+                message: "반납 완료 처리하시겠어요?",
+                subMessage: "대여자의 상호 확인 후 정상처리되며,\n완료 후 상대방에세 후기를 남길 수 있습니다."
+            };
+        }
+
+        return { message: "", subMessage: "" };
+    };
+
+    const { message: modalMessage, subMessage: modalSubMessage } = getModalText();
+
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-height-[874px] max-height-[874px] w-[402px] h-[874px] overflow-hidden flex flex-col bg-white">
             <div className="pl-[30px] pt-[30px] pb-5 flex-shrink-0">
@@ -263,13 +307,22 @@ export default function LentPage() {
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        <div className="flex gap-2 mb-1.5 items-center">
-                                            <span className={`text-[12px] px-3 py-1.5 rounded-[40px] ${statusInfo.bg} ${statusInfo.text}`}>
-                                                {statusInfo.label}
-                                            </span>
-                                            <span className="text-[12px] px-3 py-1.5 rounded-[40px] bg-[#E4E4FF] text-[#000000]">
-                                                {categoryLabel}
-                                            </span>
+                                        {/* 1. 상단행 (카테고리/상태 태그, 시간 배지) */}
+                                        <div className="flex justify-between items-start mb-1.5 w-full">
+                                            <div className="flex gap-2 items-center">
+                                                <span className={`text-[12px] px-3 py-1.5 rounded-[40px] ${statusInfo.bg} ${statusInfo.text}`}>
+                                                    {statusInfo.label}
+                                                </span>
+                                                <span className="text-[12px] px-3 py-1.5 rounded-[40px] bg-[#E4E4FF] text-[#000000]">
+                                                    {categoryLabel}
+                                                </span>
+                                            </div>
+
+                                            {isBlankCategory && (
+                                                <div className="bg-[#FF5E00] w-[80px] h-[25px] pt-[2px] mt-0.5 mr-4 text-center text-white rounded-[7px] font-bold text-[14px] flex-shrink-0">
+                                                    {getRemainingTimeBadge(item.seatDetail?.expectedCheckoutTime)}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {isBlankCategory ? (
@@ -279,14 +332,14 @@ export default function LentPage() {
                                                         <path d="M7 0C3.13 0 0 3.13 0 7C0 12.25 7 18 7 18C7 18 14 12.25 14 7C14 3.13 10.87 0 7 0ZM7 9.5C5.62 9.5 4.5 8.38 4.5 7C4.5 5.62 5.62 4.5 7 4.5C8.38 4.5 9.5 5.62 9.5 7C9.5 8.38 8.38 9.5 7 9.5Z" fill="#43A860"/>
                                                     </svg>
                                                     <span className="text-[16px] font-bold text-[#43A860] truncate">
-                                                        {item.seatDetail?.location || "도서관 좌석"}
+                                                        {item.seatDetail?.location || "위치 설명 참조"}
                                                     </span>
                                                 </div>
                                                 <p className="text-[12px] text-black mb-0.5">
                                                     요청자 : {item.ownerNickname}
                                                 </p>
                                                 <p className="text-[12px] text-black mb-1">
-                                                    {item.seatDetail?.floor}층
+                                                    {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}번` : "자리 설명 참조"}
                                                 </p>
                                                 {hasTags && (
                                                     <div className="flex gap-2 ml-[-2px] mt-1">
@@ -310,7 +363,7 @@ export default function LentPage() {
 
                                                 <p className="text-[12px] text-[#43A860] leading-[16px]">
                                                     <span>
-                                                        대여 신청일 : {formatDateShort(item.itemDetail?.rentalStartTime) || formatDateShort(item.createdAt)}
+                                                        대여 신청일 : {formatDateShort(item.itemDetail?.rentalStartTime)}
                                                     </span>
                                                     <br />
                                                     {item.rentalRequestStatus === "APPROVED" 
@@ -400,20 +453,8 @@ export default function LentPage() {
 
             {modalState.show && (
                 <ConfirmModal
-                    message={
-                        modalState.action === 'approve' 
-                        ? '대여를 승인하시겠어요?' 
-                        : modalState.action === 'reject' 
-                        ? '대여 요청을 거절하시겠어요?' 
-                        : '반납 완료 처리하시겠어요?'
-                    }
-                    subMessage={
-                        modalState.action === 'approve' 
-                        ? '승인 후 거래가 시작됩니다.' 
-                        : modalState.action === 'reject' 
-                        ? '거절 후 상태가 대여 가능으로 변경됩니다.' 
-                        : '대여자의 상호 확인 후 정상처리되며,\n완료 후 상대방에세 후기를 남길 수 있습니다.'
-                    }
+                    message={modalMessage}
+                    subMessage={modalSubMessage}
                     onConfirm={confirmAction}
                     onCancel={cancelAction}
                 />

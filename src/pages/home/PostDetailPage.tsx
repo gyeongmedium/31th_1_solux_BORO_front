@@ -167,34 +167,34 @@ export default function PostDetailPage() {
 </div>
 
       {/* 하단 고정 채팅하기 바 (Group 37: 402x61, border 1px #B3B3B3) */}
-<div
-  className="fixed bottom-0 bg-white flex items-center justify-center z-20"
-  style={{
-    width: "402px",
-    height: "61px",
-    left: "50%",
-    transform: "translateX(-50%)",
-    borderTop: "1px solid #B3B3B3",
-  }}
->
-  <button
-    className="flex items-center justify-center gap-2"
-    style={{
-      width: "304px",
-      height: "40px",
-      borderRadius: "35.9px",
-      backgroundColor: "#D3D3FF",
-    }}
-  >
-    <MessageCircle size={19} strokeWidth={1.5} style={{ height: "18px" }} className="text-[#1A1A1A]" />
-    <span
-      className="text-[14px] text-[#1A1A1A]"
-      style={{ fontFamily: "Pretendard", fontWeight: 400 }}
-    >
-      채팅하기
-    </span>
-  </button>
-</div>
+      <div
+        className="fixed bottom-0 bg-white flex items-center justify-center z-20"
+        style={{
+          width: "402px",
+          height: "61px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          borderTop: "1px solid #B3B3B3",
+        }}
+      >
+        <button
+          className="flex items-center justify-center gap-2"
+          style={{
+            width: "304px",
+            height: "40px",
+            borderRadius: "35.9px",
+            backgroundColor: "#D3D3FF",
+          }}
+        >
+          <MessageCircle size={19} strokeWidth={1.5} style={{ height: "18px" }} className="text-[#1A1A1A]" />
+          <span
+            className="text-[14px] text-[#1A1A1A]"
+            style={{ fontFamily: "Pretendard", fontWeight: 400 }}
+          >
+            채팅하기
+          </span>
+        </button>
+      </div>
     </div>
   )
 }

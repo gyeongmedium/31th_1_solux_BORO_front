@@ -19,12 +19,13 @@ export const getChatRooms = async (
     return response.data;
 };
 
-// 2. POST /api/v1/chat (대여 요청 및 채팅방 생성)
+// 2. POST /api/v1/chat/{postId} (대여 요청 및 채팅방 생성)
 export const createChatRoom = async (
+    postId: number,
     data: ChatRoom
 ): Promise<ApiResponseCreatedRentalRequest> => {
     const response = await api.post<ApiResponseCreatedRentalRequest>(
-        "/api/v1/chat",
+        `/api/v1/chat/${postId}`,
         data
     );
     return response.data;
@@ -74,9 +75,15 @@ export const getMockChatRooms = async (
                         chatRoomId: 101,
                         chatName: "스터디마스터",
                         profileUrl: "",
-                        lastMessageContent: "중앙도서관 4층 A-23 (콘센트, 창가)",
+                        lastMessageContent: "",
                         lastMessageAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
                         unreadCount: 1,
+                        location: "중앙도서관",
+                        floor: 4,
+                        seatNumber: 23,
+                        hasPowerOutlet: true,
+                        hasWindowSeat: true,
+                        expectedCheckoutTime: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
                     },
                     {
                         chatRoomId: 102,
@@ -85,7 +92,12 @@ export const getMockChatRooms = async (
                         lastMessageContent: "학생회관 3층 열람실 12번",
                         lastMessageAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
                         unreadCount: 0,
+                        location: "",
+                        hasPowerOutlet: false,
+                        hasWindowSeat: false,
+                        expectedCheckoutTime: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
                     },
+                    
                 ],
             },
         };
@@ -106,6 +118,7 @@ export const getMockChatRooms = async (
                 lastMessageContent: "안녕하세요! 혹시 내일 대여 가능할까요?",
                 lastMessageAt: new Date().toISOString(),
                 unreadCount: 2,
+                postTitle: "컴과 과잠 대여하고 싶어요.",
                 },
                 {
                 chatRoomId: 2,
@@ -114,7 +127,9 @@ export const getMockChatRooms = async (
                 lastMessageContent: "네, 정문 앞에서 3시에 뵙겠습니다.",
                 lastMessageAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // 어제
                 unreadCount: 0,
+                postTitle: "실험복 대여"
                 },
+                
             ],
         },
     };

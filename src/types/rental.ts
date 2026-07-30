@@ -24,10 +24,10 @@ export interface ItemDetail {
 export interface SeatDetail {
     location: string;
     floor: number;
-    //seatNumber: number   // 여기! 필요
+    seatNumber: number;
+    expectedCheckoutTime: string;
     hasPowerOutlet: boolean;
     hasWindowSeat: boolean;
-    //expectedCheckoutTime: string      // 여기! 필요
 }
 
 // 1. 빌려준 물품 대여 현황 조회 & 내가 빌린 물품 대여 현황 조회

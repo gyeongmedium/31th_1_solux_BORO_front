@@ -1,45 +1,56 @@
-// 받은 후기 (좋았어요/별로였어요)
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import { getReceivedReviews } from "../../api/member-gm";       // 백엔드 연결 시 주석 해제      // 여기!
-import { getMockReceivedReviews } from "../../api/member-gm";     // Mock 데이터 함수
+// import { getWrittenReviews } from "../../api/member-gm";     // 여기!
+import { getMockWrittenReviews } from "../../api/member-gm";    // 여기! 삭제하기
 import type { ReviewDetail, ReviewSentiment } from "../../types/member-gm";
 
-// 이의신청 구글 폼 URL
-const APPEAL_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf2VDNrRoVJaGDTOwpwLt2lb7ynHyfa91h54QGRJyne4np8bg/viewform";
-
-export default function ReviewPage() {
+export default function MyReviewPage() {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<ReviewSentiment>("GOOD");
-    
-    // 개별 후기 리스트 및 통계 상태
     const [reviewList, setReviewList] = useState<ReviewDetail[]>([]);
+    
+    // 카운트 정보
     const [likeCount, setLikeCount] = useState<number>(0);
     const [dislikeCount, setDislikeCount] = useState<number>(0);
 
-    // Mock 데이터 조회 (백엔드 연동 시 getMockReceivedReviews -> getReceivedReviews 로 변경)
+    /* ---------------- 백엔드 연동 시 사용할 useEffect ----------------
     useEffect(() => {
-        getMockReceivedReviews(activeTab)           // 여기!
-            .then((res) => {
-                if (res.isSuccess && res.result) {
-                    setLikeCount(res.result.likeCount);
-                    setDislikeCount(res.result.dislikeCount);
-                    setReviewList(res.result.reviewDetailList || []);
-                } else {
-                    setReviewList([]);
-                }
-            })
-            .catch(() => {
+        getWrittenReviews(activeTab).then((res) => {
+            if (res.isSuccess && res.result) {
+                setLikeCount(res.result.likeCount);
+                setDislikeCount(res.result.dislikeCount);
+                setReviewList(res.result.reviewDetailList || []);
+            } else {
                 setReviewList([]);
-            });
+            }
+        }).catch(() => {
+            setReviewList([]);
+        });
     }, [activeTab]);
+    ----------------------------------------------------------------- */
 
-    // 이의신청 버튼 클릭 시 구글 폼 새 창 열기
-    const handleAppealClick = () => {
-        window.open(APPEAL_FORM_URL, "_blank", "noopener,noreferrer");
-    };
+    // Mock 데이터 연동 useEffect       // 여기! 삭제하기
+    useEffect(() => {
+        Promise.all([
+            getMockWrittenReviews("GOOD"),
+            getMockWrittenReviews("BAD")
+        ]).then(([goodRes, badRes]) => {
+            const goodResult = goodRes.result;
+            const badResult = badRes.result;
+
+            const goodCount = goodResult?.likeCount ?? (goodResult?.reviewDetailList?.length || 0);
+            const badCount = badResult?.dislikeCount ?? (badResult?.reviewDetailList?.length || 0);
+
+            setLikeCount(goodCount);
+            setDislikeCount(badCount);
+
+            const activeResult = activeTab === "GOOD" ? goodResult : badResult;
+            setReviewList(activeResult?.reviewDetailList || []);
+        }).catch(() => {
+            setReviewList([]);
+        });
+    }, [activeTab]);
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-h-[874px] max-h-[874px] w-[402px] h-[874px] overflow-y-auto overflow-x-hidden flex flex-col bg-white mx-auto">
@@ -47,22 +58,14 @@ export default function ReviewPage() {
             <div className="pl-8 pr-8 pt-[35px] pb-[16px] flex-shrink-0 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => navigate("/mypage")}
+                        onClick={() => navigate("/mypage/review")}
                         className="cursor-pointer flex items-center justify-center"
                     >
                         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M14 8.36377C14.5523 8.36377 15 7.91605 15 7.36377C15 6.81148 14.5523 6.36377 14 6.36377V7.36377V8.36377ZM0.292893 6.65666C-0.0976315 7.04719 -0.0976315 7.68035 0.292893 8.07088L6.65685 14.4348C7.04738 14.8254 7.68054 14.8254 8.07107 14.4348C8.46159 14.0443 8.46159 13.4111 8.07107 13.0206L2.41421 7.36377L8.07107 1.70692C8.46159 1.31639 8.46159 0.683226 8.07107 0.292702C7.68054 -0.0978227 7.04738 -0.0978227 6.65685 0.292702L0.292893 6.65666ZM14 7.36377V6.36377L1 6.36377V7.36377V8.36377L14 8.36377V7.36377Z" fill="#1A1A1A"/>
                         </svg>
                     </button>
-                    <h1 className="text-[16px] font-bold leading-none text-[#1A1A1A]">받은 후기</h1>
-                </div>
-                <div className="mt-[-5px]">
-                    <button
-                        onClick={() => navigate("/mypage/my-review")}
-                        className="p-2 m-[-15px] px-3 bg-[#B3B3B3] rounded-[40px] text-[12px] text-[#FFFFFF] transition-all duration-150 active:scale-97 active:bg-[#9E9E9E] cursor-pointer select-none"
-                    >
-                        보낸 후기
-                    </button>
+                    <h1 className="text-[16px] font-bold leading-none text-[#1A1A1A]">보낸 후기</h1>
                 </div>
             </div>
 
@@ -125,17 +128,17 @@ export default function ReviewPage() {
                 {/* 후기 리스트 */}
                 <div className="space-y-6 pt-1 min-h-[300px] flex flex-col justify-start">
                     {reviewList.length === 0 ? (
-                        /* 후기가 없을 때 표시되는 영역 */
+                        /* 후기가 없을 때 */
                         <div className="flex-1 flex flex-col items-center justify-center py-20 text-center">
                             <p className="text-[14px] text-[#7F7F7F]">
-                                받은 후기가 없습니다
+                                보낸 후기가 없습니다
                             </p>
                         </div>
                     ) : (
-                        /* 후기가 존재할 때 리스트 렌더링 */
+                        /* 후기 리스트 렌더링 */
                         reviewList.map((review, idx) => (
                             <div
-                                key={review.memberId || idx}
+                                key={idx}
                                 className={`w-[370px] h-auto border border-[2px] rounded-[32px] p-5 ml-[-5px] flex flex-col gap-2 ${
                                     activeTab === "GOOD" ? "border-[#43A860]" : "border-[#FF5E00]"
                                 }`}
@@ -158,7 +161,7 @@ export default function ReviewPage() {
                                             )}
                                         </div>
 
-                                        {/* 동적 작성자 정보 바인딩 */}
+                                        {/* 후기 내용 */}
                                         <div className="mb-[-25px]">
                                             <h4 className="text-[14px] font-bold text-[#000000]">
                                                 {review.memberNickname}
@@ -171,16 +174,6 @@ export default function ReviewPage() {
                                             </span>
                                         </div>
                                     </div>
-
-                                    {/* 이의신청 버튼 -> Google Form 링크 연결 */}
-                                    {activeTab === "BAD" && (
-                                        <button
-                                            onClick={handleAppealClick}
-                                            className="w-[73px] h-[34px] bg-[#FFD4BB] text-[#1A1A1A] text-[12px] !font-semibold px-3 py-1.5 rounded-[40px] cursor-pointer hover:bg-[#fae2d0] transition-colors"
-                                        >
-                                            이의신청
-                                        </button>
-                                    )}
                                 </div>
 
                                 {review.content && (

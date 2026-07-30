@@ -16,15 +16,20 @@ const formatDate = (dateTimeStr: string): string => {
     return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
 };
 
-//남은 시간을 계산하여 "X분 후" 배지 텍스트를 만들어주는 함수               // 여기!
-const getRemainingTimeBadge = (dateTimeStr: string): string => {
-    if (!dateTimeStr) return "";
+// 남은 시간을 계산하여 "X분 후" 배지 텍스트를 만들어주는 함수
+const getRemainingTimeBadge = (dateTimeStr?: string): string => {
+    if (!dateTimeStr) return "시간 미정";
+
     const target = new Date(dateTimeStr);
     const now = new Date();
+
+    // 두 시간의 차이 (밀리초 -> 분 변환)
     const diffMs = target.getTime() - now.getTime();
     const diffMins = Math.ceil(diffMs / (1000 * 60));
 
+    // 이미 퇴장 시간이 지났거나 exact 타임이면 "마감"
     if (diffMins <= 0) return "마감";
+
     return `${diffMins}분 후`;
 };
 
@@ -89,14 +94,15 @@ export default function EmptySpotChatListPage() {
             />
 
             {/* 빈자리 채팅 카드 리스트 영역 */}
-            <div className="flex-1 overflow-y-scroll vertical-scroll pl-[16px] pr-[4.5px] space-y-6 pt-6 pb-[90px]">
+            <div className="flex-1 overflow-y-auto vertical-scroll pl-[16px] pr-[10px] space-y-6 pt-6 pb-[90px]">
                 {loading ? (
                     <div className="text-center py-10 text-gray-400">빈자리 채팅 목록을 불러오는 중...</div>
                 ) : spots.length === 0 ? (
                     <div className="text-center py-10 text-gray-400">등록된 빈자리 채팅이 없습니다.</div>
                 ) : (
                     spots.map((spot) => (
-                        <div key={spot.chatRoomId} className="w-full w-[370px] mt-[-10px] border-2 border-[#FF5E00] rounded-[40px] p-[30px] flex flex-col bg-white">
+                        <div key={spot.chatRoomId} 
+                            className="w-[370px] mt-[-10px] border-2 border-[#FF5E00] rounded-[40px] p-[30px] flex flex-col bg-white">
                         
                             {/* 1. 상단행 (닉네임 & 생성 날짜 & 시간 배지) */}
                             <div className="flex justify-between items-stretch w-full mb-4">
@@ -107,7 +113,6 @@ export default function EmptySpotChatListPage() {
                                         </svg>
                                     </div>
                                     <div className="flex flex-col gap-3">
-                                        {/* 닉네임: chatName */}
                                         <span className="font-bold text-[16px] text-black leading-none">{spot.chatName}</span>
                                         <span className="text-[12px] text-[#000000] leading-none mt-1">{formatDate(spot.lastMessageAt)}</span>
                                     </div>
@@ -115,7 +120,7 @@ export default function EmptySpotChatListPage() {
                                 
                                 <div className="flex items-start">
                                     <div className="bg-[#FF5E00] w-[80px] h-[25px] pt-[2px] text-center text-white rounded-[7px] font-bold text-[14px]">
-                                        {getRemainingTimeBadge(spot.lastMessageAt)}         {/* 여기! 예정 퇴장 시간 필드로 바꾸기*/}
+                                        {getRemainingTimeBadge(spot.expectedCheckoutTime)}
                                     </div>
                                 </div>
                             </div>
@@ -129,28 +134,28 @@ export default function EmptySpotChatListPage() {
                                 </div>
                                 <div className="flex flex-col gap-1.5 mt-[6px]">
                                     <span className="font-bold text-[16px] text-[#43A860] leading-none">
-                                        {"장소명 적기"}         {/* 여기! */}
+                                        {spot.location ? `${spot.location}` : "위치 설명 참조"}
                                     </span>
                                     <span className="text-[12px] text-[#000000] mt-1.5">
-                                        {"층 적기 / 상세 위치 적기"}       {/* 여기! */}
+                                        {spot.floor ? `${spot.floor}층` : "층"} / {spot.seatNumber ? `${spot.seatNumber}층` : "자리 설명 참조"}
                                     </span>
                                 </div>
                             </div>
 
                             {/* 3. 태그 그룹 행 (boolean 값이 true인 경우에만 출력) */}
                             {(() => {
-                                // 백엔드 응답 데이터가 없을 경우 사용할 임시 기본 boolean 값 (테스트용)     // 여기!
-                                const hasPowerOutlet = spot.hasPowerOutlet ?? true;
-                                const hasWindowSeat = spot.hasWindowSeat ?? true;
+                                // 백엔드 응답 데이터가 없을 경우 사용할 임시 기본 boolean 값 (테스트용)
+                                const hasPowerOutlet = spot.hasPowerOutlet ?? false;
+                                const hasWindowSeat = spot.hasWindowSeat ?? false;
 
                                 // true인 조건만 담을 태그 배열
                                 const activeTags: string[] = [];
                                 if (hasPowerOutlet) activeTags.push("콘센트");
                                 if (hasWindowSeat) activeTags.push("창가");
 
-                                // 만약 true인 태그가 하나도 없다면 영역을 아예 안 그리거나 여백 유지
+                                // true인 태그가 하나도 없을 때
                                 if (activeTags.length === 0) {
-                                    return <div className="mb-5 h-[24px]" />;
+                                    return <div className="mb-0 h-[0px]" />;
                                 }
 
                                 return (
