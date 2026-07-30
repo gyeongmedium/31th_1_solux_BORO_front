@@ -682,6 +682,7 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
     </div>
   </>
 )}
+    
       </div>
 
       <BottomNav />
