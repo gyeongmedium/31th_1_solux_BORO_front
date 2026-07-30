@@ -119,6 +119,8 @@ export const getMockLentRentalRequests = async (): Promise<GetLentListResponse> 
                 seatDetail: {
                     location: "중앙도서관 3열람실 A12",
                     floor: 3,
+                    seatNumber: 2,
+                    expectedCheckoutTime: "",
                     hasPowerOutlet: true,
                     hasWindowSeat: true
                 }
@@ -135,6 +137,8 @@ export const getMockLentRentalRequests = async (): Promise<GetLentListResponse> 
                 seatDetail: {
                     location: "백양관 스터디룸 B04",
                     floor: 2,
+                    seatNumber: 223,
+                    expectedCheckoutTime: "",
                     hasPowerOutlet: false,
                     hasWindowSeat: false
                 }
@@ -198,8 +202,10 @@ export const getMockBorrowedRentalRequests = async (): Promise<GetBorrowedListRe
                 ownerNickname: "강호열",
                 createdAt: new Date().toISOString(),
                 seatDetail: {
-                    location: "학생회관 2층 카페 좌석",
+                    location: "학생회관",
                     floor: 2,
+                    seatNumber: 1,
+                    expectedCheckoutTime: "",
                     hasPowerOutlet: true,
                     hasWindowSeat: true
                 }

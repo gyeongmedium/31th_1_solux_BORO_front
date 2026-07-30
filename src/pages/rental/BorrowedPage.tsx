@@ -169,12 +169,22 @@ export default function BorrowedPage() {
 
     const handleStartChat = (item: RentalRequestPreview) => {
         const chatType = item.postCategory === "EMPTY_SPOTS" ? "SPACE" : "TRADE";
-        const title = item.itemDetail?.title || item.seatDetail?.location || "상세 대여건";
+
+        // 1. 빈자리인 경우 위치 정보 조립
+        const seatTitle = item.seatDetail 
+            ? `${item.seatDetail.location || ''} ${item.seatDetail.floor ? `${item.seatDetail.floor}층` : ''} ${item.seatDetail.seatNumber || ''}`.trim().replace(/\s+/g, ' ')
+            : "";
+
+        // 2. 삼항 연산자로 title에 '단 한 번만' 값 할당 (ESLint 경고 해결)
+        const title = item.postCategory === "EMPTY_SPOTS"
+            ? (seatTitle || "빈자리 정보")
+            : (item.itemDetail?.title || "게시글 제목");
 
         navigate(`/chat/${item.rentalRequestId}`, {
             state: {
                 type: chatType,
-                title: title
+                title: title,
+                ownerNickname: item.ownerNickname,
             }
         });
     };
@@ -251,7 +261,7 @@ export default function BorrowedPage() {
                                                     제공자 : {item.ownerNickname}
                                                 </p>
                                                 <p className="text-[12px] text-black mb-1">
-                                                    {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}번` : "자리 설명 참조"}
+                                                    {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}` : "자리 설명 참조"}
                                                 </p>
                                                 {hasTags && (
                                                     <div className="flex gap-2 ml-[-2px] mt-1">

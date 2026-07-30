@@ -143,7 +143,7 @@ export const MockChatDetails = {
     result: {
         chatRoomName: "공대생활",
         postName: "전공 서적/노트북 받침대 대여합니다",
-        profileUrl: "https://blackscreen.space/images/pro/blue-screen_42.png",
+        profileUrl: "",
         chatMessageList: [
             {
                 chatMessageType: "TEXT",

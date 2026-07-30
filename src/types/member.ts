@@ -15,13 +15,13 @@ export interface PointHistoryResponse {
 }
 
 // 아이템 카테고리 타입
-import type { AssetCategory } from "./assets";
+import type { ItemCategory } from "./assets";
 
 // 보유 캐릭터 아이템 정보 타입
 export interface CharacterItem {
     itemId: number;
     itemName: string;
-    itemCategory: AssetCategory; // 'CLOTHES' | 'ACCESSORY' | 'ETC'
+    itemCategory: ItemCategory; // 'CLOTHING' | 'ACCESSORY' | 'ETC'
     equipped: boolean;           // 보유 여부
 }
 

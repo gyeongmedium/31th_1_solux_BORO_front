@@ -6,7 +6,7 @@ import { getStoreAssets, purchaseAsset } from "../../api/assets";
 import type { StoreAsset } from "../../types/assets";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
-import { mockAssets } from "../../api/mockAssets";      // mock 데이터
+import { mockAssets } from "../../api/mockAssets";      // 계속 유지하기
 
 import bagImg from "../../assets/bag.png";
 import coffeeImg from "../../assets/coffee.png";
@@ -121,18 +121,18 @@ export default function StorePage() {
     const [modalState, setModalState] = useState<{ show: boolean; item: StoreAsset | null }>({ show: false, item: null });
     const [toast, setToast] = useState<string | null>(null);
 
-    // 3. 백엔드 통신 시도 (성공하면 서버 데이터로 교체, 실패하면 Mock 유지)
+    // 3. 백엔드 통신 시도 (성공하면 서버 데이터로 교체, 데이터가 비어있거나 실패하면 Mock 유지)
     useEffect(() => {
-        // useEffect 내부에서 비동기 함수를 선언하고 호출합니다.
         const fetchStoreAssets = async () => {
             try {
                 const response = await getStoreAssets();
-                if (response?.isSuccess && response.result) {
-                    // 서버 연동 성공 시 최신 목록으로 업데이트
+                // result가 존재하고, 배열 길이가 0보다 클 때만 서버 데이터로 교체[cite: 1, 2]
+                if (response?.isSuccess && Array.isArray(response.result) && response.result.length > 0) {
                     setAssets(response.result);
+                } else {
+                    console.warn("백엔드 데이터가 비어있어 Mock 데이터를 유지합니다.");
                 }
             } catch (err) {
-                // err 변수를 로그에 활용하여 unused-vars 경고 해결
                 console.warn("백엔드 연결 실패: Mock 데이터를 유지합니다.", err);
             }
         };
@@ -140,11 +140,11 @@ export default function StorePage() {
         fetchStoreAssets();
     }, []);
 
-    // 구매 성공 후 재조회를 위한 별도 함수가 필요하다면 외부에 정의해두거나 활용할 수 있습니다.
+    // 상품 재조회 함수
     const reloadStoreAssets = async () => {
         try {
             const response = await getStoreAssets();
-            if (response?.isSuccess && response.result) {
+            if (response?.isSuccess && Array.isArray(response.result) && response.result.length > 0) {
                 setAssets(response.result);
             }
         } catch (err) {

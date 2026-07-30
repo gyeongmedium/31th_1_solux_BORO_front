@@ -38,8 +38,21 @@ export default function EmptySpotChatListPage() {
     const [spots, setSpots] = useState<ChatRoomPreview[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const handleStartChat = (chatRoomId: number) => {
-        navigate(`/chat/${chatRoomId}`, { state: { type: "SPOT" } });
+    const handleStartChat = (spot: ChatRoomPreview) => {
+        const locationTitle = [
+            spot.location,
+            spot.floor ? `${spot.floor}층` : "",
+            spot.seatNumber ? `${spot.seatNumber}` : ""
+        ].filter(Boolean).join(" ") || "빈자리 대여건";
+
+        navigate(`/chat/${spot.chatRoomId}`, {
+            state: {
+                type: "SPOT",
+                ownerNickname: spot.chatName, // 상대 아이디
+                title: locationTitle,          // 게시글 제목 (위치 + 층 + 자리번호)
+                profileUrl: spot.profileUrl       // 프로필 이미지 URL
+            }
+        });
     };
 
     useEffect(() => {
@@ -113,8 +126,12 @@ export default function EmptySpotChatListPage() {
                                         </svg>
                                     </div>
                                     <div className="flex flex-col gap-3">
-                                        <span className="font-bold text-[16px] text-black leading-none">{spot.chatName}</span>
-                                        <span className="text-[12px] text-[#000000] leading-none mt-1">{formatDate(spot.lastMessageAt)}</span>
+                                        <span className="font-bold text-[16px] text-black leading-none">
+                                            {spot.chatName}
+                                        </span>
+                                        <span className="text-[12px] text-[#000000] leading-none mt-1">
+                                            {formatDate(spot.lastMessageAt)}
+                                        </span>
                                     </div>
                                 </div>
                                 
@@ -137,7 +154,7 @@ export default function EmptySpotChatListPage() {
                                         {spot.location ? `${spot.location}` : "위치 설명 참조"}
                                     </span>
                                     <span className="text-[12px] text-[#000000] mt-1.5">
-                                        {spot.floor ? `${spot.floor}층` : "층"} / {spot.seatNumber ? `${spot.seatNumber}층` : "자리 설명 참조"}
+                                        {spot.floor ? `${spot.floor}층` : "층"} / {spot.seatNumber ? `${spot.seatNumber}` : "자리 설명 참조"}
                                     </span>
                                 </div>
                             </div>
@@ -174,7 +191,7 @@ export default function EmptySpotChatListPage() {
 
                             {/* 4. 하단 버튼 행 */}
                             <button 
-                                onClick={() => handleStartChat(spot.chatRoomId)}
+                                onClick={() => handleStartChat(spot)}
                                 className="w-[300px] h-[34px] ml-1 mb-[-5px] border border-[#7F7F7F] rounded-[40px] flex items-center justify-center gap-2 hover:bg-gray-50 active:bg-gray-100 transition-colors mt-auto"
                             >
                                 <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg">
