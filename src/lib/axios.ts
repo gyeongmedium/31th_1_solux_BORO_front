@@ -2,6 +2,15 @@
 import axios from 'axios';
 import { reissueToken } from '../api/auth';
 
+
+/* 
+1. 모든 요청에 자동으로 토큰 붙여서 보냄
+2. 401 에러(토큰 만료/없음) 나면
+3. 자동으로 "토큰 다시 발급해줘" 시도
+4. 성공하면 → 원래 요청 다시 보냄 (사용자는 눈치 못 챔, 매끄럽게)
+5. 실패하면 → 로그인 페이지로 이동 
+*/
+
 const api = axios.create({
     baseURL: import.meta.env.VITE_API_URL,
     withCredentials: true,
@@ -22,6 +31,11 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        //무한루프 방지 코드
+        if (originalRequest?.url?.includes('/auth/reissue')) {
+            localStorage.removeItem('accessToken');
+            return Promise.reject(error);
+        }
         // 401 에러이고, 아직 재시도하지 않은 요청인 경우
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
@@ -41,7 +55,6 @@ api.interceptors.response.use(
             } catch (reissueError) {
                 // Refresh Token도 만료된 경우 로그인 페이지로 이동
                 localStorage.removeItem('accessToken');
-                window.location.href = '/login';
                 return Promise.reject(reissueError);
             }
         }
