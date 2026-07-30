@@ -244,14 +244,14 @@ export default function BorrowedPage() {
                                                         <path d="M7 0C3.13 0 0 3.13 0 7C0 12.25 7 18 7 18C7 18 14 12.25 14 7C14 3.13 10.87 0 7 0ZM7 9.5C5.62 9.5 4.5 8.38 4.5 7C4.5 5.62 5.62 4.5 7 4.5C8.38 4.5 9.5 5.62 9.5 7C9.5 8.38 8.38 9.5 7 9.5Z" fill="#43A860"/>
                                                     </svg>
                                                     <span className="text-[16px] font-bold text-[#43A860] truncate">
-                                                        {item.seatDetail?.location || "도서관 좌석"}
+                                                        {item.seatDetail?.location || "위치 설명 참조"}
                                                     </span>
                                                 </div>
                                                 <p className="text-[12px] text-black mb-0.5">
                                                     제공자 : {item.ownerNickname}
                                                 </p>
                                                 <p className="text-[12px] text-black mb-1">
-                                                    {item.seatDetail?.floor}층
+                                                    {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}번` : "자리 설명 참조"}
                                                 </p>
                                                 {hasTags && (
                                                     <div className="flex gap-2 ml-[-2px] mt-1">
@@ -267,7 +267,7 @@ export default function BorrowedPage() {
                                         ) : (
                                             <>
                                                 <h2 className="text-[14px] font-bold text-black mt-3 mb-2.5 truncate leading-none">
-                                                    {item.itemDetail?.title || "대여 물품"}
+                                                    {item.itemDetail?.title || "대여 물품 설명 참조"}
                                                 </h2>
                                                 <p className="text-[12px] text-black mb-2">
                                                     제공자 : {item.ownerNickname}
