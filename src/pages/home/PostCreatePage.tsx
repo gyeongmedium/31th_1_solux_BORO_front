@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { categoryLabel } from "../../utils/postMapper"
 import type { PostCategory } from "../../types/post"
 import { createPost } from "../../api/post"
+import { createEmptySpot, updateEmptySpot } from "../../api/emptySpot"
 
 
 export default function PostCreatePage() {
@@ -32,6 +33,7 @@ export default function PostCreatePage() {
     "ETC",
   ]
 
+
   useEffect(() => {
   if (isEditMode) {
     // TODO: 실제로는 GET /api/v1/post/{postId} 호출해서 데이터 가져오기
@@ -42,35 +44,112 @@ export default function PostCreatePage() {
     setRentalPrice("10000")
   }
 }, [postId, spotId])
+
 const handleSubmit = async () => {
-  if (!title || !description || !rentalStartTime || !rentalPrice) {
-    alert("필수 항목을 모두 입력해주세요!")
+  if (activeTab === "post") {
+    
+    // 기존 게시글 작성 로직
+    if (!title || !description || !rentalStartTime || !rentalPrice) {
+      alert("필수 항목을 모두 입력해주세요.")
+      return
+    }
+
+    try {
+      if (isEditMode) {
+        console.log("수정할 게시글 ID:", postId)
+        // TODO: updatePost API 연결 필요
+        
+      } else {
+      const formattedStartTime = `${rentalStartTime}T00:00:00`
+      
+        await createPost({
+          imageUrlList: [],
+          category,
+          title,
+          description,
+          rentalStartTime: formattedStartTime,
+          rentalEndTime: formattedStartTime,
+          rentalPrice: Number(rentalPrice.replace(/[^0-9]/g, "")),
+          rentalPriceUnit: "DAY",
+        })
+      }
+      navigate("/")
+    } catch (err) {
+      console.error("게시글 처리 실패:", err)
+      alert("처리에 실패했어요. 다시 시도해주세요.")
+    }
+  } else {
+
+    //////////////////////////////////////////////////////////////
+    // 빈자리 작성 로직
+    if (!location || !floor || !seatNumber || !checkoutTime) {
+      alert("필수 항목을 모두 입력해주세요.")
+      return
+    }
+    if (isNaN(Number(floor))) {
+    alert("층은 숫자만 입력해주세요.")
     return
-  }
+    }
+
+    // 1. 선택한 시간으로 Date 객체 생성
+      const [hours, minutes] = checkoutTime.split(":").map(Number)
+      const now = new Date()
+      const checkoutDate = new Date()
+      checkoutDate.setHours(hours, minutes, 0, 0)
+
+    // 2. 자정 경계 보정 (밤 11시 넘어서 새벽 12시~1시대를 입력했을 때)
+    if (now.getHours() >= 23 && hours < 2) {
+      checkoutDate.setDate(checkoutDate.getDate() + 1)
+    }
+
+    // 3. 현재 시간과의 차이 계산 (분 단위)
+    const diffMinutes = (checkoutDate.getTime() - now.getTime()) / (1000 * 60)
+    //->20분 이내로 설정 하도록 팝업 띄우기
+    if (diffMinutes < -1) {
+      alert("퇴실 예정 시간은 현재 시각 이후여야 합니다.")
+      return
+    }
+
+    if (diffMinutes > 20) {
+      alert("퇴실 예정 시간은 현재 시각으로부터 20분 이내로 설정해야 합니다.")
+      return
+    }
 
   try {
     if (isEditMode) {
-      // TODO: 실제 수정 API PATCH /api/v1/post/{postId} 연결 필요
-      console.log("수정할 게시글 ID:", postId)
+      console.log("수정할 빈자리 ID:", spotId)
     } else {
-      await createPost({
-        imageUrlList: [],
-        category,
-        title,
-        description,
-        rentalStartTime,
-        rentalEndTime: rentalStartTime,
-        rentalPrice: Number(rentalPrice),
-        rentalPriceUnit: "DAY",
+      const parsedFloor = Number(floor.replace(/[^0-9]/g, "")) || 1
+      const parsedSeatNumber = Number(seatNumber.replace(/[^0-9]/g, "")) || 1
+
+      // 4. 스웨거 규격 표준 UTC 문자열 생성 (.toISOString())
+      // <<오류난이유>> 백엔드 시간 설정과 프론트 자바스크립트 시간 보정이 들어가야 예외가 안남.
+      // 예: 03:14 KST -> "2026-07-30T18:14:00.000Z"
+      const isoCheckoutTime = checkoutDate.toISOString()
+
+      console.log("실제 서버로 보내는 값:", isoCheckoutTime)
+
+      await createEmptySpot({
+        location,
+        floor: parsedFloor,
+        seatNumber: parsedSeatNumber,
+        hasPowerOutlet: hasOutlet,
+        hasWindowSeat: hasWindow,
+        expectedCheckoutTime: isoCheckoutTime, //로컬 날짜/시간 적용
       })
     }
-    navigate("/")
-  } catch (err) {
-    console.error("처리 실패:", err)
-    alert("처리에 실패했어요. 다시 시도해주세요!")
+      navigate("/")
+    } catch (err) {
+      console.error("빈자리 처리 실패:", err)
+      alert("처리에 실패했어요. 다시 시도해주세요.")
+    }
   }
+    /////////////////////////////////////////////////////////////////////////////////
+
 }
 
+  ////////////////////////////////////////////////////
+  //ui 구성 부분
   return (
   <div className="flex flex-col bg-white pb-10">
   {/* 상단 고정 헤더 (402x80, 스크롤해도 고정) */}
@@ -321,7 +400,7 @@ const handleSubmit = async () => {
         className="absolute bg-white shadow-md z-10"
         style={{
           top: "92px",
-          left: "px",
+          left: "25px",
           width: "138px",
           borderRadius: "30px",
           border: "1px solid #CCCCCC",
@@ -688,7 +767,7 @@ const handleSubmit = async () => {
         color: "#1A1A1A",
       }}
     >
-      카테고리 <span style={{ color: "#1A1A1A" }}>*</span>
+      카테고리 <span style={{ color: "#1A1A1A" }}></span>
     </p>
     <div
       className="absolute flex items-center"
@@ -859,6 +938,7 @@ const handleSubmit = async () => {
         paddingLeft: "26px",
       }}
     >
+      
       <input
         value={seatNumber}
         onChange={(e) => setSeatNumber(e.target.value)}
@@ -898,7 +978,7 @@ const handleSubmit = async () => {
         color: "#1A1A1A",
       }}
     >
-      콘센트 여부 <span style={{ color: "#1A1A1A" }}>*</span>
+      콘센트 여부 <span style={{ color: "#1A1A1A" }}></span>
     </p>
     <button
       onClick={() => setHasOutlet(!hasOutlet)}
@@ -948,7 +1028,7 @@ const handleSubmit = async () => {
         color: "#1A1A1A",
       }}
     >
-      창가자리 여부 <span style={{ color: "#1A1A1A" }}>*</span>
+      창가자리 여부 <span style={{ color: "#1A1A1A" }}></span>
     </p>
     <button
       onClick={() => setHasWindow(!hasWindow)}
