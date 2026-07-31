@@ -2,9 +2,12 @@
 
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-//import { getChatMessageList } from "../../api/chat";      // 여기!
-import { getMockChatDetails } from "../../api/chat";
-import type { ChatMessageDetail, ChatMessageList } from "../../types/chat";
+import SockJS from "sockjs-client";
+import { Client, type IMessage, type IFrame } from "@stomp/stompjs";
+
+import { getChatMessageList, readChatRoom, CHAT_SOCKET_ENDPOINTS } from "../../api/chat";      // 여기!
+//import { getMockChatDetails } from "../../api/chat";
+import type { ChatMessageDetail, ChatMessageList, SubChatMessagePayload, SendChatMessagePayload } from "../../types/chat";
 import { uploadImage } from "../../api/upload-image";
 
 // 메시지 상세 시간 포맷 함수 (오전/오후 HH : MM)
@@ -74,25 +77,30 @@ export default function DetailedChatPage() {
     // API 응답 데이터 상태
     const [messages, setMessages] = useState<ChatMessageDetail[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [selectedImages, setSelectedImages] = useState<{ file: File; previewUrl: string }[]>([]);
 
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const stompClientRef = useRef<Client | null>(null);
 
+    // 1. HTTP API: 초기 메시지 목록 조회 & 읽음 처리
     useEffect(() => {
         if (!roomId) return;
-        const fetchMessages = async () => {
+
+        const initChatRoom = async () => {
             setIsLoading(true);
             try {
+                // 백엔드 읽음 처리 API 호출
+                await readChatRoom(Number(roomId));
+
                 // GET /api/v1/chat/{chatRoomId} 호출
-                //const res = await getChatMessageList(Number(roomId));         // 여기!
-                const res = await getMockChatDetails(Number(roomId));           // 여기!
+                const res = await getChatMessageList(Number(roomId));
                 
                 if (res.isSuccess && res.result) {
                     setRoomInfo({
                         ...res.result,
-                        // 백엔드가 chatRoomName/postName을 안 넘겨주거나 비어있을 때 navState 값 활용
                         profileUrl: res.result.profileUrl || navState?.profileUrl || "",
                         chatRoomName: res.result.chatRoomName || navState?.ownerNickname || "상대 아이디",
                         postName: res.result.postName || navState?.title || "게시글 제목"
@@ -101,12 +109,69 @@ export default function DetailedChatPage() {
                 }
             } catch (error) {
                 console.error("채팅 내역을 불러오는데 실패했습니다.", error);
+                // 404 에러 시 화면이 하얗게 뜨는 것을 방지하기 위해 navState 기반으로 기본 정보 설정
+                setRoomInfo({
+                    chatRoomName: navState?.ownerNickname || "상대 아이디",
+                    postName: navState?.title || "게시글 제목",
+                    profileUrl: navState?.profileUrl || "",
+                    chatMessageList: []
+                });
+                setMessages([])
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchMessages();
+
+        initChatRoom();
     }, [roomId, navState]);
+
+    // 2. WebSocket/STOMP 연결 및 실시간 메시지 구독
+    useEffect(() => {
+        if (!roomId) return;
+
+        const baseUrl = import.meta.env.VITE_API_URL;
+        const socketUrl = `${baseUrl}${CHAT_SOCKET_ENDPOINTS.WS_CONNECT}`;
+        const token = localStorage.getItem("accessToken");
+
+        const client = new Client({
+            webSocketFactory: () => new SockJS(socketUrl),
+            connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+            onConnect: () => {
+                console.log("WebSocket 연결 성공");
+
+                // 실시간 메시지 구독 (/sub/chat/{roomId})
+                client.subscribe(
+                    CHAT_SOCKET_ENDPOINTS.SUB_CHAT_ROOM(Number(roomId)), 
+                    (message: IMessage) => {
+                        const receivedData: SubChatMessagePayload = JSON.parse(message.body);
+
+                        const newMsg: ChatMessageDetail = {
+                            chatMessageType: receivedData.chatMessageType,
+                            memberId: receivedData.memberId,
+                            content: receivedData.content,
+                            imageUrls: receivedData.imageUrls || [],
+                            createdAt: receivedData.createdAt,
+                        };
+
+                        setMessages((prev) => [...prev, newMsg]);
+                    }
+                );
+            },
+            onStompError: (frame: IFrame) => {
+                console.error("STOMP 에러:", frame.headers["message"]);
+            },
+        });
+
+        client.activate();
+        stompClientRef.current = client;
+
+        // 컴포넌트 언마운트 시 소켓 연결 해제
+        return () => {
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+            }
+        };
+    }, [roomId]);
 
     // 메시지 추가 시 컨테이너 내부 스크롤 하단 이동
     useEffect(() => {
@@ -115,8 +180,7 @@ export default function DetailedChatPage() {
         }
     }, [messages]);
 
-    // 여기! 
-    // 1. 텍스트 영역 높이 자동 조절
+    // 텍스트 영역 높이 자동 조절
     const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setInputValue(e.target.value);
         if (textareaRef.current) {
@@ -125,7 +189,7 @@ export default function DetailedChatPage() {
         }
     };
 
-    // 2. 이미지 선택 핸들러 (바로 전송 X, 미리보기 생성)
+    // 이미지 선택 핸들러 (바로 전송 X, 미리보기 생성)
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
@@ -138,41 +202,62 @@ export default function DetailedChatPage() {
 
         // 기존 선택된 이미지에 추가
         setSelectedImages((prev) => [...prev, ...newImages]);
-
         e.target.value = ""; // 동일 파일 재선택 가능하도록 초기화
     };
 
-    // 3. 선택한 이미지 취소
+    // 선택한 이미지 취소
     const handleRemoveImage = (indexToRemove: number) => {
         setSelectedImages((prev) => {
             const target = prev[indexToRemove];
-            if (target) URL.revokeObjectURL(target.previewUrl); // 메모리 해제
+            if (target) URL.revokeObjectURL(target.previewUrl);
             return prev.filter((_, index) => index !== indexToRemove);
         });
     };
 
-    // 4. 메시지 전송 (텍스트 + 이미지 통합 전송)       // 여기! uploadImage 불러온거 사용하기
-    const handleSendMessage = () => {
+    // 메시지 전송 (WebSocket publish)
+    const handleSendMessage = async () => {
         if (!inputValue.trim() && selectedImages.length === 0) return;
+        if (!stompClientRef.current || !stompClientRef.current.connected) {
+            console.error("웹소켓이 연결되어 있지 않습니다.");
+            return;
+        }
 
-        const hasImages = selectedImages.length > 0;
+        try {
+            setIsUploading(true);
+            let uploadedUrls: string[] = [];
 
-        const newMessage: ChatMessageDetail = {
-            chatMessageType: hasImages ? "IMAGE" : "TEXT",
-            memberId: currentUserId,
-            content: inputValue.trim(),
-            imageUrls: selectedImages.map((img) => img.previewUrl), // 여러 URL 배열 전달   // 여기! imageUrls: uploadedUrls, 로 고치기
-            createdAt: new Date().toISOString(),
-        };
+            // 이미지 업로드 실행 (uploadImage API 활용)
+            if (selectedImages.length > 0) {
+                const uploadPromises = selectedImages.map((img) => uploadImage(img.file));
+                uploadedUrls = await Promise.all(uploadPromises);
+            }
 
-        setMessages((prev) => [...prev, newMessage]);
+            const hasImages = uploadedUrls.length > 0;
 
-        // 입력 폼 초기화
-        setInputValue("");
-        setSelectedImages([]);
+            const payload: SendChatMessagePayload = {
+                chatMessageType: hasImages ? "IMAGE" : "TEXT",
+                content: inputValue.trim(),
+                imageUrls: uploadedUrls,
+            };
 
-        if (textareaRef.current) {
-            textareaRef.current.style.height = "auto";
+            // WebSocket 전송 (/pub/chat/{roomId})
+            stompClientRef.current.publish({
+                destination: CHAT_SOCKET_ENDPOINTS.PUB_CHAT_MESSAGE(Number(roomId)),
+                body: JSON.stringify(payload),
+            });
+
+            // 입력 폼 및 이미지 초기화
+            setInputValue("");
+            selectedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+            setSelectedImages([]);
+
+            if (textareaRef.current) {
+                textareaRef.current.style.height = "auto";
+            }
+        } catch (error) {
+            console.error("메시지 전송 또는 이미지 업로드 실패:", error);
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -212,7 +297,7 @@ export default function DetailedChatPage() {
                             <span className="font-bold text-[16px] text-[#000000] leading-tight flex-shrink-0">
                                 {roomInfo?.chatRoomName || "상대 아이디"}
                             </span>
-                            <div className="w-[10px] h-[10px] rounded-full bg-[#43A860] flex-shrink-0 ml-0.5" />
+                            {/*<div className="w-[10px] h-[10px] rounded-full bg-[#43A860] flex-shrink-0 ml-0.5" />*/}
                         </div>
                         <p className="text-[14px] text-[#7F7F7F] line-clamp-1">
                             {roomInfo?.postName || "게시글 제목"}
@@ -223,9 +308,9 @@ export default function DetailedChatPage() {
                 {/* ⓘ 아이콘 */}
                 <button>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M12 8H12.01V8.01H12V8Z" stroke="black" stroke-width="3" stroke-linejoin="round"/>
-                        <path d="M12 12V16" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12 8H12.01V8.01H12V8Z" stroke="black" strokeWidth="3" strokeLinejoin="round"/>
+                        <path d="M12 12V16" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                 </button>
             </header>
@@ -362,8 +447,9 @@ export default function DetailedChatPage() {
 
                 {/* 전송 버튼 */}
                 <button 
-                    onClick={handleSendMessage} 
-                    className="flex-shrink-0 active:opacity-80 transition-opacity mb-0.5"
+                    onClick={handleSendMessage}
+                    disabled={isUploading}
+                    className="flex-shrink-0 active:opacity-80 transition-opacity mb-0.5 disabled:opacity-50"
                 >
                     <svg width="48" height="48" viewBox="0 0 59 59" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="29.5" cy="29.5" r="29.5" fill="#9996FF"/>
