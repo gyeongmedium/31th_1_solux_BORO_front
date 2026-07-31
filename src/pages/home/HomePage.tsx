@@ -3,8 +3,37 @@ import BottomNav from "../../components/BottomNav"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { getPosts, likePost } from "../../api/post"
+import { getEmptySpotList } from "../../api/emptySpot"
 import { categoryLabel, statusLabel, priceUnitLabel } from "../../utils/postMapper"
 import type { PostSummary, PostCategory } from "../../types/post"
+import type { EmptySpotListResponse } from "../../types/emptySpot"
+
+//남은 시간 계산 함수(빈자리 게시물에 -분 후 라고 표기 예정)
+const getRemainingMinutesText = (expectedCheckoutTime: string) => {
+  if (!expectedCheckoutTime) return ""
+
+  // 1. <<시간 보정 필수!!>>백엔드에서 넘어온 시간 뒤에 'Z'나 '+09:00' 오프셋이 없다면 UTC로 강제 보정
+  let timeString = expectedCheckoutTime
+  if (
+    typeof timeString === "string" &&
+    !timeString.includes("Z") &&
+    !timeString.includes("+")
+  ) {
+    timeString += "Z"
+  }
+
+  const now = new Date().getTime()
+  const targetTime = new Date(timeString).getTime()
+
+  if (isNaN(targetTime)) return ""
+
+  // 2. 현재 시간과의 차이 계산 (분 단위)
+  const diffMinutes = Math.ceil((targetTime - now) / (1000 * 60))
+
+
+  if (diffMinutes <= 0) return "퇴실 완료"
+  return `${diffMinutes}분 후`
+}
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"all" | "spot">("all")
@@ -20,7 +49,7 @@ export default function HomePage() {
   const navigate = useNavigate()
 
   // 게시글 목록 불러오기(API 연동)
-  /*useEffect(() => {
+  useEffect(() => {
     const fetchPosts = async () => {
       setIsLoading(true)
       try {
@@ -33,58 +62,8 @@ export default function HomePage() {
       }
     }
     fetchPosts()
-  }, [showAvailableOnly])*/
+  }, [showAvailableOnly])
 
-  useEffect(() => {
-  // 임시 테스트용 mock 데이터
-  setPosts([
-    {
-      postId: 1,
-      status: "ACTIVE",
-      imageUrlList: [],
-      category: "DEPARTMENT_JACKET",
-      title: "컴퓨터 공학과 과잠 대여하고 싶어요",
-      description: "23학번 과잠 대여 가능하신 분 있나요? 은걸로 하루만 빌리고 싶습니다! 금방 돌려드릴게요 정말 너무너무 급해요!!!!!!!!!!!!!!",
-      rentalStartTime: "2026-04-08",
-      rentalEndTime: "2026-04-09",
-      rentalPrice: 5000,
-      rentalPriceUnit: "HOUR",
-      authorNickname: "코딩왕",
-      likeCount: 2,
-      liked: false,
-    },
-    {
-      postId: 2,
-      status: "ACTIVE",
-      imageUrlList: [],
-      category: "LIVING_SUPPLIES",
-      title: "미니 선풍기 대여합니다",
-      description: "여름 한정 미니 선풍기 대여해요",
-      rentalStartTime: "2026-04-01",
-      rentalEndTime: "2026-04-02",
-      rentalPrice: 2000,
-      rentalPriceUnit: "DAY",
-      authorNickname: "생활왕",
-      likeCount: 8,
-      liked: false,
-    },
-    {
-      postId: 3,
-      status: "ACTIVE",
-      imageUrlList: [],
-      category: "LIVING_SUPPLIES",
-      title: "미니 선풍기 대여합니다",
-      description: "여름 한정 미니 선풍기 대여해요",
-      rentalStartTime: "2026-04-01",
-      rentalEndTime: "2026-04-02",
-      rentalPrice: 2000,
-      rentalPriceUnit: "DAY",
-      authorNickname: "생활왕",
-      likeCount: 8,
-      liked: false,
-    }
-  ])
-}, [])
 
   // 좋아요 토글
   const toggleLike = async (postId: number) => {
@@ -118,29 +97,22 @@ export default function HomePage() {
     }
   }
 
-  // 빈자리 mock 데이터 (아직 API 미연동)
-  const [spotPosts] = useState([
-    {
-      id: 1,
-      title: "스타벅스 숙대 정문점",
-      timeLeft: "10분 후",
-      floor: 1,
-      window: true,
-      outlet: false,
-      location: "스타벅스 숙대 정문점",
-      author: "카페인중독",
-    },
-    {
-      id: 2,
-      title: "숙명여자대학교 중앙도서관 4층 열람실",
-      timeLeft: "30분 후",
-      floor: 4,
-      window: true,
-      outlet: true,
-      location: "중앙도서관 4층",
-      author: "도서관지킴이",
-    },
-  ])
+// 빈자리 게시글 목록
+const [spotPosts, setSpotPosts] = useState<EmptySpotListResponse[]>([])
+
+// 빈자리 게시글 목록 불러오기(API 연동)
+useEffect(() => {
+  if (activeTab !== "spot") return
+  const fetchEmptySpots = async () => {
+    try {
+      const res = await getEmptySpotList()
+      setSpotPosts((res.data as any).result || [])
+    } catch (err) {
+      console.error("빈자리 목록 조회 실패:", err)
+    }
+  }
+  fetchEmptySpots()
+}, [activeTab])
 
   // 빈자리 검색 필터링
 const filteredSpotPosts = spotPosts.filter((spot) => {
@@ -170,6 +142,7 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
       return new Date(b.rentalStartTime).getTime() - new Date(a.rentalStartTime).getTime()
     })
 
+
   const categoryList: PostCategory[] = [
     "DEPARTMENT_JACKET",
     "MAJOR_BOOKS",
@@ -181,10 +154,10 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
 
   return (
     <div className="w-full min-h-full bg-white flex flex-col justify-between vertical-scroll">
-      <div className="w-full flex flex-col bg-white pb-10">
+  <div className="w-full flex flex-col bg-white pb-10">
 
-        {/* 헤더: 로고 (116x29) + 글쓰기 버튼*/}
-        <div className="flex items-center justify-between px-[22px] pt-[30px] pb-4">
+    {/* 헤더: 로고 (116x29) + 글쓰기 버튼*/}
+    <div className="flex items-center justify-between px-[22px] pt-[30px] pb-4">
             <img src="/logo1.png" alt="BORO" style={{ width: "116.09px", height: "29px" }} />
             <button
               onClick={() => navigate("/post/create")}
@@ -565,123 +538,78 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
   </p>
 ) : (
   filteredSpotPosts.map((spot) => (
+  <div
+    key={spot.emptySpotId}
+    onClick={() => navigate(`/post/spot/${spot.emptySpotId}`)}
+    className="relative mx-auto cursor-pointer"
+    style={{
+      width: "370px",
+      minHeight: "191px",
+      borderRadius: "40px",
+      border: "2px solid #FF5E00",
+      paddingTop: "28px",
+      paddingLeft: "30px",
+      paddingRight: "18px",
+      paddingBottom: "18px",
+    }}
+  >
+    {/* 시간 뱃지 */}
     <div
-  key={spot.id}
-  onClick={() => navigate(`/post/spot/${spot.id}`)}
-  className="relative mx-auto cursor-pointer"
-  style={{
-    width: "370px",
-    minHeight: "191px",
-    borderRadius: "40px",
-    border: "2px solid #FF5E00",
-    paddingTop: "30px",
-    paddingLeft: "30px",
-    paddingRight: "18px",
-    paddingBottom: "18px",
-  }}
->
-      {/* 시간 뱃지 (80x25, radius 7) */}
-      <div
-        className="absolute flex items-center justify-center whitespace-nowrap"
-        style={{
-          width: "80px",
-          height: "24px",
-          top: "0px",
-          right: "25px",
-          borderRadius: "7px",
-          backgroundColor: "#FF5E00",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "Pretendard",
-            fontWeight: 500,
-            fontSize: "14px",
-            lineHeight: "1.2",
-            color: "#FFFFFF",
-          }}
-        >
-          {spot.timeLeft}
-        </span>
-      </div>
-
-      {/* 번개 아이콘 + 제목 (22x24 아이콘, 226x18 제목 font14 bold) */}
-      <div className="flex items-start gap-3 mb-3" style={{ paddingRight: "0px" }}>
-        <Zap size={22} style={{ color: "#FF5E00", fill: "#FF5E00", flexShrink: 0 }} />
-        <p
-          style={{
-            fontFamily: "Pretendard",
-            fontWeight: 700,
-            fontSize: "14px",
-            lineHeight: "1.2",
-            color: "#1A1A1A",
-          }}
-        >
-          {spot.title}
-        </p>
-      </div>
-
-      {/* 설명 (226x34, font12 regular) */}
-      <p
-        className="mb-4"
-        style={{
-          marginLeft: "34px",
-          fontFamily: "Pretendard",
-          fontWeight: 500,
-          fontSize: "12px",
-          lineHeight: "1.4",
-          color: "#4A4A4A",
-        }}
-      >
-        {spot.floor}층 / {spot.window ? "창가 자리" : "복도 자리"} / 콘센트 {spot.outlet ? "있음" : "없음"}
-      </p>
-
-      {/* 위치 (아이콘 12x15, 텍스트 font12 semibold) */}
-      <div className="flex items-center gap-1 mb-6" style={{ marginLeft: "34px" }}>
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-  <path
-    d="M12 2C7.58 2 4 5.58 4 10C4 16 12 22 12 22C12 22 20 16 20 10C20 5.58 16.42 2 12 2Z"
-    fill="#43A860"
-  />
-  <circle cx="12" cy="10" r="4" fill="white" />
-</svg>
-<span
-          style={{
-            fontFamily: "Pretendard",
-            fontWeight: 500,
-            fontSize: "12px",
-            lineHeight: "1.2",
-            color: "#43A860",
-          }}
-        >
-          {spot.location}
-        </span>
-      </div>
-
-      {/* 작성자 (원 25x25, 이름 font12 regular) */}
-      <div className="flex items-center gap-2">
-        <div
-          className="bg-gray-700 flex-shrink-0"
-          style={{ width: "25px", height: "25px", borderRadius: "15px" }}
-        />
-        <span
-          style={{
-            fontFamily: "Pretendard",
-            fontWeight: 400,
-            fontSize: "12px",
-            lineHeight: "1.2",
-            color: "#000000",
-          }}
-        >
-          {spot.author}
-        </span>
-      </div>
+      className="absolute flex items-center justify-center whitespace-nowrap"
+      style={{
+        width: "80px",
+        height: "25px",
+        top: "0px",
+        right: "30px",
+        borderRadius: "7px",
+        backgroundColor: "#FF5E00",
+      }}
+    >
+      <span style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "14px", color: "#FFFFFF" }}>
+        {getRemainingMinutesText(spot.expectedCheckoutTime)}
+      </span>
     </div>
-  ))
-)}
+
+    {/* 번개 아이콘 + 제목 (location으로 대체) */}
+    <div className="flex items-start gap-3 mb-4" style={{ paddingRight: "70px" }}>
+      <Zap size={22} style={{ color: "#FF5E00", fill: "#FF5E00", flexShrink: 0 }} />
+      <p style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "14px", color: "#1A1A1A" }}>
+        {spot.location}
+      </p>
+    </div>
+
+    {/* 설명 (층/창가/콘센트) */}
+    <p
+      className="mb-4"
+      style={{ marginLeft: "34px", fontFamily: "Pretendard", fontWeight: 400, fontSize: "12px", color: "#4A4A4A" }}
+    >
+      {spot.floor}층 / {spot.hasWindowSeat ? "창가 자리" : "복도 자리"} / 콘센트 {spot.hasPowerOutlet ? "있음" : "없음"}
+    </p>
+
+    {/* 위치 (좌석번호) */}
+    <div className="flex items-center gap-1 mb-6" style={{ marginLeft: "30px" }}>
+      <svg width="20" height="19" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+        <path d="M12 2C7.58 2 4 5.58 4 10C4 16 12 22 12 22C12 22 20 16 20 10C20 5.58 16.42 2 12 2Z" fill="#43A860" />
+        <circle cx="12" cy="10" r="4" fill="white" />
+      </svg>
+      <span style={{ fontFamily: "Pretendard", fontWeight: 600, fontSize: "12px", color: "#43A860" }}>
+        {spot.seatNumber}번 좌석
+      </span>
+    </div>
+
+    {/* 작성자 */}
+    <div className="flex items-center gap-2">
+      <div className="bg-gray-700 flex-shrink-0" style={{ width: "25px", height: "25px", borderRadius: "15px" }} />
+      <span style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "12px", color: "#000000" }}>
+        {spot.authorNickname}
+      </span>
+    </div>
+  </div>
+)))}
     </div>
   </>
 )}
+    
       </div>
 
       <BottomNav />
