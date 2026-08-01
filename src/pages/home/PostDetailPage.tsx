@@ -12,39 +12,9 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<PostSummary | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  useEffect(() => {
-  const fetchPostDetail = async () => {
-    if (!postId) return
-    setIsLoading(true)
-    try {
-      const res = await getPostDetail(Number(postId))
-      setPost(res.data.result)
-    } catch (err) {
-      console.error("게시글 상세 조회 실패 (mock 데이터 사용):", err)
-      // 임시 mock 데이터 (테스트용, 나중에 삭제 예정)
-      setPost({
-        postId: Number(postId) || 1,
-        status: "ACTIVE",
-        imageUrlList: [],
-        category: "DEPARTMENT_JACKET",
-        title: "컴퓨터 공학과 과잠 대여하고 싶어요",
-        description: "23학번 과잠 대여 가능하신 분 있나요? 상태 좋은걸로 하루만 빌리고 싶습니다!",
-        rentalStartTime: "2026-04-08",
-        rentalEndTime: "2026-04-09",
-        rentalPrice: 5000,
-        rentalPriceUnit: "HOUR",
-        authorNickname: "코딩왕",
-        likeCount: 2,
-        liked: false,
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-  fetchPostDetail()
-}, [postId])
 
-  /*useEffect(() => {
+
+  useEffect(() => {
     const fetchPostDetail = async () => {
       if (!postId) return
       setIsLoading(true)
@@ -58,7 +28,7 @@ export default function PostDetailPage() {
       }
     }
     fetchPostDetail()
-  }, [postId])*/
+  }, [postId])
 
   const toggleLike = async () => {
     if (!post) return
@@ -173,10 +143,9 @@ export default function PostDetailPage() {
       대여 신청일 : {post.rentalStartTime}
     </span>
   </div>
-            {/* 날짜 시간(게시글 작성일) -> 필드 추가 후 수정 필요*/}
             <div className="flex items-center gap-2 mb-9">
               <Clock size={22} className="text-[#7F7F7F] flex-shrink-0" />
-              <span className="text-[12px] text-[#7F7F7F]"> -- </span>
+              <span className="text-[12px] text-[#7F7F7F]"> {new Date(post.createdAt).toLocaleDateString("ko-KR")} </span>
             </div>
 
           {/* 대여 비용 (Rectangle 109: 368x68, 그라데이션 배경) */}

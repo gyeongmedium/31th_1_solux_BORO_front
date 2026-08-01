@@ -1,10 +1,12 @@
 import { ArrowLeft, ImagePlus, ChevronDown, Calendar, Clock } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
-import { useEffect, useState } from "react"
-import { categoryLabel } from "../../utils/postMapper"
-import type { PostCategory } from "../../types/post"
+import { useEffect, useRef, useState } from "react"
+import { categoryLabel, priceUnitLabel } from "../../utils/postMapper"
+import type { PostCategory, RentalPriceUnit } from "../../types/post"
 import { createPost } from "../../api/post"
 import { createEmptySpot, updateEmptySpot } from "../../api/emptySpot"
+import axios from "axios"
+import { getPresignedUrl } from "../../api/file"
 
 
 export default function PostCreatePage() {
@@ -22,8 +24,13 @@ export default function PostCreatePage() {
   const [floor, setFloor] = useState("")
   const [seatNumber, setSeatNumber] = useState("")
   const [checkoutTime, setCheckoutTime] = useState("")
+  const [rentalPriceUnit, setRentalPriceUnit] = useState<RentalPriceUnit | null>(null)
+  const [periodCount, setPeriodCount] = useState("1")
+  const [showPeriodMenu, setShowPeriodMenu] = useState(false)
   const { postId, spotId } = useParams()
   const isEditMode = !!postId || !!spotId  // postId나 spotId가 있으면 true (수정 모드)
+  const [imageFiles, setImageFiles] = useState<File[]>([])
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const postCategoryList: PostCategory[] = [
     "DEPARTMENT_JACKET",
@@ -32,7 +39,6 @@ export default function PostCreatePage() {
     "LIVING_SUPPLIES",
     "ETC",
   ]
-
 
   useEffect(() => {
   if (isEditMode) {
@@ -45,39 +51,78 @@ export default function PostCreatePage() {
   }
 }, [postId, spotId])
 
-const handleSubmit = async () => {
-  if (activeTab === "post") {
-    
-    // 기존 게시글 작성 로직
-    if (!title || !description || !rentalStartTime || !rentalPrice) {
-      alert("필수 항목을 모두 입력해주세요.")
-      return
+  const uploadImage = async (file: File): Promise<string> => {
+    const res = await getPresignedUrl({
+      fileName: file.name,
+      contentType: file.type,
+    })
+    const { presignedUrl, fileUrl } = res.data.result
+
+    await axios.put(presignedUrl, file, {
+      headers: { "Content-Type": file.type },
+    })
+
+    return fileUrl
+  }
+  const handleSubmit = async () => {
+    if (activeTab === "post") {
+      
+      //////////////////////////////////////////////////////
+      // 기존 게시글 작성 로직
+      if (!title || !description || !rentalStartTime || !rentalPrice || !rentalPriceUnit) {
+        alert("필수 항목을 모두 입력해주세요.")
+        return
+      }
+
+    const calculateEndTime = (startDate: string, unit: RentalPriceUnit): string => {
+      const date = new Date(startDate)
+      switch (unit) {
+        case "HOUR":
+          date.setHours(date.getHours() + 1)
+          break
+        case "DAY":
+          date.setDate(date.getDate() + 1)
+          break
+        case "WEEK":
+          date.setDate(date.getDate() + 7)
+          break
+        case "MONTH":
+          date.setMonth(date.getMonth() + 1)
+          break
+        case "SEMESTER":
+          date.setMonth(date.getMonth() + 4)
+          break
+      }
+      return date.toISOString().split("T")[0]
     }
 
     try {
-      if (isEditMode) {
-        console.log("수정할 게시글 ID:", postId)
-        // TODO: updatePost API 연결 필요
-        
-      } else {
-      const formattedStartTime = `${rentalStartTime}T00:00:00`
-      
-        await createPost({
-          imageUrlList: [],
-          category,
-          title,
-          description,
-          rentalStartTime: formattedStartTime,
-          rentalEndTime: formattedStartTime,
-          rentalPrice: Number(rentalPrice.replace(/[^0-9]/g, "")),
-          rentalPriceUnit: "DAY",
-        })
+      if (imageFiles.length === 0) {
+        alert("사진을 최소 1장 이상 첨부해야 합니다.")
+        return
       }
-      navigate("/")
-    } catch (err) {
-      console.error("게시글 처리 실패:", err)
-      alert("처리에 실패했어요. 다시 시도해주세요.")
+
+    const uploadedUrls = await Promise.all(imageFiles.map((file) => uploadImage(file)))
+
+    if (isEditMode) {
+      console.log("수정할 게시글 ID:", postId)
+    } else {
+      await createPost({
+        imageUrlList: uploadedUrls,
+        category,
+        title,
+        description,
+        rentalStartTime,
+        rentalEndTime: calculateEndTime(rentalStartTime, rentalPriceUnit),
+        rentalPrice: Number(rentalPrice),
+        rentalPriceUnit,
+      })
     }
+    navigate("/")
+  } catch (err) {
+    console.error("게시글 처리 실패:", err)
+    alert("처리에 실패했어요. 다시 시도해주세요.")
+  }
   } else {
 
     //////////////////////////////////////////////////////////////
@@ -104,11 +149,11 @@ const handleSubmit = async () => {
 
     // 3. 현재 시간과의 차이 계산 (분 단위)
     const diffMinutes = (checkoutDate.getTime() - now.getTime()) / (1000 * 60)
-    //->20분 이내로 설정 하도록 팝업 띄우기
-    if (diffMinutes < -1) {
-      alert("퇴실 예정 시간은 현재 시각 이후여야 합니다.")
-      return
-    }
+    //->5-20분 이내로 설정 하도록 팝업 띄우기
+    if (diffMinutes < 5) {
+  alert("퇴실 예정 시간은 현재 시각으로부터 최소 5분 이후여야 합니다.")
+  return
+}
 
     if (diffMinutes > 20) {
       alert("퇴실 예정 시간은 현재 시각으로부터 20분 이내로 설정해야 합니다.")
@@ -246,6 +291,7 @@ const handleSubmit = async () => {
       {/* 사진 추가하기 (334x295, radius 40, 배경 #E6E6E6) */}
 <div className="w-full flex justify-center mb-5">
   <button
+    onClick={() => fileInputRef.current?.click()}
     className="flex flex-col items-center justify-center gap-3"
     style={{
       width: "334px",
@@ -254,28 +300,26 @@ const handleSubmit = async () => {
       backgroundColor: "#E6E6E6",
     }}
   >
-    <ImagePlus size={80} className="text-[#7F7F7F]" strokeWidth={1.5} />
-    <span
-      style={{
-        fontFamily: "Pretendard",
-        fontWeight: 700,
-        fontSize: "16px",
-        color: "#000000",
-      }}
-    >
+    <ImagePlus size={56} className="text-[#B3B3B3]" strokeWidth={1.5} />
+    <span style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "16px", color: "#7F7F7F" }}>
       사진 추가하기
     </span>
-    <span
-      style={{
-        fontFamily: "Pretendard",
-        fontWeight: 400,
-        fontSize: "13px",
-        color: "#7F7F7F",
-      }}
-    >
-      최대 10장
+    <span style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "13px", color: "#B3B3B3" }}>
+      최대 10장 ({imageFiles.length}장 선택됨)
     </span>
   </button>
+  <input
+    ref={fileInputRef}
+    type="file"
+    accept="image/*"
+    multiple
+    className="hidden"
+    onChange={(e) => {
+      if (e.target.files) {
+        setImageFiles(Array.from(e.target.files))
+      }
+    }}
+  />
 </div>
 
    {/* 카테고리 (334x107, radius 40, border 1px #CCCCCC) */}
@@ -301,7 +345,7 @@ const handleSubmit = async () => {
         color: "#1A1A1A",
       }}
     >
-      카테고리 *
+      카테고리
     </p>
 
     {/* 드롭다운 박스 (138x46, radius 40, border 1px) */}
@@ -611,21 +655,52 @@ const handleSubmit = async () => {
     style={{ width: "1px", height: "1px" }}
   />
 </div>
-      <button
-        className="flex items-center justify-center gap-1"
-        style={{
-          width: "105px",
-          height: "46px",
-          borderRadius: "40px",
-          backgroundColor: "#E6E6E6",
-          fontFamily: "Pretendard",
-          fontWeight: 400,
-          fontSize: "12px",
-          color: "#7F7F7F",
-        }}
-      >
-        대여 기간 <ChevronDown size={23} />
-      </button>
+<div className="relative">
+  <button
+    onClick={() => setShowPeriodMenu(!showPeriodMenu)}
+    className="flex items-center justify-center gap-1"
+    style={{
+      width: "105px",
+      height: "46px",
+      borderRadius: "40px",
+      backgroundColor: "#E6E6E6",
+      fontFamily: "Pretendard",
+      fontWeight: 400,
+      fontSize: "12px",
+      color: rentalPriceUnit ? "#1A1A1A" : "#7F7F7F",
+    }}
+  >
+    {rentalPriceUnit ? priceUnitLabel[rentalPriceUnit] : "대여 기간"} <ChevronDown size={23} />
+  </button>
+
+  {showPeriodMenu && (
+    <div
+      className="absolute bg-white shadow-md z-10"
+      style={{
+        top: "50px",
+        right: "0px",
+        width: "105px",
+        borderRadius: "16px",
+        border: "1px solid #CCCCCC",
+        overflow: "hidden",
+      }}
+    >
+      {(["HOUR", "DAY", "WEEK", "MONTH", "SEMESTER"] as RentalPriceUnit[]).map((unit) => (
+        <button
+          key={unit}
+          onClick={() => {
+            setRentalPriceUnit(unit)
+            setShowPeriodMenu(false)
+          }}
+          className="w-full text-center py-2 hover:bg-gray-100"
+          style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "12px", color: "#1A1A1A" }}
+        >
+          {priceUnitLabel[unit]}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
     </div>
  <p
       className="absolute"
