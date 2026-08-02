@@ -150,7 +150,7 @@ export default function PostDetailPage() {
 
           {/* 대여 비용 (Rectangle 109: 368x68, 그라데이션 배경) */}
           <div 
-            className="w-[351px] h-[68px] flex items-center justify-between px-4 -mx-2 mb-4"
+            className="w-[352px] h-[68px] flex items-center justify-between px-4 -mx-2 mb-4"
             style={{ background: "linear-gradient(90deg, #FFFFFF 0%, #E4E4FF 100%)" }}
           >
             <span 
