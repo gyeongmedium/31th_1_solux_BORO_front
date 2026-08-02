@@ -401,12 +401,12 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
                       </div>
 
                       {/* 카테고리 뱃지 (내용에 따라 너비 자동) */}
-<div
-  className="absolute flex items-center justify-center text-[12px] bg-[#E4E4FF] text-[#000000] px-2.5 whitespace-nowrap"
-  style={{ height: "30px", top: "23px", left: "186px", borderRadius: "40px" }}
->
-  {categoryLabel[post.category]}
-</div>
+                      <div
+                        className="absolute flex items-center justify-center text-[12px] bg-[#E4E4FF] text-[#000000] px-2.5 whitespace-nowrap"
+                        style={{ height: "30px", top: "23px", left: "186px", borderRadius: "40px" }}
+                      >
+                        {categoryLabel[post.category]}
+                      </div>
 
                       {/* 좋아요 버튼 (우측 상단 배치) */}
                       <button
@@ -414,8 +414,8 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
                           e.stopPropagation()
                           toggleLike(post.postId)
                         }}
-                        className="absolute flex items-center gap-0.5"
-                        style={{ top: "23px", right: "20px" }}
+                        className="absolute flex items-center gap-1"
+                        style={{ top: "23px", right: "25px" }}
                       >
                         <Heart size={20} className={post.liked ? "fill-[#9996FF] text-[#9996FF]" : "text-[#9996FF]"} />
                         <span className="text-xs text-[#000000]">{post.likeCount}</span>
@@ -458,21 +458,21 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
                       </p>
 
                       {/* 대여 신청일 (하단 고정) */}
-<p
-  className="absolute"
-  style={{
-    width: "200px",
-    left: "122px",
-    bottom: "55px",
-    fontFamily: "Pretendard",
-    fontWeight: 400,
-    fontSize: "12px",
-    lineHeight: "1.2",
-    color: "#43A860",
-  }}
->
-  대여 신청일 : {post.rentalStartTime}
-</p>
+                      <p
+                        className="absolute"
+                        style={{
+                          width: "200px",
+                          left: "122px",
+                          bottom: "55px",
+                          fontFamily: "Pretendard",
+                          fontWeight: 400,
+                          fontSize: "12px",
+                          lineHeight: "1.2",
+                          color: "#43A860",
+                        }}
+                      >
+                        대여 신청일 : {post.rentalStartTime}
+                      </p>
 
                       {/* 사용자 사진 (25x25, radius 15, top 154 left 26) */}
                       <div
@@ -484,7 +484,7 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
                       <p
                         className="absolute overflow-hidden text-ellipsis whitespace-nowrap"
                         style={{
-                          width: "40px",
+                          width: "100px",
                           height: "14px",
                           top: "160px",
                           left: "62px",
