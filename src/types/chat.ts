@@ -87,3 +87,39 @@ export interface ChatMessageList {
 }
 
 export type ApiResponseChatMessageList = ApiResponse<ChatMessageList>;
+
+
+// 5. PATCH /api/v1/chat/{roomId}/read (채팅방 읽음 처리)
+export type ApiResponseReadChatRoom = ApiResponse<Record<string, never>>;
+
+
+// =============================
+// WebSocket / STOMP 타입 정의
+
+// 6. SUBSCRIBE /sub/chat/{roomId} (채팅방 메시지 구독)
+export interface SubChatMessagePayload {
+    roomId: number;
+    chatMessageType: ChatMessageType;
+    memberId: number;
+    content: string;
+    imageUrls: string[];
+    createdAt: string;
+}
+
+
+// 7. SEND /pub/chat/{roomId} (채팅방 메시지 전송)
+export interface SendChatMessagePayload {
+    chatMessageType: ChatMessageType;
+    content: string;
+    imageUrls: string[];
+}
+
+
+// 8. SUBSCRIBE user/queue/unread (채팅방 생성 조회 - 업데이트된 채팅방 반영)
+export interface UnreadChatUpdatePayload {
+    memberId: number;
+    chatRoomId: number;
+    lastMessageContent: string;
+    lastMessageAt: string;
+    unreadCount: number;
+}

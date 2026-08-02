@@ -1,6 +1,9 @@
 import { ArrowLeft, Share2, MapPin, Clock, Calendar, MessageCircle } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 
+import { createChatRoom } from "../../api/chat"
+import type { ChatRoom } from "../../types/chat"
+
 export default function SpotDetailPage() {
   const navigate = useNavigate()
   const { spotId } = useParams()
@@ -19,6 +22,38 @@ export default function SpotDetailPage() {
     timeLeft: "10분 후",
     dateTime: "2026. 4. 7 오전 10:30",
   }
+
+
+  {/* 경민: 채팅하기 버튼과 채팅방 생성 연결을 위한 코드 (나중에 이 주석 삭제하기) */}
+  const handleStartChat = async () => {
+    if (!spotId) return;
+
+    try {
+      // POST /api/v1/chat/{postId} 호출 (빈자리 게시글이므로 EMPTY_SPOT)
+      const requestData: ChatRoom = {
+        chatRoomType: "EMPTY_SPOT",
+      };
+
+      const response = await createChatRoom(Number(spotId), requestData);
+
+      if (response.isSuccess && response.result) {
+        // 생성된 rentalRequestId를 방 ID로 사용하여 DetailedChatPage로 이동
+        const createdRoomId = response.result.rentalRequestId;
+
+        navigate(`/chat/${createdRoomId}`, {
+          state: {
+            ownerNickname: spot.author,
+            title: spot.title,
+          },
+        });
+      } else {
+        alert(response.message || "채팅방 생성에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("채팅방 생성 중 오류 발생:", err);
+      alert("채팅방을 생성할 수 없습니다. 로그인 상태를 확인해주세요.");
+    }
+  };
 
   return (
     <div className="flex flex-col bg-white pb-24 vertical-scroll">
@@ -196,6 +231,7 @@ export default function SpotDetailPage() {
         }}
       >
         <button
+          onClick={handleStartChat}       // 경민: 채팅하기 버튼과 채팅방 생성 연결을 위한 코드 (나중에 이 주석 삭제하기)
           className="flex items-center justify-center gap-2"
           style={{
             width: "304px",

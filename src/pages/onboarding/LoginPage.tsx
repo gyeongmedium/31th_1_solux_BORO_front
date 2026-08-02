@@ -1,9 +1,6 @@
 // 로그인 페이지
 
-import { useState } from "react";
-
 export default function LoginPage() {
-    const [email, setEmail] = useState("");
 
     const handleGoogleLogin = () => {
         const CLIENT_ID = "201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com";
@@ -20,40 +17,18 @@ export default function LoginPage() {
         <div className="relative min-w-[402px] max-w-[402px] min-h-[874px] max-height-[874px] w-[402px] h-[874px] overflow-y-auto overflow-x-hidden flex flex-col items-center bg-white">
             
             {/* 1. 상단 로고 및 슬로건 섹션 */}
-            <div className="flex flex-col items-center text-center mt-[123px] gap-0.5">
+            <div className="flex flex-col items-center text-center mt-[160px] gap-0.5">
                 <img src="/logo1.png" alt="BORO 로고" className="h-[58px] w-auto" />
                 <h1 className="text-[14px] text-[#1A1A1A] mt-1.5">바로, 송이끼리!</h1>
                 <p className="text-[12px] text-[#7F7F7F]">대학생만의 신뢰 기반 대여 플랫폼</p>
             </div>
 
             {/* 2. 로그인 폼 카드 섹션 */}
-            <div className="flex w-[370px] h-[356px] flex-col rounded-[40px] bg-[#E4E4FF] mt-10 p-8">
+            <div className="flex w-[370px] h-auto flex-col rounded-[40px] bg-[#E4E4FF] mt-12 p-8 gap-8">
                 <h2 className="text-[16px] font-bold text-[#1A1A1A] ml-1">로그인</h2>
 
-                {/* 이메일 입력 섹션 */}
-                <div className="flex flex-col gap-[4px] mt-3">
-                    <label htmlFor="email" className="text-[14px] text-[#1A1A1A] pl-1">
-                        학교 이메일
-                    </label>
-                    <input
-                        type="email"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="example@sookmyung.ac.kr"
-                        className="w-[304px] h-[40px] rounded-[35.9px] bg-white px-6 py-4 text-[12px] text-[#1A1A1A] placeholder-[#7F7F7F] focus:outline-none"
-                    />
-                    <p className="pl-1 text-[12px] text-[#7F7F7F]">
-                        학교 이메일(@ac.kr)만 사용 가능합니다
-                    </p>
-                </div>
-
                 {/* 소셜 및 일반 로그인 버튼 섹션 */}
-                <div className="flex flex-col gap-3">
-                    <label className="text-[14px] text-[#1A1A1A] pl-1 mt-3">
-                        학교 이메일로 로그인하기
-                    </label>
-
+                <div className="flex flex-col gap-3 items-center justify-center">
                     {/* Google 로그인 버튼 */}
                     <button
                         type="button"
@@ -65,21 +40,28 @@ export default function LoginPage() {
                         alt="Google"
                         className="h-[17px] w-[17px]"
                         />
-                        <span className="text-[12px] text-[#1A1A1A]">구글 계정으로 로그인 / 회원가입</span>
+                        <span className="text-[12px] text-[#1A1A1A]">구글 계정으로 로그인하기</span>
                     </button>
+                    <p className="pl-1 text-[12px] text-[#7F7F7F]">
+                        학교 이메일(@ac.kr)만 사용 가능합니다
+                    </p>
+                    {/* 3. 회원가입 유도 링크 섹션 */}
+                    <div className="flex items-center justify-center gap-2 text-center text-[12px] text-[#7F7F7F] mt-6">
+                        <span>계정이 없으신가요?</span>
+                        <button
+                            type="button"
+                            onClick={handleGoogleLogin}
+                            className="font-semibold text-[#0077FF] cursor-pointer"
+                        >
+                            회원가입
+                        </button>
+                    </div>
 
-                    {/* 일반 로그인 버튼 */}
-                    <button
-                        type="button"
-                        className="w-[304px] h-[40px] rounded-[35.9px] bg-[#9996FF] text-[14px] !font-bold text-white transition hover:bg-[#7a7eff]"
-                    >
-                        로그인
-                    </button>
                 </div>
             </div>
 
             {/* 3. 하단 서비스 소개 카드 섹션 */}
-            <div className="flex flex-col w-[370px] h-[162px] gap-3 rounded-[40px] bg-[#F0F0FF] p-6 mt-6">
+            <div className="flex flex-col w-[370px] h-[162px] gap-3 rounded-[40px] bg-[#F0F0FF] p-6 mt-8">
                 <h3 className="text-[16px] font-bold text-[#1A1A1A] pl-2">‘바로’ 는?</h3>
                 
                 {/* 서비스 소개 목록 */}

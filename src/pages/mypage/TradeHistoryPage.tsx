@@ -318,7 +318,15 @@ export default function TradeHistoryPage() {
                     )}
                     {trade.showReviewButton && (
                       <button
-                        onClick={() => navigate(`/mypage/review-create/${trade.id}`)}
+                        onClick={() =>
+                          navigate(`/mypage/review-create/${trade.id}`, {    // 경민: 후기 작성 페이지에 이동하고, 게시글 제목, 거래자 아이디 전달하기 위해서
+                            state: {
+                              rentalId: trade.id,
+                              title: trade.title,
+                              partnerName: trade.counterpart,
+                            },
+                          })
+                        }
                         className="flex items-center justify-center"
                         style={{
                           width: "94px",
