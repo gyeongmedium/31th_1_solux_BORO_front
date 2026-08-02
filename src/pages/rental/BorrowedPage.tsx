@@ -1,11 +1,10 @@
 // 대여현황 (빌린 탭)
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom"; 
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
-import { getBorrowedRentalRequests, completeRentalReturn } from "../../api/rental";       // 여기!
-//import { getMockBorrowedRentalRequests, completeMockRentalReturn } from "../../api/rental";
+import { getBorrowedRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";
 import type { RentalRequestPreview, RentalRequestStatus } from "../../types/rental";
 
 // 팝업 컴포넌트 (취소/확인)
@@ -98,16 +97,15 @@ export default function BorrowedPage() {
 
     const [modalState, setModalState] = useState<{
         show: boolean;
-        item: RentalRequestPreview | null;
-    }>({ show: false, item: null });
+        item: (RentalRequestPreview & { isReturnWaiting?: boolean }) | null;
+        action: 'approve' | 'reject' | 'return' | null;
+    }>({ show: false, item: null, action: null });
 
     const [toast, setToast] = useState<string | null>(null);
 
-    // 내가 빌린 목록 로드
-    const fetchRentals = async () => {
+    const fetchRentals = useCallback(async () => {
         try {
-            const res = await getBorrowedRentalRequests();        // 여기!
-            //const res = await getMockBorrowedRentalRequests();      // 여기! 이거 삭제
+            const res = await getBorrowedRentalRequests();
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -116,14 +114,13 @@ export default function BorrowedPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         let isMounted = true;
         (async () => {
             try {
-                const res = await getBorrowedRentalRequests();        // 여기!
-                //const res = await getMockBorrowedRentalRequests();
+                const res = await getBorrowedRentalRequests();
                 if (res.isSuccess && isMounted) {
                     setRentals(res.result);
                 }
@@ -141,41 +138,69 @@ export default function BorrowedPage() {
         };
     }, []);
 
-    const handleReturn = (item: RentalRequestPreview) => {
-        setModalState({ show: true, item });
+    const handleApprove = (item: RentalRequestPreview) => {
+        setModalState({ show: true, item, action: 'approve' });
     };
 
-    const confirmReturn = async () => {
-        if (!modalState.item) return;
+    const handleReject = (item: RentalRequestPreview) => {
+        setModalState({ show: true, item, action: 'reject' });
+    };
+
+    const handleReturn = (item: RentalRequestPreview) => {
+        setModalState({ show: true, item, action: 'return' });
+    };
+
+    const confirmAction = async () => {
+        if (!modalState.item || !modalState.action) return;
+        const currentItem = modalState.item;
 
         try {
-            const res = await completeRentalReturn(modalState.item.rentalRequestId);      // 여기!
-            //const res = await completeMockRentalReturn(modalState.item.rentalRequestId);
-            if (res.isSuccess) {
-                setModalState({ show: false, item: null });
-                setToast('제공자 처리시 마이페이지에서 확인 가능합니다.');
-                setTimeout(() => setToast(null), 2000);
-                fetchRentals();
+            if (modalState.action === 'return') {
+                const res = await completeRentalReturn(currentItem.rentalRequestId);
+                if (res.isSuccess) {
+                    // 1. 해당 아이템의 isReturnWaiting 상태를 true로 직접 변경
+                    setRentals((prev) =>
+                        prev.map((r) =>
+                            r.rentalRequestId === currentItem.rentalRequestId
+                                ? { ...r, isReturnWaiting: true }
+                                : r
+                        )
+                    );
+
+                    setModalState({ show: false, item: null, action: null });
+                    setToast('제공자 처리시 마이페이지에서 확인 가능합니다.');
+                    setTimeout(() => setToast(null), 2000);
+                    
+                    // 2. fetchRentals();
+                }
+            } else {
+                const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
+                const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
+                if (res.isSuccess) {
+                    const newStatusLabel = modalState.action === 'approve' ? '대여중' : '대여가능';
+                    setModalState({ show: false, item: null, action: null });
+                    setToast(`상태가 "${newStatusLabel}"으로 변경되었습니다.`);
+                    setTimeout(() => setToast(null), 2000);
+                    fetchRentals();
+                }
             }
         } catch (error) {
-            console.error("반납 처리 실패:", error);
-            setModalState({ show: false, item: null });
+            console.error("요청 처리 실패:", error);
+            setModalState({ show: false, item: null, action: null });
         }
     };
 
-    const cancelReturn = () => {
-        setModalState({ show: false, item: null });
+    const cancelAction = () => {
+        setModalState({ show: false, item: null, action: null });
     };
 
     const handleStartChat = (item: RentalRequestPreview) => {
         const chatType = item.postCategory === "EMPTY_SPOTS" ? "SPACE" : "TRADE";
 
-        // 1. 빈자리인 경우 위치 정보 조립
         const seatTitle = item.seatDetail 
             ? `${item.seatDetail.location || ''} ${item.seatDetail.floor ? `${item.seatDetail.floor}층` : ''} ${item.seatDetail.seatNumber || ''}`.trim().replace(/\s+/g, ' ')
             : "";
 
-        // 2. 삼항 연산자로 title에 '단 한 번만' 값 할당 (ESLint 경고 해결)
         const title = item.postCategory === "EMPTY_SPOTS"
             ? (seatTitle || "빈자리 정보")
             : (item.itemDetail?.title || "게시글 제목");
@@ -188,6 +213,41 @@ export default function BorrowedPage() {
             }
         });
     };
+
+    const getModalText = () => {
+        if (!modalState.item || !modalState.action) return { message: "", subMessage: "" };
+
+        if (modalState.action === 'approve') {
+            return { message: "대여를 승인하시겠어요?", subMessage: "승인 후 거래가 시작됩니다." };
+        }
+
+        if (modalState.action === 'reject') {
+            return { message: "대여 요청을 거절하시겠어요?", subMessage: "거절 후 상태가 대여 가능으로 변경됩니다." };
+        }
+
+        if (modalState.action === 'return') {
+            return {
+                message: "반납 완료 처리하시겠어요?",
+                subMessage: "제공자의 상호 확인 후 정상처리되며,\n완료 후 상대방에게 후기를 남길 수 있습니다."
+            };
+        }
+
+        return { message: "", subMessage: "" };
+    };
+
+    const { message: modalMessage, subMessage: modalSubMessage } = getModalText();
+
+    // BorrowedPage 필터링 규칙 적용
+    const filteredRentals = rentals.filter((item) => {
+        const isBlankCategory = item.postCategory === "EMPTY_SPOTS";
+        if (isBlankCategory) {
+            // 빈자리 게시물: 대여중 상태
+            return item.rentalRequestStatus === "APPROVED";
+        } else {
+            // 물품 게시물: 요청중, 대여중 상태
+            return item.rentalRequestStatus === "PENDING" || item.rentalRequestStatus === "APPROVED";
+        }
+    });
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-height-[874px] max-height-[874px] w-[402px] h-[874px] overflow-hidden flex flex-col bg-white">
@@ -208,15 +268,14 @@ export default function BorrowedPage() {
             <div className="flex-1 overflow-x-hidden overflow-y-scroll vertical-scroll px-4 space-y-4 pt-2 pb-[75px]">
                 {isLoading ? (
                     <div className="text-center py-10 text-gray-400">불러오는 중...</div>
-                ) : rentals.length === 0 ? (
+                ) : filteredRentals.length === 0 ? (
                     <div className="text-center py-10 text-gray-400">빌린 내역이 없습니다.</div>
                 ) : (
-                    rentals.map((item) => {
+                    filteredRentals.map((item) => {
                         const isBlankCategory = item.postCategory === "EMPTY_SPOTS";
                         const statusInfo = getStatusInfo(item.rentalRequestStatus);
                         const categoryLabel = CATEGORY_LABEL_MAP[item.postCategory] || item.postCategory;
 
-                        // 태그 존재 여부 확인
                         const hasTags = item.seatDetail?.hasPowerOutlet || item.seatDetail?.hasWindowSeat;
 
                         return (
@@ -227,7 +286,7 @@ export default function BorrowedPage() {
                                 <div className="flex gap-4 mb-4">
                                     <div className="w-[90px] h-[90px] bg-[#E6E6E6] rounded-[20px] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                         {item.imageUrl ? (
-                                            <img src={item.imageUrl} className="w-full h-full object-cover" />
+                                            <img src={item.imageUrl} alt="물품 이미지" className="w-full h-full object-cover" />
                                         ) : (
                                             <img 
                                                 src="/logo187.png" 
@@ -248,7 +307,7 @@ export default function BorrowedPage() {
                                         </div>
 
                                         {isBlankCategory ? (
-                                            <>
+                                            <>  {/* 빈자리 게시물일 때 */}
                                                 <div className="flex items-center gap-2 mt-2 mb-1">
                                                     <svg width="14" height="18" viewBox="0 0 14 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <path d="M7 0C3.13 0 0 3.13 0 7C0 12.25 7 18 7 18C7 18 14 12.25 14 7C14 3.13 10.87 0 7 0ZM7 9.5C5.62 9.5 4.5 8.38 4.5 7C4.5 5.62 5.62 4.5 7 4.5C8.38 4.5 9.5 5.62 9.5 7C9.5 8.38 8.38 9.5 7 9.5Z" fill="#43A860"/>
@@ -275,17 +334,21 @@ export default function BorrowedPage() {
                                                 )}
                                             </>
                                         ) : (
-                                            <>
+                                            <>  {/* 물품 게시물일 때 */}
                                                 <h2 className="text-[14px] font-bold text-black mt-3 mb-2.5 truncate leading-none">
                                                     {item.itemDetail?.title || "대여 물품 설명 참조"}
                                                 </h2>
                                                 <p className="text-[12px] text-black mb-2">
-                                                    제공자 : {item.ownerNickname}
+                                                    제공자 : {"여기 수정"}
                                                 </p>
                                                 <p className="text-[12px] text-[#43A860] leading-[16px]">
                                                     대여 시작 : {item.itemDetail?.rentalStartTime} <br />
-                                                    반납 예정 : {item.itemDetail?.rentalEndTime}
-                                                </p>
+                                                    {item.rentalRequestStatus === 'PENDING' ? (
+                                                        <>대여 가격 : {item.itemDetail?.rentalPrice?.toLocaleString()}원</>
+                                                    ) : (
+                                                        <>반납 예정 : {item.itemDetail?.rentalEndTime}</>
+                                                    )}
+                                                    </p>
                                             </>
                                         )}
                                     </div>
@@ -293,26 +356,56 @@ export default function BorrowedPage() {
 
                                 {/* 하단 버튼 영역 */}
                                 <div className="flex flex-col gap-2 items-center w-full">
-                                    <button 
-                                        onClick={() => handleReturn(item)}
-                                        disabled={item.isReturnWaiting}
-                                        className={`w-[304px] h-[34px] rounded-[40px] text-[14px] font-bold transition-colors ${
-                                            item.isReturnWaiting 
-                                            ? "bg-[#CCCCCC] text-white cursor-not-allowed" 
-                                            : "bg-[#9996FF] text-white active:bg-[#8582eb]"
-                                        }`}
-                                    >
-                                        {item.isReturnWaiting ? "반납 대기" : "반납 하기"}
-                                    </button>
-                                    <button 
-                                        onClick={() => handleStartChat(item)}
-                                        className="w-[304px] h-[34px] bg-white border border-black rounded-[40px] text-[14px] flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
-                                    >
-                                        <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
-                                            <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                        채팅하기
-                                    </button>
+                                    {item.rentalRequestStatus === "APPROVED" ? (
+                                        <div className="flex flex-col gap-2 items-center w-full">
+                                            <button 
+                                                onClick={() => handleReturn(item)}
+                                                disabled={item.isReturnWaiting}
+                                                className={`w-[304px] h-[34px] rounded-[40px] text-[14px] font-bold transition-colors ${
+                                                    item.isReturnWaiting 
+                                                    ? "bg-[#CCCCCC] text-white cursor-not-allowed" 
+                                                    : "bg-[#9996FF] text-white active:bg-[#8582eb]"
+                                                }`}
+                                            >
+                                                {item.isReturnWaiting ? "반납 대기" : "반납 하기"}
+                                            </button>
+                                            <button 
+                                                onClick={() => handleStartChat(item)}
+                                                className="w-[304px] h-[34px] bg-white border border-black rounded-[40px] text-[14px] flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
+                                            >
+                                                <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
+                                                    <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                                채팅하기
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-2 items-center w-full">
+                                            <div className="flex gap-4 w-full justify-center">
+                                                <button 
+                                                    onClick={() => handleApprove(item)}
+                                                    className="w-[144px] h-[34px] py-1 bg-[#9996FF] text-white rounded-[40px] text-[14px] font-bold active:bg-[#8e7dd1] transition-colors"
+                                                >
+                                                    승인
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleReject(item)}
+                                                    className="w-[144px] h-[34px] py-1 bg-white border border-[#7F7F7F] text-[#1A1A1A] text-[14px] rounded-[40px] active:bg-gray-50 transition-colors"
+                                                >
+                                                    거절
+                                                </button>
+                                            </div>
+                                            <button 
+                                                onClick={() => handleStartChat(item)}
+                                                className="w-[304px] h-[34px] bg-white border border-black rounded-[40px] text-[14px] flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
+                                            >
+                                                <svg width="16" height="15" viewBox="0 0 16 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-black">
+                                                    <path d="M14.6667 6.33333C14.6667 9.46294 11.6819 12 8 12C7.3065 12 6.6433 11.9016 6.02428 11.7171L3 13V10.3837C1.76185 9.33642 1 7.91719 1 6.33333C1 3.20372 3.98477 0.666664 7.66667 0.666664C11.3486 0.666664 14.6667 3.20372 14.6667 6.33333Z" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+                                                </svg>
+                                                채팅하기
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -320,15 +413,14 @@ export default function BorrowedPage() {
                 )}
             </div>
 
-            {/* 하단 공통 네비게이션 */}
             <BottomNav />
 
             {modalState.show && (
                 <ConfirmModal
-                    message="반납 완료 처리하시겠어요?"
-                    subMessage={"제공자의 상호 확인 후 정상처리되며,\n완료 후 상대방에게 후기를 남길 수 있습니다."}
-                    onConfirm={confirmReturn}
-                    onCancel={cancelReturn}
+                    message={modalMessage}
+                    subMessage={modalSubMessage}
+                    onConfirm={confirmAction}
+                    onCancel={cancelAction}
                 />
             )}
 
