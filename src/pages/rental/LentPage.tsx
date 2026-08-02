@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom"; 
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
-//import { getLentRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";      // 여기!
-import { getMockLentRentalRequests, decideMockRentalRequest, completeMockRentalReturn } from "../../api/rental";
+import { getLentRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";      // 여기!
+//import { getMockLentRentalRequests, decideMockRentalRequest, completeMockRentalReturn } from "../../api/rental";
 import type { RentalRequestPreview, RentalRequestStatus } from "../../types/rental";
 
 // 팝업 컴포넌트 (취소/확인)
@@ -133,8 +133,8 @@ export default function LentPage() {
     // 대여 목록 로드 (useCallback으로 메모이제이션)
     const fetchRentals = useCallback(async () => {
         try {
-            //const res = await getLentRentalRequests();    // 여기!
-            const res = await getMockLentRentalRequests();  // 여기!
+            const res = await getLentRentalRequests();    // 여기!
+            //const res = await getMockLentRentalRequests();  // 여기!
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -149,8 +149,8 @@ export default function LentPage() {
         let isMounted = true;
         (async () => {
             try {
-                //const res = await getLentRentalRequests();        // 여기!
-                const res = await getMockLentRentalRequests();
+                const res = await getLentRentalRequests();        // 여기!
+                //const res = await getMockLentRentalRequests();
                 if (res.isSuccess && isMounted) {
                     setRentals(res.result);
                 }
@@ -186,8 +186,8 @@ export default function LentPage() {
 
         try {
             if (modalState.action === 'confirmReturn') {
-                //const res = await completeRentalReturn(currentItem.rentalRequestId);  // 여기!
-                const res = await completeMockRentalReturn(currentItem.rentalRequestId);
+                const res = await completeRentalReturn(currentItem.rentalRequestId);  // 여기!
+                //const res = await completeMockRentalReturn(currentItem.rentalRequestId);
                 if (res.isSuccess) {
                     setModalState({ show: false, item: null, action: null });
                     setToast('대여자 처리시 마이페이지에서 확인 가능합니다.');
@@ -196,8 +196,8 @@ export default function LentPage() {
                 }
             } else {
                 const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
-                //const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
-                const res = await decideMockRentalRequest(currentItem.rentalRequestId, decideType);
+                const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
+                //const res = await decideMockRentalRequest(currentItem.rentalRequestId, decideType);
                 if (res.isSuccess) {
                     const newStatusLabel = modalState.action === 'approve' ? '대여중' : '대여가능';
                     setModalState({ show: false, item: null, action: null });

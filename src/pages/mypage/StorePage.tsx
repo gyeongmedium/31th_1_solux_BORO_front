@@ -6,7 +6,7 @@ import { getStoreAssets, purchaseAsset } from "../../api/assets";
 import type { StoreAsset } from "../../types/assets";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
-import { mockAssets } from "../../api/mockAssets";      // 계속 유지하기
+//import { mockAssets } from "../../api/mockAssets";      // mock 데이터
 
 import bagImg from "../../assets/bag.png";
 import coffeeImg from "../../assets/coffee.png";
@@ -113,7 +113,7 @@ export default function StorePage() {
     const navigate = useNavigate();
     
     // 초기값을 빈 배열로 설정하고 서버 데이터를 세팅할 수 있도록 수정
-    const [assets, setAssets] = useState<StoreAsset[]>(mockAssets);     
+    const [assets, setAssets] = useState<StoreAsset[]>([]);     
     const [userPoint, setUserPoint] = useState<number>(1250);       // 여기! 포인트 하드 코딩 함
     
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
@@ -121,30 +121,27 @@ export default function StorePage() {
     const [modalState, setModalState] = useState<{ show: boolean; item: StoreAsset | null }>({ show: false, item: null });
     const [toast, setToast] = useState<string | null>(null);
 
-    // 3. 백엔드 통신 시도 (성공하면 서버 데이터로 교체, 데이터가 비어있거나 실패하면 Mock 유지)
+    // 백엔드에서 상점 아이템 로드
     useEffect(() => {
         const fetchStoreAssets = async () => {
             try {
                 const response = await getStoreAssets();
-                // result가 존재하고, 배열 길이가 0보다 클 때만 서버 데이터로 교체[cite: 1, 2]
-                if (response?.isSuccess && Array.isArray(response.result) && response.result.length > 0) {
+                if (response?.isSuccess && Array.isArray(response.result)) {
                     setAssets(response.result);
-                } else {
-                    console.warn("백엔드 데이터가 비어있어 Mock 데이터를 유지합니다.");
                 }
             } catch (err) {
-                console.warn("백엔드 연결 실패: Mock 데이터를 유지합니다.", err);
+                console.error("상품 목록 로딩 실패:", err);
             }
         };
 
         fetchStoreAssets();
     }, []);
 
-    // 상품 재조회 함수
+    // 상품 상태 재조회
     const reloadStoreAssets = async () => {
         try {
             const response = await getStoreAssets();
-            if (response?.isSuccess && Array.isArray(response.result) && response.result.length > 0) {
+            if (response?.isSuccess && Array.isArray(response.result)) {
                 setAssets(response.result);
             }
         } catch (err) {
@@ -156,7 +153,7 @@ export default function StorePage() {
         setModalState({ show: true, item });
     };
 
-    // 2. 구매 확인 시 서버로 POST 요청 전송
+    // 구매 확인 시 백엔드로 POST 요청 및 상태 업데이트
     const confirmPurchase = async () => {
         if (!modalState.item) return;
         const { itemId, itemPrice, itemName } = modalState.item;
@@ -171,7 +168,7 @@ export default function StorePage() {
                 setToast(`${itemName}을(를) 구매했습니다!`);
                 setTimeout(() => setToast(null), 2000);
 
-                // 최신 상태 재조회
+                // 구매 반영된 최신 목록 재조회 (owned: true 반영)
                 reloadStoreAssets();
             }
         } catch (err) {

@@ -6,6 +6,8 @@ import type {
     ReissueResponse,
     GoogleCallbackRequest,
     GoogleCallbackResponse,
+    NicknameCheckParams,
+    NicknameCheckResponse
 } from '../types/auth';
 
 const BASE_URL = import.meta.env.VITE_API_URL;
@@ -32,6 +34,17 @@ export const googleCallback = async (
 ): Promise<GoogleCallbackResponse> => {
     const response = await api.get<GoogleCallbackResponse>(
         '/api/v1/auth/google/callback',
+        { params }
+    );
+    return response.data;
+};
+
+// 4. [POST] /api/v1/auth/nicknames-check
+export const checkNickname = async (params: NicknameCheckParams): Promise<NicknameCheckResponse> => {
+    // POST 요청이지만 query parameter로 전달되므로 params 옵션을 지정합니다.
+    const response = await api.post<NicknameCheckResponse>(
+        "/api/v1/auth/nicknames-check",
+        null,
         { params }
     );
     return response.data;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { signUp } from "../../api/auth";
+import { signUp, checkNickname } from "../../api/auth";
 import type { SignUpRequest } from "../../types/auth";
 
 export default function SignUpPage() {
@@ -31,14 +31,33 @@ export default function SignUpPage() {
     // 검증 관련 상태 관리
     const [isNicknameChecked, setIsNicknameChecked] = useState(false);
 
-    // 닉네임 중복확인 핸들러
-    const handleNicknameCheck = () => {
+    // 닉네임 중복확인 핸들러 (API 연동)
+    const handleNicknameCheck = async () => {
         if (!nickname.trim()) {
             alert("닉네임을 입력해주세요.");
             return;
         }
-        setIsNicknameChecked(true);
-        alert("사용 가능한 닉네임입니다.");
+
+        try {
+            const response = await checkNickname({ nickname: nickname.trim() });
+
+            if (response.isSuccess) {
+                if (response.result.available) {
+                    setIsNicknameChecked(true);
+                    alert("사용 가능한 닉네임입니다.");
+                } else {
+                    setIsNicknameChecked(false);
+                    alert("이미 사용 중인 닉네임입니다.");
+                }
+            } else {
+                setIsNicknameChecked(false);
+                alert(response.message || "닉네임 중복 확인에 실패했습니다.");
+            }
+        } catch (error) {
+            console.error("닉네임 중복 확인 실패:", error);
+            setIsNicknameChecked(false);
+            alert("닉네임 중복 확인 중 오류가 발생했습니다.");
+        }
     };
 
     const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {

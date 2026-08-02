@@ -46,7 +46,7 @@ function RootPage() {
 
   // 토큰이 없으면 주소창은 / 그대로 유지하면서 LoginPage를 렌더링
   if (!token) {
-    return <LoginPage />;
+    return <Navigate to="/login" replace />;
   }
 
   // 토큰이 있으면 HomePage 렌더링

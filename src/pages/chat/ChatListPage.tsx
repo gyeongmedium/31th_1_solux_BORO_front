@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import { getChatRooms } from "../../api/chat";        // 여기!
-import { getMockChatRooms } from "../../api/chat";      // 여기!
+import { getChatRooms } from "../../api/chat";        // 여기!
+//import { getMockChatRooms } from "../../api/chat";      // 여기! mock 데이터 불러옴
 import type { ChatRoomPreview } from "../../types/chat";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
@@ -57,8 +57,8 @@ export default function ChatListPage() {
             try {
                 setLoading(true);
                 // 1. GET /api/v1/chat?type=ITEM 호출
-                //const res = await getChatRooms("ITEM");       // 여기!
-                const res = await getMockChatRooms("ITEM");     // 여기!
+                const res = await getChatRooms("ITEM");       // 여기!
+                //const res = await getMockChatRooms("ITEM");     // 여기!
                 
                 if (res.isSuccess && res.result?.chatRoomList) {
                     // 받아온 채팅방 리스트를 최신 메시지 작성 시간 순(내림차순) 정렬
@@ -112,16 +112,16 @@ export default function ChatListPage() {
                 {loading ? (
                     <div className="text-center py-10 text-gray-400">채팅방 목록을 불러오는 중...</div>
                 ) : rooms.length === 0 ? (
-                    <div className="text-center py-10 text-gray-400">참여 중인 거래 채팅방이 없습니다.</div>
+                    <div className="text-center py-10 text-gray-400">참여중인 거래 채팅방이 없습니다.</div>
                 ) : (
                     rooms.map((room) => (
                         <div key={room.chatRoomId}
                             onClick={() => navigate(`/chat/${room.chatRoomId}`, { 
                                         state: { 
                                             type: "TRADE",
-                                            ownerNickname: room.chatName,  // 상대 아이디
+                                            ownerNickname: room.chatName,   // 상대 아이디
                                             title: room.postTitle,          // 게시글 제목
-                                            profileUrl: room.profileUrl    // 프로필 이미지 URL
+                                            profileUrl: room.profileUrl     // 프로필 이미지 URL
                                         } 
                                     })}                            
                                 className="flex items-stretch justify-between cursor-pointer group w-[341px]"

@@ -97,7 +97,6 @@ export type ApiResponseReadChatRoom = ApiResponse<Record<string, never>>;
 // WebSocket / STOMP 타입 정의
 
 // 6. SUBSCRIBE /sub/chat/{roomId} (채팅방 메시지 구독)
-// responses
 export interface SubChatMessagePayload {
     roomId: number;
     chatMessageType: ChatMessageType;
@@ -108,8 +107,7 @@ export interface SubChatMessagePayload {
 }
 
 
-// 7. SEND /sub/chat/{roomId} (채팅방 메시지 전송)
-// request body
+// 7. SEND /pub/chat/{roomId} (채팅방 메시지 전송)
 export interface SendChatMessagePayload {
     chatMessageType: ChatMessageType;
     content: string;
@@ -118,7 +116,6 @@ export interface SendChatMessagePayload {
 
 
 // 8. SUBSCRIBE user/queue/unread (채팅방 생성 조회 - 업데이트된 채팅방 반영)
-// responses
 export interface UnreadChatUpdatePayload {
     memberId: number;
     chatRoomId: number;

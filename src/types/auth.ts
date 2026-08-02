@@ -51,3 +51,19 @@ export interface LoginResult {
 }
 
 export type GoogleCallbackResponse = ApiResponse<LoginResult>;
+
+
+// 4. 닉네임 중복 확인
+// Request Parameter
+export interface NicknameCheckParams {
+    nickname: string;
+}
+
+// Result DTO
+export interface NicknameCheck {
+    nickname: string;
+    available: boolean;
+}
+
+// Response
+export type NicknameCheckResponse = ApiResponse<NicknameCheck>;
