@@ -25,6 +25,7 @@ export interface PostSummary {
   authorNickname: string
   likeCount: number
   liked: boolean
+  createdAt: string
 }
 
 export interface ApiResponse<T> {
