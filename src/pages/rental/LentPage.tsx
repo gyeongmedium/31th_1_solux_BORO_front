@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom"; 
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
-//import { getLentRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";      // 여기!
-import { getMockLentRentalRequests, decideMockRentalRequest, completeMockRentalReturn } from "../../api/rental";
+import { getLentRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";      // 여기!
+//import { getMockLentRentalRequests, decideMockRentalRequest, completeMockRentalReturn } from "../../api/rental";
 import type { RentalRequestPreview, RentalRequestStatus } from "../../types/rental";
 
 // 팝업 컴포넌트 (취소/확인)
@@ -133,8 +133,8 @@ export default function LentPage() {
     // 대여 목록 로드 (useCallback으로 메모이제이션)
     const fetchRentals = useCallback(async () => {
         try {
-            //const res = await getLentRentalRequests();    // 여기!
-            const res = await getMockLentRentalRequests();  // 여기!
+            const res = await getLentRentalRequests();    // 여기!
+            //const res = await getMockLentRentalRequests();  // 여기!
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -149,8 +149,8 @@ export default function LentPage() {
         let isMounted = true;
         (async () => {
             try {
-                //const res = await getLentRentalRequests();        // 여기!
-                const res = await getMockLentRentalRequests();
+                const res = await getLentRentalRequests();        // 여기!
+                //const res = await getMockLentRentalRequests();
                 if (res.isSuccess && isMounted) {
                     setRentals(res.result);
                 }
@@ -186,8 +186,8 @@ export default function LentPage() {
 
         try {
             if (modalState.action === 'confirmReturn') {
-                //const res = await completeRentalReturn(currentItem.rentalRequestId);  // 여기!
-                const res = await completeMockRentalReturn(currentItem.rentalRequestId);
+                const res = await completeRentalReturn(currentItem.rentalRequestId);  // 여기!
+                //const res = await completeMockRentalReturn(currentItem.rentalRequestId);
                 if (res.isSuccess) {
                     setModalState({ show: false, item: null, action: null });
                     setToast('대여자 처리시 마이페이지에서 확인 가능합니다.');
@@ -196,8 +196,8 @@ export default function LentPage() {
                 }
             } else {
                 const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
-                //const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
-                const res = await decideMockRentalRequest(currentItem.rentalRequestId, decideType);
+                const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
+                //const res = await decideMockRentalRequest(currentItem.rentalRequestId, decideType);
                 if (res.isSuccess) {
                     const newStatusLabel = modalState.action === 'approve' ? '대여중' : '대여가능';
                     setModalState({ show: false, item: null, action: null });
@@ -218,12 +218,22 @@ export default function LentPage() {
 
     const handleStartChat = (item: RentalRequestPreview) => {
         const chatType = item.postCategory === "EMPTY_SPOTS" ? "SPACE" : "TRADE";
-        const title = item.itemDetail?.title || item.seatDetail?.location || "상세 대여건";
+
+        // 1. 빈자리인 경우 위치 정보 조립
+        const seatTitle = item.seatDetail 
+            ? `${item.seatDetail.location || ''} ${item.seatDetail.floor ? `${item.seatDetail.floor}층` : ''} ${item.seatDetail.seatNumber || ''}`.trim().replace(/\s+/g, ' ')
+            : "";
+
+        // 2. 삼항 연산자로 const 변수에 단 한 번만 값 할당
+        const title = item.postCategory === "EMPTY_SPOTS"
+            ? (seatTitle || "빈자리 정보")
+            : (item.itemDetail?.title || "게시글 제목");
 
         navigate(`/chat/${item.rentalRequestId}`, {
             state: {
                 type: chatType,
-                title: title
+                title: title,
+                ownerNickname: item.ownerNickname,
             }
         });
     };
@@ -339,7 +349,7 @@ export default function LentPage() {
                                                     요청자 : {item.ownerNickname}
                                                 </p>
                                                 <p className="text-[12px] text-black mb-1">
-                                                    {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}번` : "자리 설명 참조"}
+                                                    {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}` : "자리 설명 참조"}
                                                 </p>
                                                 {hasTags && (
                                                     <div className="flex gap-2 ml-[-2px] mt-1">

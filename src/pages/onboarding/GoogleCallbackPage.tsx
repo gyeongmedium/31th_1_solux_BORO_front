@@ -1,6 +1,16 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { googleCallback } from "../../api/auth";
+import { jwtDecode } from "jwt-decode";
+
+
+interface JwtPayload {
+    sub?: string;
+    memberId?: number | string;
+    userId?: number | string;
+    exp?: number;
+    iat?: number;
+}
 
 export default function GoogleCallbackPage() {
     const navigate = useNavigate();
@@ -38,7 +48,20 @@ export default function GoogleCallbackPage() {
                     else if (authStatus === "LOGIN" || accessToken) {
                         if (accessToken) {
                             localStorage.setItem("accessToken", accessToken);
+
+                            try {
+                                // JWT 토큰 페이로드 디코딩
+                                const decoded = jwtDecode<JwtPayload>(accessToken);
+                                const memberId = decoded.memberId || decoded.sub || decoded.userId;
+                                
+                                if (memberId) {
+                                    localStorage.setItem("memberId", String(memberId));
+                                }
+                            } catch (error) {
+                                console.error("토큰 디코딩 실패:", error);
+                            }
                         }
+                        
                         alert("로그인에 성공하였습니다.");
                         navigate("/");
                     }

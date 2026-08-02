@@ -55,20 +55,20 @@ const positionMap: Record<string, React.CSSProperties> = {
 const INITIAL_ITEMS: DisplayItem[] = [
     // 의상 (CLOTHING)
     { itemId: 0, itemName: "기본 의상", itemCategory: "CLOTHING", isPurchased: true },
-    { itemId: -1, itemName: "후드티", itemCategory: "CLOTHING", isPurchased: true },
-    { itemId: -2, itemName: "정장", itemCategory: "CLOTHING", isPurchased: true },
-    { itemId: -3, itemName: "프린세스 송이", itemCategory: "CLOTHING", isPurchased: true },
-    { itemId: -4, itemName: "정장 송이", itemCategory: "CLOTHING", isPurchased: true },
+    { itemId: -1, itemName: "후드티", itemCategory: "CLOTHING", isPurchased: false },
+    { itemId: -2, itemName: "정장", itemCategory: "CLOTHING", isPurchased: false },
+    { itemId: -3, itemName: "프린세스 송이", itemCategory: "CLOTHING", isPurchased: false },
+    { itemId: -4, itemName: "정장 송이", itemCategory: "CLOTHING", isPurchased: false },
     
     // 악세사리 (ACCESSORY)
-    { itemId: -5, itemName: "헤드셋", itemCategory: "ACCESSORY", isPurchased: true },
-    { itemId: -6, itemName: "모자", itemCategory: "ACCESSORY", isPurchased: true },
-    { itemId: -7, itemName: "안경", itemCategory: "ACCESSORY", isPurchased: true },
-    { itemId: -8, itemName: "가방", itemCategory: "ACCESSORY", isPurchased: true },
+    { itemId: -5, itemName: "헤드셋", itemCategory: "ACCESSORY", isPurchased: false },
+    { itemId: -6, itemName: "모자", itemCategory: "ACCESSORY", isPurchased: false },
+    { itemId: -7, itemName: "안경", itemCategory: "ACCESSORY", isPurchased: false },
+    { itemId: -8, itemName: "가방", itemCategory: "ACCESSORY", isPurchased: false },
     
     // 기타 (ETC)
-    { itemId: -9, itemName: "마스크", itemCategory: "ETC", isPurchased: true },
-    { itemId: -10, itemName: "커피", itemCategory: "ETC", isPurchased: true },
+    { itemId: -9, itemName: "마스크", itemCategory: "ETC", isPurchased: false },
+    { itemId: -10, itemName: "커피", itemCategory: "ETC", isPurchased: false },
 ];
 
 export default function NoonsongDecoPage() {

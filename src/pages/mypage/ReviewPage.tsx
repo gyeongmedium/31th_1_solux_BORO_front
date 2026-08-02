@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//import { getReceivedReviews } from "../../api/member-gm";       // 백엔드 연결 시 주석 해제      // 여기!
-import { getMockReceivedReviews } from "../../api/member-gm";     // Mock 데이터 함수
+import { getReceivedReviews } from "../../api/member-gm";       // 여기!
+//import { getMockReceivedReviews } from "../../api/member-gm";     // Mock 데이터 함수
 import type { ReviewDetail, ReviewSentiment } from "../../types/member-gm";
 
 // 이의신청 구글 폼 URL
@@ -19,9 +19,9 @@ export default function ReviewPage() {
     const [likeCount, setLikeCount] = useState<number>(0);
     const [dislikeCount, setDislikeCount] = useState<number>(0);
 
-    // Mock 데이터 조회 (백엔드 연동 시 getMockReceivedReviews -> getReceivedReviews 로 변경)
+    // 백엔드 연동 시 getMockReceivedReviews -> getReceivedReviews 로 변경)
     useEffect(() => {
-        getMockReceivedReviews(activeTab)           // 여기!
+        getReceivedReviews(activeTab)           // 여기!
             .then((res) => {
                 if (res.isSuccess && res.result) {
                     setLikeCount(res.result.likeCount);

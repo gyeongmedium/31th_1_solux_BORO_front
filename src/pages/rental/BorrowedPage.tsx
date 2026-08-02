@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
-//import { getBorrowedRentalRequests, completeRentalReturn } from "../../api/rental";       // 여기!
-import { getMockBorrowedRentalRequests, completeMockRentalReturn } from "../../api/rental";
+import { getBorrowedRentalRequests, completeRentalReturn } from "../../api/rental";       // 여기!
+//import { getMockBorrowedRentalRequests, completeMockRentalReturn } from "../../api/rental";
 import type { RentalRequestPreview, RentalRequestStatus } from "../../types/rental";
 
 // 팝업 컴포넌트 (취소/확인)
@@ -106,8 +106,8 @@ export default function BorrowedPage() {
     // 내가 빌린 목록 로드
     const fetchRentals = async () => {
         try {
-            //const res = await getBorrowedRentalRequests();        // 여기!
-            const res = await getMockBorrowedRentalRequests();      // 여기! 이거 삭제
+            const res = await getBorrowedRentalRequests();        // 여기!
+            //const res = await getMockBorrowedRentalRequests();      // 여기! 이거 삭제
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -122,8 +122,8 @@ export default function BorrowedPage() {
         let isMounted = true;
         (async () => {
             try {
-                //const res = await getBorrowedRentalRequests();        // 여기!
-                const res = await getMockBorrowedRentalRequests();
+                const res = await getBorrowedRentalRequests();        // 여기!
+                //const res = await getMockBorrowedRentalRequests();
                 if (res.isSuccess && isMounted) {
                     setRentals(res.result);
                 }
@@ -149,8 +149,8 @@ export default function BorrowedPage() {
         if (!modalState.item) return;
 
         try {
-            //const res = await completeRentalReturn(modalState.item.rentalRequestId);      // 여기!
-            const res = await completeMockRentalReturn(modalState.item.rentalRequestId);
+            const res = await completeRentalReturn(modalState.item.rentalRequestId);      // 여기!
+            //const res = await completeMockRentalReturn(modalState.item.rentalRequestId);
             if (res.isSuccess) {
                 setModalState({ show: false, item: null });
                 setToast('제공자 처리시 마이페이지에서 확인 가능합니다.');
@@ -169,12 +169,22 @@ export default function BorrowedPage() {
 
     const handleStartChat = (item: RentalRequestPreview) => {
         const chatType = item.postCategory === "EMPTY_SPOTS" ? "SPACE" : "TRADE";
-        const title = item.itemDetail?.title || item.seatDetail?.location || "상세 대여건";
+
+        // 1. 빈자리인 경우 위치 정보 조립
+        const seatTitle = item.seatDetail 
+            ? `${item.seatDetail.location || ''} ${item.seatDetail.floor ? `${item.seatDetail.floor}층` : ''} ${item.seatDetail.seatNumber || ''}`.trim().replace(/\s+/g, ' ')
+            : "";
+
+        // 2. 삼항 연산자로 title에 '단 한 번만' 값 할당 (ESLint 경고 해결)
+        const title = item.postCategory === "EMPTY_SPOTS"
+            ? (seatTitle || "빈자리 정보")
+            : (item.itemDetail?.title || "게시글 제목");
 
         navigate(`/chat/${item.rentalRequestId}`, {
             state: {
                 type: chatType,
-                title: title
+                title: title,
+                ownerNickname: item.ownerNickname,
             }
         });
     };
@@ -217,7 +227,7 @@ export default function BorrowedPage() {
                                 <div className="flex gap-4 mb-4">
                                     <div className="w-[90px] h-[90px] bg-[#E6E6E6] rounded-[20px] flex items-center justify-center flex-shrink-0 overflow-hidden">
                                         {item.imageUrl ? (
-                                            <img src={item.imageUrl} alt="물품/자리 이미지" className="w-full h-full object-cover" />
+                                            <img src={item.imageUrl} className="w-full h-full object-cover" />
                                         ) : (
                                             <img 
                                                 src="/logo187.png" 
@@ -251,7 +261,7 @@ export default function BorrowedPage() {
                                                     제공자 : {item.ownerNickname}
                                                 </p>
                                                 <p className="text-[12px] text-black mb-1">
-                                                    {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}번` : "자리 설명 참조"}
+                                                    {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}` : "자리 설명 참조"}
                                                 </p>
                                                 {hasTags && (
                                                     <div className="flex gap-2 ml-[-2px] mt-1">
