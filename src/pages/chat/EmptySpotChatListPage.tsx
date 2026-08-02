@@ -9,28 +9,57 @@ import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
 
 
-//형태의 날짜 포맷 함수
-const formatDate = (dateTimeStr: string): string => {
-    if (!dateTimeStr) return "";
-    const d = new Date(dateTimeStr);
-    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
+// 공통 타임존 정규화 헬퍼 함수
+const normalizeIsoString = (isoString: string): string => {
+    if (!isoString) return "";
+    return isoString.endsWith("Z") || isoString.includes("+") 
+        ? isoString 
+        : `${isoString}Z`;
 };
 
-// 남은 시간을 계산하여 "X분 후" 배지 텍스트를 만들어주는 함수
+// 날짜 포맷 함수 (YYYY. MM. DD 또는 YYYY. M. D)
+const formatDate = (dateTimeStr: string): string => {
+    if (!dateTimeStr) return "";
+    
+    const normalizedIso = normalizeIsoString(dateTimeStr);
+    const d = new Date(normalizedIso);
+
+    const year = d.getFullYear();
+    // 한 자리 수 달/일에 0을 채우려면 padStart를 사용하고, 아니면 기존대로 유지할 수 있습니다.
+    const month = (d.getMonth() + 1).toString().padStart(2, "0");
+    const day = d.getDate().toString().padStart(2, "0");
+
+    return `${year}. ${month}. ${day}`;
+};
+
+// 남은 시간을 계산하여 배지 텍스트를 만들어주는 함수
 const getRemainingTimeBadge = (dateTimeStr?: string): string => {
     if (!dateTimeStr) return "시간 미정";
 
-    const target = new Date(dateTimeStr);
+    const normalizedIso = normalizeIsoString(dateTimeStr);
+    const target = new Date(normalizedIso);
     const now = new Date();
 
     // 두 시간의 차이 (밀리초 -> 분 변환)
     const diffMs = target.getTime() - now.getTime();
     const diffMins = Math.ceil(diffMs / (1000 * 60));
 
-    // 이미 퇴장 시간이 지났거나 exact 타임이면 "마감"
+    // 이미 시간이 지났거나 exact 타임이면 "마감"
     if (diffMins <= 0) return "마감";
 
-    return `${diffMins}분 후`;
+    if (diffMins < 60) {
+        return `${diffMins}분 후`;
+    } 
+    
+    const diffHours = Math.floor(diffMins / 60);
+    const remainMins = diffMins % 60;
+
+    if (diffHours < 24) {
+        return remainMins > 0 ? `${diffHours}시간 ${remainMins}분 후` : `${diffHours}시간 후`;
+    }
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}일 후`;
 };
 
 export default function EmptySpotChatListPage() {
