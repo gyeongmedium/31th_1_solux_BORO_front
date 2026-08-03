@@ -85,8 +85,6 @@ function getStatusInfo(status: RentalRequestStatus): { label: UIStatus; bg: stri
             return { label: "대여가능", bg: "bg-[#E9F5EE]", text: "text-[#1A1A1A]" };
         case 'COMPLETED':
             return { label: "반납완료", bg: "bg-[#E4E4FF]", text: "text-[#1A1A1A]" };
-        default:
-            return { label: "대여중", bg: "bg-[#FFD4BB]", text: "text-[#1A1A1A]" };
     }
 }
 

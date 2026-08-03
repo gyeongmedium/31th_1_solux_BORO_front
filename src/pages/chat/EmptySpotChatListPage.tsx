@@ -17,15 +17,20 @@ const normalizeIsoString = (isoString: string): string => {
         : `${isoString}Z`;
 };
 
-// 날짜 포맷 함수 (YYYY. MM. DD 또는 YYYY. M. D)
-const formatDate = (dateTimeStr: string): string => {
+// 날짜 포맷 함수 (YYYY. MM. DD)
+const formatDate = (dateTimeStr?: string): string => {
     if (!dateTimeStr) return "";
     
+    // 1. Z를 붙여 UTC 시각으로 인식하게 만듦
     const normalizedIso = normalizeIsoString(dateTimeStr);
+    
+    // 2. Date 객체 변환 시 한국 시간(+9시간)으로 자동 변환됨
     const d = new Date(normalizedIso);
 
+    // 날짜 변환 실패 예외 처리
+    if (isNaN(d.getTime())) return "";
+
     const year = d.getFullYear();
-    // 한 자리 수 달/일에 0을 채우려면 padStart를 사용하고, 아니면 기존대로 유지할 수 있습니다.
     const month = (d.getMonth() + 1).toString().padStart(2, "0");
     const day = d.getDate().toString().padStart(2, "0");
 
@@ -159,7 +164,7 @@ export default function EmptySpotChatListPage() {
                                             {spot.chatName}
                                         </span>
                                         <span className="text-[12px] text-[#000000] leading-none mt-1">
-                                            {formatDate(spot.lastMessageAt)}
+                                            {formatDate(spot.lastMessageAt || spot.expectedCheckoutTime)}
                                         </span>
                                     </div>
                                 </div>
