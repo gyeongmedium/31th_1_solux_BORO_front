@@ -61,9 +61,9 @@ export default function PostCreatePage() {
     await axios.put(presignedUrl, file, {
       headers: { "Content-Type": file.type },
     })
-
     return fileUrl
   }
+
   const handleSubmit = async () => {
     if (activeTab === "post") {
       
@@ -74,27 +74,32 @@ export default function PostCreatePage() {
         return
       }
 
-    const calculateEndTime = (startDate: string, unit: RentalPriceUnit): string => {
-      const date = new Date(startDate)
-      switch (unit) {
-        case "HOUR":
-          date.setHours(date.getHours() + 1)
-          break
-        case "DAY":
-          date.setDate(date.getDate() + 1)
-          break
-        case "WEEK":
-          date.setDate(date.getDate() + 7)
-          break
-        case "MONTH":
-          date.setMonth(date.getMonth() + 1)
-          break
-        case "SEMESTER":
-          date.setMonth(date.getMonth() + 4)
-          break
+      if (Number(rentalPrice) > 5000) {
+        alert("대여 비용은 최대 5,000원까지 입력할 수 있습니다.")
+        return
       }
-      return date.toISOString().split("T")[0]
-    }
+
+      const calculateEndTime = (startDate: string, unit: RentalPriceUnit): string => {
+        const date = new Date(startDate)
+        switch (unit) {
+          case "HOUR":
+            date.setHours(date.getHours() + 1)
+            break
+          case "DAY":
+            date.setDate(date.getDate() + 1)
+            break
+          case "WEEK":
+            date.setDate(date.getDate() + 7)
+            break
+          case "MONTH":
+            date.setMonth(date.getMonth() + 1)
+            break
+          case "SEMESTER":
+            date.setMonth(date.getMonth() + 4)
+            break
+        }
+        return date.toISOString().split("T")[0]
+      }
 
     try {
       if (imageFiles.length === 0) {
@@ -106,7 +111,8 @@ export default function PostCreatePage() {
 
     if (isEditMode) {
       console.log("수정할 게시글 ID:", postId)
-    } else {
+    } 
+    else {
       await createPost({
         imageUrlList: uploadedUrls,
         category,
@@ -119,11 +125,12 @@ export default function PostCreatePage() {
       })
     }
     navigate("/")
-  } catch (err) {
-    console.error("게시글 처리 실패:", err)
-    alert("처리에 실패했어요. 다시 시도해주세요.")
-  }
-  } else {
+    } 
+    catch (err) {
+      console.error("게시글 처리 실패:", err)
+      alert("처리에 실패했어요. 다시 시도해주세요.")
+    }
+    } else {
 
     //////////////////////////////////////////////////////////////
     // 빈자리 작성 로직
@@ -151,44 +158,44 @@ export default function PostCreatePage() {
     const diffMinutes = (checkoutDate.getTime() - now.getTime()) / (1000 * 60)
     //->5-20분 이내로 설정 하도록 팝업 띄우기
     if (diffMinutes < 5) {
-  alert("퇴실 예정 시간은 현재 시각으로부터 최소 5분 이후여야 합니다.")
-  return
-}
+      alert("퇴실 예정 시간은 현재 시각으로부터 최소 5분 이후여야 합니다.")
+      return
+    }
 
     if (diffMinutes > 20) {
       alert("퇴실 예정 시간은 현재 시각으로부터 20분 이내로 설정해야 합니다.")
       return
     }
 
-  try {
-    if (isEditMode) {
-      console.log("수정할 빈자리 ID:", spotId)
-    } else {
-      const parsedFloor = Number(floor.replace(/[^0-9]/g, "")) || 1
-      const parsedSeatNumber = Number(seatNumber.replace(/[^0-9]/g, "")) || 1
+    try {
+      if (isEditMode) {
+        console.log("수정할 빈자리 ID:", spotId)
+      } else {
+        const parsedFloor = Number(floor.replace(/[^0-9]/g, "")) || 1
+        const parsedSeatNumber = Number(seatNumber.replace(/[^0-9]/g, "")) || 1
 
-      // 4. 스웨거 규격 표준 UTC 문자열 생성 (.toISOString())
-      // <<오류난이유>> 백엔드 시간 설정과 프론트 자바스크립트 시간 보정이 들어가야 예외가 안남.
-      // 예: 03:14 KST -> "2026-07-30T18:14:00.000Z"
-      const isoCheckoutTime = checkoutDate.toISOString()
+        // 4. 스웨거 규격 표준 UTC 문자열 생성 (.toISOString())
+        // <<오류난이유>> 백엔드 시간 설정과 프론트 자바스크립트 시간 보정이 들어가야 예외가 안남.
+        // 예: 03:14 KST -> "2026-07-30T18:14:00.000Z"
+        const isoCheckoutTime = checkoutDate.toISOString()
 
-      console.log("실제 서버로 보내는 값:", isoCheckoutTime)
+        console.log("실제 서버로 보내는 값:", isoCheckoutTime)
 
-      await createEmptySpot({
-        location,
-        floor: parsedFloor,
-        seatNumber: parsedSeatNumber,
-        hasPowerOutlet: hasOutlet,
-        hasWindowSeat: hasWindow,
-        expectedCheckoutTime: isoCheckoutTime, //로컬 날짜/시간 적용
-      })
+        await createEmptySpot({
+          location,
+          floor: parsedFloor,
+          seatNumber: parsedSeatNumber,
+          hasPowerOutlet: hasOutlet,
+          hasWindowSeat: hasWindow,
+          expectedCheckoutTime: isoCheckoutTime, //로컬 날짜/시간 적용
+        })
+      }
+        navigate("/")
+      } catch (err) {
+        console.error("빈자리 처리 실패:", err)
+        alert("처리에 실패했어요. 다시 시도해주세요.")
+      }
     }
-      navigate("/")
-    } catch (err) {
-      console.error("빈자리 처리 실패:", err)
-      alert("처리에 실패했어요. 다시 시도해주세요.")
-    }
-  }
     /////////////////////////////////////////////////////////////////////////////////
 
 }

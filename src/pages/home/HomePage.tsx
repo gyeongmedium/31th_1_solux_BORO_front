@@ -12,7 +12,7 @@ import type { EmptySpotListResponse } from "../../types/emptySpot"
 const getRemainingMinutesText = (expectedCheckoutTime: string) => {
   if (!expectedCheckoutTime) return ""
 
-  // 1. <<시간 보정 필수!!>>백엔드에서 넘어온 시간 뒤에 'Z'나 '+09:00' 오프셋이 없다면 UTC로 강제 보정
+  // 1. <<시간 보정 필수>>백엔드에서 넘어온 시간 뒤에 'Z'나 '+09:00' 오프셋이 없다면 UTC로 강제 보정
   let timeString = expectedCheckoutTime
   if (
     typeof timeString === "string" &&
@@ -40,7 +40,7 @@ export default function HomePage() {
   const [sortType, setSortType] = useState<"latest" | "popular">("latest")
   const [showSortMenu, setShowSortMenu] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<PostCategory | "전체">("전체")
-  const [showAvailableOnly, setShowAvailableOnly] = useState(true)
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false)
   const [searchKeyword, setSearchKeyword] = useState("")
 
   const [posts, setPosts] = useState<PostSummary[]>([])
@@ -54,6 +54,9 @@ export default function HomePage() {
       setIsLoading(true)
       try {
         const res = await getPosts(showAvailableOnly)
+        console.log("현재 토글 상태(showAvailableOnly):", showAvailableOnly)
+        console.log("백엔드에서 받아온 전체 게시글 목록:", res.data.result)
+
         setPosts(res.data.result)
       } catch (err) {
         console.error("게시글 목록 조회 실패:", err)
@@ -124,23 +127,30 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
   )
 })
 
-  // 선택된 카테고리 + 검색어 + 정렬 기준에 맞게 처리
-  const filteredPosts = posts
-    .filter((post) => selectedCategory === "전체" || post.category === selectedCategory)
-    .filter((post) => {
-      if (searchKeyword.trim() === "") return true
-      const keyword = searchKeyword.toLowerCase()
-      return (
-        post.title.toLowerCase().includes(keyword) ||
-        post.description.toLowerCase().includes(keyword)
-      )
-    })
-    .sort((a, b) => {
-      if (sortType === "popular") {
-        return b.likeCount - a.likeCount
-      }
-      return new Date(b.rentalStartTime).getTime() - new Date(a.rentalStartTime).getTime()
-    })
+// 선택된 카테고리 + 검색어 + 정렬 기준에 맞게 처리
+//대여가능, 대여중, 대여완료만 존재
+// 1. 홈 화면에 노출할 상태 정의
+const ALLOWED_STATUSES = ["ACTIVE", "PENDING", "COMPLETED"]
+
+// 2. 선택된 카테고리 + 검색어 + 정렬 기준 + 상태 처리
+const filteredPosts = posts
+  // ACTIVE, PENDING, COMPLETED 상태의 게시글만 통과
+  .filter((post) => ALLOWED_STATUSES.includes(post.status))
+  .filter((post) => selectedCategory === "전체" || post.category === selectedCategory)
+  .filter((post) => {
+    if (searchKeyword.trim() === "") return true
+    const keyword = searchKeyword.toLowerCase()
+    return (
+      post.title.toLowerCase().includes(keyword) ||
+      post.description.toLowerCase().includes(keyword)
+    )
+  })
+  .sort((a, b) => {
+    if (sortType === "popular") {
+      return b.likeCount - a.likeCount
+    }
+    return new Date(b.rentalStartTime).getTime() - new Date(a.rentalStartTime).getTime()
+  })
 
 
   const categoryList: PostCategory[] = [
@@ -387,25 +397,27 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
                       </div>
 
                       {/* 대여가능 뱃지 (62x30, top 23 left 116) */}
+                      <div className="absolute flex items-center gap-1.5" style={{ top: "23px", left: "116px" }}>
                       <div
-                        className={`absolute flex items-center justify-center text-[12px] ${
+                        className={`flex items-center justify-center text-[12px] text-black px-2.5 whitespace-nowrap ${
                           post.status === "ACTIVE"
-                            ? "bg-[#E9F5EE] text-black"
-                            : post.status === "RENTED"
-                            ? "bg-[#FFF3CD] text-[#8A6D00]"
-                            : "bg-[#FFE1E1] text-[#C93333]"
+                            ? "bg-[#E9F5EE]"
+                            : post.status === "PENDING"
+                            ? "bg-[#FFF3CD]"
+                            : "bg-[#FFE1E1]"
                         }`}
-                        style={{ width: "65px", height: "30px", top: "23px", left: "116px", borderRadius: "40px" }}
+                        style={{ height: "30px", borderRadius: "40px" }}
                       >
                         {statusLabel[post.status]}
                       </div>
 
                       {/* 카테고리 뱃지 (내용에 따라 너비 자동) */}
                       <div
-                        className="absolute flex items-center justify-center text-[12px] bg-[#E4E4FF] text-[#000000] px-2.5 whitespace-nowrap"
-                        style={{ height: "30px", top: "23px", left: "186px", borderRadius: "40px" }}
+                        className="flex items-center justify-center text-[12px] bg-[#E4E4FF] text-[#000000] px-2.5 whitespace-nowrap"
+                        style={{ height: "30px",  borderRadius: "40px" }}
                       >
                         {categoryLabel[post.category]}
+                      </div>
                       </div>
 
                       {/* 좋아요 버튼 (우측 상단 배치) */}

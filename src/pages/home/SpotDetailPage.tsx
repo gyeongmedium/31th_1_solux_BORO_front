@@ -67,20 +67,6 @@ export default function SpotDetailPage() {
         </button>
       </div>
 
-      {/* 이미지 영역 (Rectangle 91: 370x295, radius 40) */}
-      <div className="px-4 mb-5">
-        {spot.imageUrl ? (
-          <img
-            src={spot.imageUrl}
-            alt={spot.title}
-            className="w-[370px] h-[295px] object-cover rounded-[40px]"
-          />
-        ) : (
-          <div className="w-[370px] h-[295px] bg-[#E6E6E6] rounded-[40px] flex items-center justify-center">
-            <img src="/logo3.png" alt="기본 이미지" className="w-16 h-16 object-contain opacity-60" />
-          </div>
-        )}
-      </div>
 
       {/* 상세 정보 카드 (Rectangle 110: 370x421, radius 40, border 1px) */}
       <div className="px-4 mb-5">
@@ -158,7 +144,7 @@ export default function SpotDetailPage() {
 
           {/* 대여 비용 (Rectangle 109: 그라데이션 배경) */}
           <div
-            className="w-[352px] h-[68px] flex items-center justify-between px-4 -mx-2 mb-4"
+            className="w-[351px] h-[68px] flex items-center justify-between px-4 -mx-2 mb-4"
             style={{ background: "linear-gradient(90deg, #FFFFFF 0%, #E4E4FF 100%)" }}
           >
             <span
