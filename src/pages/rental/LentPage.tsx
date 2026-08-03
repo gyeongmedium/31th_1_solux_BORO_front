@@ -4,8 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom"; 
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
-import { getLentRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";      // 여기!
-//import { getMockLentRentalRequests, decideMockRentalRequest, completeMockRentalReturn } from "../../api/rental";
+import { getLentRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";
 import type { RentalRequestPreview, RentalRequestStatus } from "../../types/rental";
 
 // 팝업 컴포넌트 (취소/확인)
@@ -94,19 +93,31 @@ function getStatusInfo(status: RentalRequestStatus): { label: UIStatus; bg: stri
 // 날짜 포맷 변환 함수 (YYYY-MM-DD -> YY.MM.DD)
 function formatDateShort(dateStr?: string) {
     if (!dateStr) return "";
-    const cleanStr = dateStr.split("T")[0];
-    const parts = cleanStr.split("-");
-    if (parts.length === 3) {
-        return `${parts[0].slice(2)}.${parts[1]}.${parts[2]}`;
-    }
-    return dateStr;
+    
+    const normalizedIso = dateStr.endsWith("Z") || dateStr.includes("+")
+        ? dateStr
+        : `${dateStr}Z`;
+
+    const d = new Date(normalizedIso);
+    
+    if (isNaN(d.getTime())) return dateStr;
+
+    const year = d.getFullYear().toString().slice(-2);
+    const month = (d.getMonth() + 1).toString().padStart(2, "0");
+    const day = d.getDate().toString().padStart(2, "0");
+
+    return `${year}.${month}.${day}`;
 }
 
 // 남은 시간을 계산하여 "X분 후" 배지 텍스트를 만들어주는 함수
 const getRemainingTimeBadge = (dateTimeStr?: string): string => {
     if (!dateTimeStr) return "미정";
 
-    const target = new Date(dateTimeStr);
+    const normalizedIso = dateTimeStr.endsWith("Z") || dateTimeStr.includes("+")
+        ? dateTimeStr
+        : `${dateTimeStr}Z`;
+
+    const target = new Date(normalizedIso);
     const now = new Date();
 
     const diffMs = target.getTime() - now.getTime();
@@ -130,11 +141,9 @@ export default function LentPage() {
 
     const [toast, setToast] = useState<string | null>(null);
 
-    // 대여 목록 로드 (useCallback으로 메모이제이션)
     const fetchRentals = useCallback(async () => {
         try {
-            const res = await getLentRentalRequests();    // 여기!
-            //const res = await getMockLentRentalRequests();  // 여기!
+            const res = await getLentRentalRequests();
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -149,8 +158,7 @@ export default function LentPage() {
         let isMounted = true;
         (async () => {
             try {
-                const res = await getLentRentalRequests();        // 여기!
-                //const res = await getMockLentRentalRequests();
+                const res = await getLentRentalRequests();
                 if (res.isSuccess && isMounted) {
                     setRentals(res.result);
                 }
@@ -186,8 +194,7 @@ export default function LentPage() {
 
         try {
             if (modalState.action === 'confirmReturn') {
-                const res = await completeRentalReturn(currentItem.rentalRequestId);  // 여기!
-                //const res = await completeMockRentalReturn(currentItem.rentalRequestId);
+                const res = await completeRentalReturn(currentItem.rentalRequestId);
                 if (res.isSuccess) {
                     setModalState({ show: false, item: null, action: null });
                     setToast('대여자 처리시 마이페이지에서 확인 가능합니다.');
@@ -197,7 +204,6 @@ export default function LentPage() {
             } else {
                 const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
                 const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
-                //const res = await decideMockRentalRequest(currentItem.rentalRequestId, decideType);
                 if (res.isSuccess) {
                     const newStatusLabel = modalState.action === 'approve' ? '대여중' : '대여가능';
                     setModalState({ show: false, item: null, action: null });
@@ -219,12 +225,10 @@ export default function LentPage() {
     const handleStartChat = (item: RentalRequestPreview) => {
         const chatType = item.postCategory === "EMPTY_SPOTS" ? "SPACE" : "TRADE";
 
-        // 1. 빈자리인 경우 위치 정보 조립
         const seatTitle = item.seatDetail 
             ? `${item.seatDetail.location || ''} ${item.seatDetail.floor ? `${item.seatDetail.floor}층` : ''} ${item.seatDetail.seatNumber || ''}`.trim().replace(/\s+/g, ' ')
             : "";
 
-        // 2. 삼항 연산자로 const 변수에 단 한 번만 값 할당
         const title = item.postCategory === "EMPTY_SPOTS"
             ? (seatTitle || "빈자리 정보")
             : (item.itemDetail?.title || "게시글 제목");
@@ -238,7 +242,6 @@ export default function LentPage() {
         });
     };
 
-    // 모달 멘트 세팅 함수
     const getModalText = () => {
         if (!modalState.item || !modalState.action) return { message: "", subMessage: "" };
 
@@ -268,6 +271,18 @@ export default function LentPage() {
 
     const { message: modalMessage, subMessage: modalSubMessage } = getModalText();
 
+    // LentPage 필터링 규칙 적용
+    const filteredRentals = rentals.filter((item) => {
+        const isBlankCategory = item.postCategory === "EMPTY_SPOTS";
+        if (isBlankCategory) {
+            // 빈자리 게시물: 요청중, 대여중 상태
+            return item.rentalRequestStatus === "PENDING" || item.rentalRequestStatus === "APPROVED";
+        } else {
+            // 물품 게시물: 대여중 상태
+            return item.rentalRequestStatus === "APPROVED";
+        }
+    });
+
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-height-[874px] max-height-[874px] w-[402px] h-[874px] overflow-hidden flex flex-col bg-white">
             <div className="pl-[30px] pt-[30px] pb-5 flex-shrink-0">
@@ -287,15 +302,14 @@ export default function LentPage() {
             <div className="flex-1 overflow-x-hidden overflow-y-scroll vertical-scroll px-4 space-y-4 pt-2 pb-[75px]">
                 {isLoading ? (
                     <div className="text-center py-10 text-gray-400">불러오는 중...</div>
-                ) : rentals.length === 0 ? (
+                ) : filteredRentals.length === 0 ? (
                     <div className="text-center py-10 text-gray-400">빌려준 내역이 없습니다.</div>
                 ) : (
-                    rentals.map((item) => {
+                    filteredRentals.map((item) => {
                         const isBlankCategory = item.postCategory === "EMPTY_SPOTS";
                         const statusInfo = getStatusInfo(item.rentalRequestStatus);
                         const categoryLabel = CATEGORY_LABEL_MAP[item.postCategory] || item.postCategory;
 
-                        // 태그 존재 여부 확인
                         const hasTags = item.seatDetail?.hasPowerOutlet || item.seatDetail?.hasWindowSeat;
 
                         return (
@@ -317,7 +331,6 @@ export default function LentPage() {
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        {/* 1. 상단행 (카테고리/상태 태그, 시간 배지) */}
                                         <div className="flex justify-between items-start mb-1.5 w-full">
                                             <div className="flex gap-2 items-center">
                                                 <span className={`text-[12px] px-3 py-1.5 rounded-[40px] ${statusInfo.bg} ${statusInfo.text}`}>
@@ -346,7 +359,7 @@ export default function LentPage() {
                                                     </span>
                                                 </div>
                                                 <p className="text-[12px] text-black mb-0.5">
-                                                    요청자 : {item.ownerNickname}
+                                                    요청자 : {"여기! 수정하기"}
                                                 </p>
                                                 <p className="text-[12px] text-black mb-1">
                                                     {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}` : "자리 설명 참조"}
@@ -394,7 +407,7 @@ export default function LentPage() {
                                                 disabled
                                                 className="w-[304px] h-[34px] bg-[#CCCCCC] text-white rounded-[40px] text-[14px] font-bold cursor-not-allowed"
                                             >
-                                                반납 대기
+                                                반납 대기       {/* 여기! 반납 상태 받아서 대기중으로 만들기 */}
                                             </button>
                                             <button 
                                                 onClick={() => handleStartChat(item)}
@@ -431,7 +444,7 @@ export default function LentPage() {
                                                     onClick={() => handleApprove(item)}
                                                     className="w-[144px] h-[34px] py-1 bg-[#9996FF] text-white rounded-[40px] text-[14px] font-bold active:bg-[#8e7dd1] transition-colors"
                                                 >
-                                                    {isBlankCategory ? "승인" : "대여 승인"}
+                                                    {isBlankCategory ? "승인" : "승인"}
                                                 </button>
                                                 <button 
                                                     onClick={() => handleReject(item)}
@@ -458,7 +471,6 @@ export default function LentPage() {
                 )}
             </div>
 
-            {/* 하단 공통 네비게이션 */}
             <BottomNav />
 
             {modalState.show && (

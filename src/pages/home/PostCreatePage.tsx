@@ -1234,7 +1234,7 @@ export default function PostCreatePage() {
       )}
 
       {/* 등록하기 버튼 */}
-<div className="w-full flex justify-center mb-6">
+<div className="w-full flex justify-center mb-40">
   <button
   onClick={handleSubmit}
   style={{

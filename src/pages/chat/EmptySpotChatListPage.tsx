@@ -9,28 +9,57 @@ import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
 
 
-//형태의 날짜 포맷 함수
-const formatDate = (dateTimeStr: string): string => {
-    if (!dateTimeStr) return "";
-    const d = new Date(dateTimeStr);
-    return `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}`;
+// 공통 타임존 정규화 헬퍼 함수
+const normalizeIsoString = (isoString: string): string => {
+    if (!isoString) return "";
+    return isoString.endsWith("Z") || isoString.includes("+") 
+        ? isoString 
+        : `${isoString}Z`;
 };
 
-// 남은 시간을 계산하여 "X분 후" 배지 텍스트를 만들어주는 함수
+// 날짜 포맷 함수 (YYYY. MM. DD 또는 YYYY. M. D)
+const formatDate = (dateTimeStr: string): string => {
+    if (!dateTimeStr) return "";
+    
+    const normalizedIso = normalizeIsoString(dateTimeStr);
+    const d = new Date(normalizedIso);
+
+    const year = d.getFullYear();
+    // 한 자리 수 달/일에 0을 채우려면 padStart를 사용하고, 아니면 기존대로 유지할 수 있습니다.
+    const month = (d.getMonth() + 1).toString().padStart(2, "0");
+    const day = d.getDate().toString().padStart(2, "0");
+
+    return `${year}. ${month}. ${day}`;
+};
+
+// 남은 시간을 계산하여 배지 텍스트를 만들어주는 함수
 const getRemainingTimeBadge = (dateTimeStr?: string): string => {
     if (!dateTimeStr) return "시간 미정";
 
-    const target = new Date(dateTimeStr);
+    const normalizedIso = normalizeIsoString(dateTimeStr);
+    const target = new Date(normalizedIso);
     const now = new Date();
 
     // 두 시간의 차이 (밀리초 -> 분 변환)
     const diffMs = target.getTime() - now.getTime();
     const diffMins = Math.ceil(diffMs / (1000 * 60));
 
-    // 이미 퇴장 시간이 지났거나 exact 타임이면 "마감"
+    // 이미 시간이 지났거나 exact 타임이면 "마감"
     if (diffMins <= 0) return "마감";
 
-    return `${diffMins}분 후`;
+    if (diffMins < 60) {
+        return `${diffMins}분 후`;
+    } 
+    
+    const diffHours = Math.floor(diffMins / 60);
+    const remainMins = diffMins % 60;
+
+    if (diffHours < 24) {
+        return remainMins > 0 ? `${diffHours}시간 ${remainMins}분 후` : `${diffHours}시간 후`;
+    }
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}일 후`;
 };
 
 export default function EmptySpotChatListPage() {
@@ -96,7 +125,7 @@ export default function EmptySpotChatListPage() {
                             xmlns="http://www.w3.org/2000/svg"
                             className="flex-shrink-0"
                         >
-                            <path d="M9.90776 1.46182C10.266 1.06642 9.92838 0.500017 9.333 0.500017H4.71566C4.59063 0.49922 4.46747 0.526508 4.35802 0.579258C4.24858 0.632007 4.15652 0.708444 4.09071 0.801217L0.596763 5.87483C0.32107 6.27443 0.667577 6.77303 1.22102 6.77303H3.57851L1.35784 11.612C1.03677 12.224 1.90441 12.7838 2.48742 12.341L11.5 4.89862H6.79126L9.90776 1.46182Z" stroke="currentColor" stroke-linecap="round" strokeLinejoin="round"
+                            <path d="M9.90776 1.46182C10.266 1.06642 9.92838 0.500017 9.333 0.500017H4.71566C4.59063 0.49922 4.46747 0.526508 4.35802 0.579258C4.24858 0.632007 4.15652 0.708444 4.09071 0.801217L0.596763 5.87483C0.32107 6.27443 0.667577 6.77303 1.22102 6.77303H3.57851L1.35784 11.612C1.03677 12.224 1.90441 12.7838 2.48742 12.341L11.5 4.89862H6.79126L9.90776 1.46182Z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"
                                 fill="#FFFFFF"
                             />
                         </svg>

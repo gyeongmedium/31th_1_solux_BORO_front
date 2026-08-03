@@ -3,15 +3,20 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getChatRooms } from "../../api/chat";        // 여기!
-//import { getMockChatRooms } from "../../api/chat";      // 여기! mock 데이터 불러옴
 import type { ChatRoomPreview } from "../../types/chat";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
 
-// LocalDateTime 문자열을 받아 오늘/어제/날짜 형식으로 변환하는 함수
+// LocalDateTime 문자열을 받아 오늘(시간)/어제/MM.DD/YY.MM.DD 형식으로 변환하는 함수
 const formatChatTime = (dateTimeStr: string): string => {
     if (!dateTimeStr) return "";
-    const messageDate = new Date(dateTimeStr);
+
+    // 타임존 오프셋 지정이 없는 ISO 문자열일 경우 'Z'(UTC) 부여
+    const normalizedIso = dateTimeStr.endsWith("Z") || dateTimeStr.includes("+") 
+        ? dateTimeStr 
+        : `${dateTimeStr}Z`;
+
+    const messageDate = new Date(normalizedIso);
     const now = new Date();
 
     const messageDay = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate());
@@ -20,31 +25,33 @@ const formatChatTime = (dateTimeStr: string): string => {
     const diffTime = today.getTime() - messageDay.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
+    // 1. 오늘 작성된 메시지 -> "오전/오후 H:MM"
     if (diffDays === 0) {
         let hours = messageDate.getHours();
         const minutes = messageDate.getMinutes().toString().padStart(2, "0");
         const ampm = hours >= 12 ? "오후" : "오전";
         
         hours = hours % 12;
-        hours = hours ? hours : 12;
+        hours = hours ? hours : 12; // 0시는 12시로 표시
         
-        return `${ampm} ${hours} : ${minutes}`;
-    } else if (diffDays === 1) {
+        return `${ampm} ${hours}:${minutes}`;
+    } 
+    
+    // 2. 어제 작성된 메시지 -> "어제"
+    if (diffDays === 1) {
         return "어제";
-    } else {
-        const currentYear = now.getFullYear();
-        const messageYear = messageDate.getFullYear();
-        
-        const month = (messageDate.getMonth() + 1).toString().padStart(2, "0");
-        const day = messageDate.getDate().toString().padStart(2, "0");
-
-        if (messageYear < currentYear) {
-            const shortYear = messageYear.toString().slice(-2);
-            return `${shortYear}.${month}.${day}`;
-        } else {
-            return `${month}.${day}`;
-        }
     }
+
+    // 3. 그 외 (올해 -> MM.DD / 이전 년도 -> YY.MM.DD)
+    const month = (messageDate.getMonth() + 1).toString().padStart(2, "0");
+    const day = messageDate.getDate().toString().padStart(2, "0");
+
+    if (messageDate.getFullYear() < now.getFullYear()) {
+        const shortYear = messageDate.getFullYear().toString().slice(-2);
+        return `${shortYear}.${month}.${day}`;
+    }
+    
+    return `${month}.${day}`;
 };
 
 export default function ChatListPage() {
@@ -58,7 +65,6 @@ export default function ChatListPage() {
                 setLoading(true);
                 // 1. GET /api/v1/chat?type=ITEM 호출
                 const res = await getChatRooms("ITEM");       // 여기!
-                //const res = await getMockChatRooms("ITEM");     // 여기!
                 
                 if (res.isSuccess && res.result?.chatRoomList) {
                     // 받아온 채팅방 리스트를 최신 메시지 작성 시간 순(내림차순) 정렬
