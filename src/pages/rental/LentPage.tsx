@@ -130,12 +130,12 @@ const getRemainingTimeBadge = (dateTimeStr?: string): string => {
 
 export default function LentPage() {
     const navigate = useNavigate();
-    const [rentals, setRentals] = useState<(RentalRequestPreview & { isReturnWaiting?: boolean })[]>([]);
+    const [rentals, setRentals] = useState<RentalRequestPreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [modalState, setModalState] = useState<{
         show: boolean;
-        item: (RentalRequestPreview & { isReturnWaiting?: boolean }) | null;
+        item: RentalRequestPreview | null;
         action: 'approve' | 'reject' | 'confirmReturn' | null;
     }>({ show: false, item: null, action: null });
 
@@ -195,6 +195,7 @@ export default function LentPage() {
         try {
             if (modalState.action === 'confirmReturn') {
                 const res = await completeRentalReturn(currentItem.rentalRequestId);
+                
                 if (res.isSuccess) {
                     setModalState({ show: false, item: null, action: null });
                     setToast('대여자 처리시 마이페이지에서 확인 가능합니다.');
@@ -233,7 +234,9 @@ export default function LentPage() {
             ? (seatTitle || "빈자리 정보")
             : (item.itemDetail?.title || "게시글 제목");
 
-        navigate(`/chat/${item.rentalRequestId}`, {
+        const targetRoomId = item.rentalRequestId;      // 여기!
+
+        navigate(`/chat/${targetRoomId}`, {
             state: {
                 type: chatType,
                 title: title,
@@ -312,6 +315,11 @@ export default function LentPage() {
 
                         const hasTags = item.seatDetail?.hasPowerOutlet || item.seatDetail?.hasWindowSeat;
 
+                        // 내가 반납해서 대기 상태인지 판단하는 조건
+                        // 물품 게시물일 때: ownerReturned가 true일 때
+                        // 빈자리 게시물일 때: borrowerReturned가 true일 때
+                        const isReturnWaiting = isBlankCategory ? item.borrowerReturned : item.ownerReturned;
+
                         return (
                             <div 
                                 key={item.rentalRequestId} 
@@ -359,7 +367,7 @@ export default function LentPage() {
                                                     </span>
                                                 </div>
                                                 <p className="text-[12px] text-black mb-0.5">
-                                                    요청자 : {"여기! 수정하기"}
+                                                    요청자 : {/*item.ownerNickname*/} 여기! 수정
                                                 </p>
                                                 <p className="text-[12px] text-black mb-1">
                                                     {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}` : "자리 설명 참조"}
@@ -381,7 +389,7 @@ export default function LentPage() {
                                                     {item.itemDetail?.title || "대여 물품"}
                                                 </h2>
                                                 <p className="text-[12px] text-black mb-2">
-                                                    대여자 : {item.ownerNickname}
+                                                    대여자 : {/*item.ownerNickname*/} 여기! 수정
                                                 </p>
 
                                                 <p className="text-[12px] text-[#43A860] leading-[16px]">
@@ -401,13 +409,13 @@ export default function LentPage() {
 
                                 {/* 하단 버튼 영역 */}
                                 <div className="flex flex-col gap-2 items-center w-full">
-                                    {item.isReturnWaiting ? (
+                                    {isReturnWaiting ? (
                                         <div className="flex flex-col gap-2 items-center w-full">
                                             <button 
                                                 disabled
                                                 className="w-[304px] h-[34px] bg-[#CCCCCC] text-white rounded-[40px] text-[14px] font-bold cursor-not-allowed"
                                             >
-                                                반납 대기       {/* 여기! 반납 상태 받아서 대기중으로 만들기 */}
+                                                반납 대기
                                             </button>
                                             <button 
                                                 onClick={() => handleStartChat(item)}

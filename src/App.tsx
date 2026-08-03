@@ -96,11 +96,12 @@ export default function App() {
             <Route path="/post/edit/:postId" element={<PostCreatePage />} />
             <Route path="/spot/edit/:spotId" element={<PostCreatePage />} />
             <Route path="/post/:postId" element={<PostDetailPage />} />
+            <Route path="/post/spot/:spotId" element={<SpotDetailPage />} />
+
 
             {/* 채팅 */}
             <Route path="/chat" element={<ChatListPage />} />
             <Route path="/chat/spot" element={<EmptySpotChatListPage />} />
-            <Route path="/post/spot/:spotId" element={<SpotDetailPage />} />
             <Route path="/chat/:roomId" element={<DetailedChatPage />} />
             
             {/* 대여 현황 */}

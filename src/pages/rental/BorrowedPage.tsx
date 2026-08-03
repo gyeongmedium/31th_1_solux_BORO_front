@@ -90,12 +90,12 @@ function getStatusInfo(status: RentalRequestStatus): { label: UIStatus; bg: stri
 
 export default function BorrowedPage() {
     const navigate = useNavigate();
-    const [rentals, setRentals] = useState<(RentalRequestPreview & { isReturnWaiting?: boolean })[]>([]);
+    const [rentals, setRentals] = useState<RentalRequestPreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const [modalState, setModalState] = useState<{
         show: boolean;
-        item: (RentalRequestPreview & { isReturnWaiting?: boolean }) | null;
+        item: RentalRequestPreview | null;
         action: 'approve' | 'reject' | 'return' | null;
     }>({ show: false, item: null, action: null });
 
@@ -156,20 +156,10 @@ export default function BorrowedPage() {
             if (modalState.action === 'return') {
                 const res = await completeRentalReturn(currentItem.rentalRequestId);
                 if (res.isSuccess) {
-                    // 1. 해당 아이템의 isReturnWaiting 상태를 true로 직접 변경
-                    setRentals((prev) =>
-                        prev.map((r) =>
-                            r.rentalRequestId === currentItem.rentalRequestId
-                                ? { ...r, isReturnWaiting: true }
-                                : r
-                        )
-                    );
-
                     setModalState({ show: false, item: null, action: null });
                     setToast('제공자 처리시 마이페이지에서 확인 가능합니다.');
                     setTimeout(() => setToast(null), 2000);
-                    
-                    // 2. fetchRentals();
+                    fetchRentals();
                 }
             } else {
                 const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
@@ -275,6 +265,9 @@ export default function BorrowedPage() {
                         const categoryLabel = CATEGORY_LABEL_MAP[item.postCategory] || item.postCategory;
 
                         const hasTags = item.seatDetail?.hasPowerOutlet || item.seatDetail?.hasWindowSeat;
+                        
+                        // 내가 반납해서 대기 상태인지 판단하는 조건
+                        const isReturnWaiting = isBlankCategory ? item.ownerReturned : item.borrowerReturned;
 
                         return (
                             <div 
@@ -337,7 +330,7 @@ export default function BorrowedPage() {
                                                     {item.itemDetail?.title || "대여 물품 설명 참조"}
                                                 </h2>
                                                 <p className="text-[12px] text-black mb-2">
-                                                    제공자 : {"여기 수정"}
+                                                    제공자 : {item.ownerNickname}
                                                 </p>
                                                 <p className="text-[12px] text-[#43A860] leading-[16px]">
                                                     대여 시작 : {item.itemDetail?.rentalStartTime} <br />
@@ -358,14 +351,14 @@ export default function BorrowedPage() {
                                         <div className="flex flex-col gap-2 items-center w-full">
                                             <button 
                                                 onClick={() => handleReturn(item)}
-                                                disabled={item.isReturnWaiting}
+                                                disabled={isReturnWaiting}
                                                 className={`w-[304px] h-[34px] rounded-[40px] text-[14px] font-bold transition-colors ${
-                                                    item.isReturnWaiting 
+                                                    isReturnWaiting 
                                                     ? "bg-[#CCCCCC] text-white cursor-not-allowed" 
                                                     : "bg-[#9996FF] text-white active:bg-[#8582eb]"
                                                 }`}
                                             >
-                                                {item.isReturnWaiting ? "반납 대기" : "반납 하기"}
+                                                {isReturnWaiting ? "반납 대기" : "반납 하기"}
                                             </button>
                                             <button 
                                                 onClick={() => handleStartChat(item)}

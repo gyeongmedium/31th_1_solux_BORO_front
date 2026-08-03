@@ -93,11 +93,16 @@ export default function EmptySpotChatListPage() {
         const fetchSpotRooms = async () => {
             try {
                 setLoading(true);
-                // GET /api/v1/chat?type=EMPTY_SPOT Mock 데이터 호출
-                const res = await getChatRooms("EMPTY_SPOT");         // 여기!
-                //const res = await getMockChatRooms("EMPTY_SPOT");
+                const res = await getChatRooms("EMPTY_SPOT");
                 if (res.isSuccess && res.result?.chatRoomList) {
-                    setSpots(res.result.chatRoomList);
+                    // 최신 날짜순 정렬 (내림차순)
+                    const sortedList = [...res.result.chatRoomList].sort((a, b) => {
+                        const dateA = new Date(normalizeIsoString(a.lastMessageAt || a.expectedCheckoutTime || "")).getTime();
+                        const dateB = new Date(normalizeIsoString(b.lastMessageAt || b.expectedCheckoutTime || "")).getTime();
+                        return dateB - dateA;
+                    });
+
+                    setSpots(sortedList);
                 }
             } catch (error) {
                 console.error("빈자리 채팅 목록 조회 실패:", error);

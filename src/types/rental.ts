@@ -40,6 +40,8 @@ export interface RentalRequestPreview {
     postCategory: PostCategory;
     ownerNickname: string;
     createdAt: string;
+    borrowerReturned: boolean;
+    ownerReturned: boolean;
     itemDetail?: ItemDetail;
     seatDetail?: SeatDetail;
 }
