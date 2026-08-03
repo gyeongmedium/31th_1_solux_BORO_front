@@ -12,6 +12,7 @@ export interface EmptySpotListResponse {
 
 export interface EmptySpotDetailResponse {
     emptySpotId: number; 
+    status: string;
     location: string;
     floor: number;
     seatNumber: number;

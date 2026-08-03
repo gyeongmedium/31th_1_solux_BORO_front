@@ -1,4 +1,4 @@
-import { Search, Zap, ChevronDown, Heart, MapPin } from "lucide-react"
+import { Search, Zap, ChevronDown, Heart } from "lucide-react"
 import BottomNav from "../../components/BottomNav"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
@@ -396,7 +396,7 @@ const filteredPosts = posts
                         />
                       </div>
 
-                      {/* 대여가능 뱃지 (62x30, top 23 left 116) */}
+                      {/* 대여가능 뱃지 */}
                       <div className="absolute flex items-center gap-1.5" style={{ top: "23px", left: "116px" }}>
                       <div
                         className={`flex items-center justify-center text-[12px] text-black px-2.5 whitespace-nowrap ${
@@ -404,7 +404,9 @@ const filteredPosts = posts
                             ? "bg-[#E9F5EE]"
                             : post.status === "PENDING"
                             ? "bg-[#FFF3CD]"
-                            : "bg-[#FFE1E1]"
+                            : post.status === "COMPLETED"
+                            ? "bg-[#FFE1E1]"
+                            : "bg-[#E6E6E6]" // DELETED
                         }`}
                         style={{ height: "30px", borderRadius: "40px" }}
                       >

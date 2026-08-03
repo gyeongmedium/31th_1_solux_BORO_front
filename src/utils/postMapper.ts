@@ -16,6 +16,7 @@ export const statusLabel: Record<PostStatus, string> = {
   ACTIVE: "대여가능",
   PENDING: "대여중",
   COMPLETED: "대여완료",
+  DELETED: "삭제됨",
 }
 
 export const priceUnitLabel: Record<RentalPriceUnit, string> = {
