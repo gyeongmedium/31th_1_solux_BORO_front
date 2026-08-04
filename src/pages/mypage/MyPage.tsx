@@ -418,7 +418,7 @@ export default function MyPage() {
       </div>
 
       {/* 로그아웃 버튼 (하단 여백 mb-10 추가) */}
-      <div className="px-4 mb-10">
+      <div className="px-4 mb-30">
         <button
           onClick={() => setShowLogoutModal(true)}
           className="w-full h-[48px] rounded-[40px] border border-[#9996FF] bg-white flex items-center justify-center gap-2 text-[#9996FF] text-[14px]"

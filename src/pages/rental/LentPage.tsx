@@ -6,6 +6,9 @@ import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
 import { getLentRentalRequests, decideRentalRequest, completeRentalReturn } from "../../api/rental";
 import type { RentalRequestPreview, RentalRequestStatus } from "../../types/rental";
+import { getChatRooms } from "../../api/chat";
+import type { ChatRoomPreview } from "../../types/chat";
+
 
 // 팝업 컴포넌트 (취소/확인)
 function ConfirmModal({ 
@@ -128,10 +131,38 @@ const getRemainingTimeBadge = (dateTimeStr?: string): string => {
     return `${diffMins}분 후`;
 };
 
+// 대여 요청/물품 데이터와 채팅방 목록 데이터를 매칭하여 상대방 Nickname(chatName)을 반환하는 함수
+const getTargetChatName = (
+    item: RentalRequestPreview,
+    tradeRooms: ChatRoomPreview[],
+    spotRooms: ChatRoomPreview[]
+): string => {
+    const isBlankCategory = item.postCategory === "EMPTY_SPOTS";
+
+    if (isBlankCategory) {
+        // 빈자리 게시글: item.seatDetail.location 과 spot.location 이 일치하는 채팅방 검색
+        const matchedSpot = spotRooms.find(
+            (spot) => spot.location && item.seatDetail?.location && spot.location === item.seatDetail.location
+        );
+        return matchedSpot?.chatName || item.ownerNickname || "요청자 정보 없음";
+    } else {
+        // 물품 게시글: item.itemDetail.title 과 room.postTitle 이 일치하는 채팅방 검색
+        const matchedTrade = tradeRooms.find(
+            (room) => room.postTitle && item.itemDetail?.title && room.postTitle === item.itemDetail.title
+        );
+        return matchedTrade?.chatName || item.ownerNickname || "대여자 정보 없음";
+    }
+};
+
+
 export default function LentPage() {
     const navigate = useNavigate();
     const [rentals, setRentals] = useState<RentalRequestPreview[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // 채팅 목록 상태 추가
+    const [tradeRooms, setTradeRooms] = useState<ChatRoomPreview[]>([]);
+    const [spotRooms, setSpotRooms] = useState<ChatRoomPreview[]>([]);
 
     const [modalState, setModalState] = useState<{
         show: boolean;
@@ -141,35 +172,62 @@ export default function LentPage() {
 
     const [toast, setToast] = useState<string | null>(null);
 
-    const fetchRentals = useCallback(async () => {
+    const fetchAllData = useCallback(async () => {
         try {
-            const res = await getLentRentalRequests();
-            if (res.isSuccess) {
-                setRentals(res.result);
+            setIsLoading(true);
+            
+            // 대여 현황, 거래 채팅, 빈자리 채팅 3개 요청 병렬 수행
+            const [lentRes, tradeRes, spotRes] = await Promise.all([
+                getLentRentalRequests(),
+                getChatRooms("ITEM"),
+                getChatRooms("EMPTY_SPOT"),
+            ]);
+
+            if (lentRes.isSuccess) setRentals(lentRes.result);
+            if (tradeRes.isSuccess && tradeRes.result?.chatRoomList) {
+                setTradeRooms(tradeRes.result.chatRoomList);
+            }
+            if (spotRes.isSuccess && spotRes.result?.chatRoomList) {
+                setSpotRooms(spotRes.result.chatRoomList);
             }
         } catch (error) {
-            console.error("빌려준 목록 로딩 실패:", error);
+            console.error("데이터 로딩 실패:", error);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
+    // 최초 마운트 시 실행되는 Effect (isMounted 관리)
     useEffect(() => {
         let isMounted = true;
-        (async () => {
+
+        const initData = async () => {
             try {
-                const res = await getLentRentalRequests();
-                if (res.isSuccess && isMounted) {
-                    setRentals(res.result);
+                const [lentRes, tradeRes, spotRes] = await Promise.all([
+                    getLentRentalRequests(),
+                    getChatRooms("ITEM"),
+                    getChatRooms("EMPTY_SPOT"),
+                ]);
+
+                if (isMounted) {
+                    if (lentRes.isSuccess) setRentals(lentRes.result);
+                    if (tradeRes.isSuccess && tradeRes.result?.chatRoomList) {
+                        setTradeRooms(tradeRes.result.chatRoomList);
+                    }
+                    if (spotRes.isSuccess && spotRes.result?.chatRoomList) {
+                        setSpotRooms(spotRes.result.chatRoomList);
+                    }
                 }
             } catch (error) {
-                console.error("빌려준 목록 로딩 실패:", error);
+                console.error("데이터 로딩 실패:", error);
             } finally {
                 if (isMounted) {
                     setIsLoading(false);
                 }
             }
-        })();
+        };
+
+        initData();
 
         return () => {
             isMounted = false;
@@ -200,7 +258,7 @@ export default function LentPage() {
                     setModalState({ show: false, item: null, action: null });
                     setToast('대여자 처리시 마이페이지에서 확인 가능합니다.');
                     setTimeout(() => setToast(null), 2000);
-                    fetchRentals();
+                    fetchAllData();
                 }
             } else {
                 const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
@@ -210,7 +268,7 @@ export default function LentPage() {
                     setModalState({ show: false, item: null, action: null });
                     setToast(`상태가 "${newStatusLabel}"으로 변경되었습니다.`);
                     setTimeout(() => setToast(null), 2000);
-                    fetchRentals();
+                    fetchAllData();
                 }
             }
         } catch (error) {
@@ -313,11 +371,10 @@ export default function LentPage() {
 
                         const hasTags = item.seatDetail?.hasPowerOutlet || item.seatDetail?.hasWindowSeat;
 
-                        // 내가 반납해서 대기 상태인지 판단하는 조건
-                        // 물품 게시물일 때: ownerReturned가 true일 때
-                        // 빈자리 게시물일 때: borrowerReturned가 true일 때
+                        // 내가 반납해서 대기 상태인지 판단하는 조건 (물품 게시물일 때: ownerReturned가 true일 때, 빈자리 게시물일 때: borrowerReturned가 true일 때)
                         const isReturnWaiting = isBlankCategory ? item.borrowerReturned : item.ownerReturned;
-
+                        // 매칭 헬퍼 함수를 통한 닉네임 구하기
+                        const targetNickname = getTargetChatName(item, tradeRooms, spotRooms);
                         return (
                             <div 
                                 key={item.rentalRequestId} 
@@ -365,7 +422,7 @@ export default function LentPage() {
                                                     </span>
                                                 </div>
                                                 <p className="text-[12px] text-black mb-0.5">
-                                                    요청자 : {/*item.ownerNickname*/} 여기! 수정
+                                                    요청자 : {targetNickname}
                                                 </p>
                                                 <p className="text-[12px] text-black mb-1">
                                                     {item.seatDetail?.floor ? `${item.seatDetail.floor}층` : "층"} / {item.seatDetail?.seatNumber ? `${item.seatDetail.seatNumber}` : "자리 설명 참조"}
@@ -387,7 +444,7 @@ export default function LentPage() {
                                                     {item.itemDetail?.title || "대여 물품"}
                                                 </h2>
                                                 <p className="text-[12px] text-black mb-2">
-                                                    대여자 : {/*item.ownerNickname*/} 여기! 수정
+                                                    대여자 : {targetNickname}
                                                 </p>
 
                                                 <p className="text-[12px] text-[#43A860] leading-[16px]">

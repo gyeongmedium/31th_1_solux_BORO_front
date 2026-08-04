@@ -7,14 +7,14 @@ import SockJS from "sockjs-client";
 
 
 import { getChatMessageList, readChatRoom, CHAT_SOCKET_ENDPOINTS } from "../../api/chat";
-import type { ChatMessageDetail, ChatMessageList, ChatMessageType } from "../../types/chat";
+import type { ChatMessageDetail, ChatMessageList } from "../../types/chat";
 import { uploadImage } from "../../api/upload-image";
 
 // 메시지 상세 시간 포맷 함수 (오전/오후 HH : MM)
 const formatDetailTime = (isoString: string) => {
     if (!isoString) return "";
     
-    const normalizedIso = isoString.endsWith("Z") || isoString.includes("+") 
+    const normalizedIso = isoString.endsWith("Z") || isoString.includes("+")
         ? isoString 
         : `${isoString}Z`;
 
@@ -142,7 +142,7 @@ export default function DetailedChatPage() {
         if (!roomId) return;
 
         const baseUrl =
-            import.meta.env.VITE_API_URL || "https://api.boro-app.com";
+            import.meta.env.VITE_API_URL;
         const token = localStorage.getItem("accessToken");
 
         // SockJS 사용
@@ -279,16 +279,6 @@ export default function DetailedChatPage() {
                 destination: CHAT_SOCKET_ENDPOINTS.PUB_CHAT_MESSAGE(Number(roomId)),
                 body: JSON.stringify(payload),
             });
-
-            const myMessage: ChatMessageDetail = {
-                chatMessageType: payload.chatMessageType as ChatMessageType,
-                memberId: currentUserId,
-                content: payload.content,
-                imageUrls: payload.imageUrls,
-                createdAt: new Date().toISOString(),
-            };
-
-            setMessages((prev) => [...prev, myMessage]);
 
             setInputValue("");
             selectedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
