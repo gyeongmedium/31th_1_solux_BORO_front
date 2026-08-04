@@ -193,7 +193,7 @@ export default function BorrowedPage() {
             ? (seatTitle || "빈자리 정보")
             : (item.itemDetail?.title || "게시글 제목");
 
-        navigate(`/chat/${item.rentalRequestId}`, {
+        navigate(`/chat/${item.chatRoomId}`, {
             state: {
                 type: chatType,
                 title: title,

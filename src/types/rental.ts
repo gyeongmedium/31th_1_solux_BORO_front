@@ -35,6 +35,7 @@ export interface SeatDetail {
 export interface RentalRequestPreview {
     rentalRequestId: number;
     postId: number;
+    chatRoomId: number;
     imageUrl: string;
     rentalRequestStatus: RentalRequestStatus;
     postCategory: PostCategory;

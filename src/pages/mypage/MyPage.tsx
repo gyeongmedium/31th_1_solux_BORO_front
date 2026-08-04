@@ -1,11 +1,56 @@
 import { ChevronRight, Clock, Star, Heart, ShoppingCart, UserCog, Settings, LogOut, AlertCircle } from "lucide-react"
 import BottomNav from "../../components/BottomNav"
-import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
+import { useState, useEffect } from "react"
+
+import { getMemberAssets } from "../../api/member-gm"
+import type { MemberAsset } from "../../types/member-gm"
+
+
+{/* 눈송이 꾸미기 */}
+// 눈송이 관련 이미지 및 에셋 Import
+import baseNoonsong from "../../assets/noonsong.png"
+import bagImg from "../../assets/bag.png"
+import coffeeImg from "../../assets/coffee.png"
+import glassesImg from "../../assets/glasses.png"
+import hatImg from "../../assets/hat.png"
+import headsetImg from "../../assets/headset.png"
+import hoodieImg from "../../assets/hoodie.png"
+import maskImg from "../../assets/mask.png"
+import princessSongImg from "../../assets/princess_song.png"
+import suitSongImg from "../../assets/suit_song.png"
+import suitImg from "../../assets/suit.png"
+
+// 1. 아이템 이름 - 이미지 매칭
+const imageMap: Record<string, string> = {
+  "가방": bagImg,
+  "커피": coffeeImg,
+  "안경": glassesImg,
+  "모자": hatImg,
+  "헤드셋": headsetImg,
+  "후드티": hoodieImg,
+  "마스크": maskImg,
+  "프린세스 송이": princessSongImg,
+  "정장 송이": suitSongImg,
+  "정장": suitImg,
+}
+
+// 2. 아이템 오버레이 좌표
+const positionMap: Record<string, React.CSSProperties> = {
+  "후드티": { top: "65.5%", left: "50.9%", transform: "translate(-50%, -50%)", width: "46px", zIndex: 5 },
+  "정장": { top: "65.5%", left: "50.9%", transform: "translate(-50%, -50%)", width: "46px", zIndex: 10 },
+  "헤드셋": { top: "36%", left: "50%", transform: "translate(-50%, -50%)", width: "70px", zIndex: 20 },
+  "모자": { top: "24.5%", left: "50%", transform: "translate(-50%, -50%)", width: "58px", zIndex: 15 },
+  "안경": { top: "42%", left: "48.5%", transform: "translate(-50%, -50%)", width: "40px", zIndex: 30 },
+  "가방": { top: "72%", left: "68%", transform: "translate(-50%, -50%)", width: "16px", zIndex: 15 },
+  "마스크": { top: "53%", left: "49%", transform: "translate(-50%, -50%)", width: "41px", zIndex: 30 },
+  "커피": { top: "65%", left: "33%", transform: "translate(-50%, -50%) rotate(-20deg)", width: "12px", zIndex: 25 },
+}
 
 export default function MyPage() {
   const navigate = useNavigate()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const location = useLocation()
 
   const user = {
     name: "김윤지",
@@ -18,7 +63,7 @@ export default function MyPage() {
 
   const menuItems = [
     { icon: Clock, label: "거래 내역", path: "/mypage/history" },
-    { icon: Star, label: "받은 후기", path: "/mypage/review" },
+    { icon: Star, label: "후기", path: "/mypage/review" },
     { icon: Heart, label: "찜한 게시물 보기", path: "/mypage/liked" },
     { icon: ShoppingCart, label: "포인트 / 상점", path: "/mypage/store" },
     { icon: UserCog, label: "프로필 수정", path: "/mypage/edit" },
@@ -30,6 +75,41 @@ export default function MyPage() {
     navigate("/login")
   }
 
+  {/* 눈송이 꾸미기 */}
+  // 착용중인 아이템 상태 관리
+  const [equippedItems, setEquippedItems] = useState<string[]>(() => {
+    // 1. 뒤로가기(navigate)로 전달받은 state가 있는 경우 우선 적용
+    if (location.state && (location.state as { equippedItems?: string[] }).equippedItems) {
+      return (location.state as { equippedItems: string[] }).equippedItems
+    }
+    // 2. localStorage에서 캐시된 데이터 조회
+    const saved = localStorage.getItem("equippedItems")
+    return saved ? JSON.parse(saved) : []
+  })
+
+  // 백엔드 API 연동: 마이페이지 진입 시 서버에서 착용 중인 아이템 목록 동기화
+  useEffect(() => {
+    getMemberAssets()
+      .then((res) => {
+        if (res.isSuccess && Array.isArray(res.result)) {
+          const equippedNames = res.result
+            .filter((asset: MemberAsset) => asset.equipped)
+            .map((asset: MemberAsset) => asset.itemName)
+
+          setEquippedItems(equippedNames)
+          localStorage.setItem("equippedItems", JSON.stringify(equippedNames))
+        }
+      })
+      .catch((err) => {
+        console.error("마이페이지 장착 아이템 조회 실패:", err)
+      })
+  }, [])
+
+  // 풀세트 아이템 판별
+  const isFullSetItem = (name: string) => name === "프린세스 송이" || name === "정장 송이"
+  const activeFullSet = equippedItems.find(isFullSetItem)
+
+  
   return (
     <div className="flex flex-col bg-white pb-24 vertical-scroll">
       {/* 헤더: 마이페이지 (font 24 bold) */}
@@ -145,8 +225,45 @@ export default function MyPage() {
               <ChevronRight size={22} strokeWidth={3} className="flex-shrink-0" style={{ width: "22px", height: "22px" }} />
             </button>
           </div>
-          <div className="w-[150px] h-[120px] my-1 flex items-center justify-center">
-            <div className="text-6xl">👻</div>
+
+          {/* 캐릭터 프리뷰 영역 */}
+          <div className="w-[150px] h-[120px] my-[-15px] flex items-center justify-center overflow-hidden">
+            {activeFullSet ? (
+              /* 풀세트 캐릭터 */
+              <img
+                src={imageMap[activeFullSet]}
+                alt={activeFullSet}
+                className="w-[88px] h-[110px] object-contain"
+              />
+            ) : (
+              /* 기본 눈송이 기준 1:1 오버레이 래퍼 */
+              <div className="relative w-[88px] h-[110px] flex items-center justify-center">
+                {/* 기본 눈송이 */}
+                <img
+                  src={baseNoonsong}
+                  alt="기본 눈송이"
+                  className="w-full h-full object-contain absolute inset-0 z-0"
+                />
+
+                {/* 장착 아이템 */}
+                {equippedItems.map((itemName) => {
+                  const overlayImg = imageMap[itemName]
+                  const posStyle = positionMap[itemName]
+
+                  if (!overlayImg) return null
+
+                  return (
+                    <img
+                      key={itemName}
+                      src={overlayImg}
+                      alt={itemName}
+                      style={posStyle}
+                      className="absolute object-contain pointer-events-none"
+                    />
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

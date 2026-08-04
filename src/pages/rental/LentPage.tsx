@@ -234,9 +234,7 @@ export default function LentPage() {
             ? (seatTitle || "빈자리 정보")
             : (item.itemDetail?.title || "게시글 제목");
 
-        const targetRoomId = item.rentalRequestId;      // 여기!
-
-        navigate(`/chat/${targetRoomId}`, {
+        navigate(`/chat/${item.chatRoomId}`, {
             state: {
                 type: chatType,
                 title: title,
