@@ -109,7 +109,7 @@ export default function MyPage() {
   const isFullSetItem = (name: string) => name === "프린세스 송이" || name === "정장 송이"
   const activeFullSet = equippedItems.find(isFullSetItem)
 
-  
+
   return (
     <div className="flex flex-col bg-white pb-24 vertical-scroll">
       {/* 헤더: 마이페이지 (font 24 bold) */}
@@ -217,7 +217,7 @@ export default function MyPage() {
               {user.nickname}
             </span>
             <button
-              onClick={() => navigate("/mypage/noonsong")}
+              onClick={() => navigate("/mypage/noonsong", { state: { nickname: user.nickname } })}
               className="text-[15px] text-[#8E8E93] flex items-center gap-0.5"
               style={{ width: "80px", marginTop: "8px" }}
             >

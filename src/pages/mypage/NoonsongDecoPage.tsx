@@ -1,7 +1,7 @@
 // 눈송이 꾸미기
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getMemberAssets, equipMemberAsset } from "../../api/member-gm";
 import type { MemberAsset, ItemCategory } from "../../types/member-gm";
 import baseNoonsong from "../../assets/noonsong.png";
@@ -74,6 +74,9 @@ const INITIAL_ITEMS: DisplayItem[] = [
 export default function NoonsongDecoPage() {
     const navigate = useNavigate();
     const userPoint = 1250;             // 여기!
+    const location = useLocation()
+
+    const nickname = (location.state as { nickname?: string })?.nickname || "눈송이"
 
     // 하드코딩된 목록을 초기값으로 설정하여 화면이 텅 비는 것 방지
     const [itemList, setItemList] = useState<DisplayItem[]>(INITIAL_ITEMS);
@@ -274,7 +277,7 @@ export default function NoonsongDecoPage() {
                 {/* 캐릭터 미리보기 영역 */}
                 <div className="flex flex-col items-center">
                     {/* 사용자 아이디 */}
-                    <h2 className="text-[16px] font-bold text-black mb-3">눈송이</h2>       {/* 여기! */}
+                    <h2 className="text-[16px] font-bold text-black mb-3">{nickname}</h2>       {/* 여기! */}
 
                     <div className="w-[370px] h-[305px] bg-gradient-to-b from-[#9996FF]/30 to-[#E4E4FF]/15 rounded-[40px] relative flex items-center justify-center overflow-hidden">
                         {activeFullSet ? (
