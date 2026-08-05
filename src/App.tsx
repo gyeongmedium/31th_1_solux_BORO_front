@@ -41,15 +41,14 @@ function MobileLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+// 루트 진입 시 토큰 여부에 따라 /login 또는 /home 등으로 보내주는 진입점역할 컴포넌트
 function RootPage() {
   const token = localStorage.getItem("accessToken");
 
-  // 토큰이 없으면 주소창은 / 그대로 유지하면서 LoginPage를 렌더링
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // 토큰이 있으면 HomePage 렌더링
   return <HomePage />;
 }
 
@@ -60,7 +59,7 @@ function ProtectedRoute() {
 
   useEffect(() => {
     if (!token && !isAlertShown.current) {
-      isAlertShown.current = true; // 플래그를 true로 변경해서 중복 실행 방지
+      isAlertShown.current = true;
       alert("로그인이 필요한 서비스입니다.");
       navigate("/login", { replace: true });
     }
@@ -72,7 +71,6 @@ function ProtectedRoute() {
 
   return <Outlet />;
 }
-
 
 
 export default function App() {
@@ -91,16 +89,15 @@ export default function App() {
           {/* 로그인 토큰 필수 */}
           <Route element={<ProtectedRoute />}>
             {/* 홈 */}
-            <Route path="/" element={<HomePage />} />
             <Route path="/post/create" element={<PostCreatePage />} />
             <Route path="/post/edit/:postId" element={<PostCreatePage />} />
             <Route path="/spot/edit/:spotId" element={<PostCreatePage />} />
             <Route path="/post/:postId" element={<PostDetailPage />} />
+            <Route path="/post/spot/:spotId" element={<SpotDetailPage />} />
 
             {/* 채팅 */}
             <Route path="/chat" element={<ChatListPage />} />
             <Route path="/chat/spot" element={<EmptySpotChatListPage />} />
-            <Route path="/post/spot/:spotId" element={<SpotDetailPage />} />
             <Route path="/chat/:roomId" element={<DetailedChatPage />} />
             
             {/* 대여 현황 */}

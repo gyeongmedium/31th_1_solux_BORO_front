@@ -24,7 +24,7 @@ export default function SpotDetailPage() {
   }
 
 
-  {/* 경민: 채팅하기 버튼과 채팅방 생성 연결을 위한 코드 (나중에 이 주석 삭제하기) */}
+  {/* 경민: 채팅하기 버튼과 채팅방 생성 연결을 위한 코드 (나중에 이 주석 삭제하기) */}    // 여기! 채팅방이 어디로 이동하는지
   const handleStartChat = async () => {
     if (!spotId) return;
 
