@@ -78,7 +78,7 @@ export default function PostDetailPage() {
       }
     } catch (err) {
       console.error("채팅방 생성 중 오류 발생:", err);
-      alert("채팅방을 생성할 수 없습니다. 다시 시도해주세요.");
+      alert("채팅방을 생성할 수 없습니다.");
     }
   };
 
