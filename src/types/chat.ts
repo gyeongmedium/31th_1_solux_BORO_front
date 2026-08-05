@@ -45,6 +45,7 @@ export interface ChatRoom {
 
 // responses
 export interface CreatedRentalRequest {
+    chatRoomId: number;
     rentalRequestId: number;
     requestStatus: requestStatusType;
     borrowerReturned: boolean;

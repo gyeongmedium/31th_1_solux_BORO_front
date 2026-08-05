@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getReceivedReviews } from "../../api/member-gm";       // 여기!
-//import { getMockReceivedReviews } from "../../api/member-gm";     // Mock 데이터 함수
+import { getReceivedReviews } from "../../api/member-gm";
 import type { ReviewDetail, ReviewSentiment } from "../../types/member-gm";
 
 // 이의신청 구글 폼 URL
