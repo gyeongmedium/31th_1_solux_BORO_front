@@ -1,7 +1,6 @@
 @import 'pretendard/dist/web/variable/pretendardvariable.css';
 @import "tailwindcss";
 
-
 * {
     font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 }

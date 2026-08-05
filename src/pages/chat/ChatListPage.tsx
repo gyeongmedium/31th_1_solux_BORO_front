@@ -233,13 +233,7 @@ export default function ChatListPage() {
 
                             {/* 시간 및 알림 배지 구역 */}
                             <div className="flex flex-col items-end gap-3 flex-shrink-0 w-[80px] pt-1 text-right">
-                                <span 
-                                    className={`text-[12px] ${
-                                        new Date(room.lastMessageAt).toDateString() === new Date().toDateString()
-                                            ? "text-[#1A1A1A]"
-                                            : "text-[#7F7F7F]"
-                                    }`}
-                                >
+                                <span className="text-[12px] text-[#7F7F7F]">
                                     {formatChatTime(room.lastMessageAt)}
                                 </span>
                                 {room.unreadCount > 0 ? (

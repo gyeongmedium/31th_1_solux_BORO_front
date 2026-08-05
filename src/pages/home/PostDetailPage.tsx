@@ -51,21 +51,21 @@ export default function PostDetailPage() {
     }
   }
 
-  {/* 경민: 채팅하기 버튼과 채팅방 생성 연결을 위한 코드 (나중에 이 주석 삭제하기) */}    // 여기!
+  {/* 경민: 채팅하기 버튼과 채팅방 생성 연결을 위한 코드 (나중에 이 주석 삭제하기) */}
   const handleStartChat = async () => {
     if (!postId) return;
 
     try {
       // POST /api/v1/chat/{postId} 호출
       const requestData: ChatRoom = {
-        chatRoomType: "ITEM", // 기본값 설정 (필요 시 post 객체 내부 필드 활용)
+        chatRoomType: "ITEM",
       };
 
       const response = await createChatRoom(Number(postId), requestData);
 
       if (response.isSuccess && response.result) {
-        // 생성된 rentalRequestId를 방 ID로 사용하여 DetailedChatPage로 이동
-        const createdRoomId = response.result.rentalRequestId;
+        // 생성된 chatRoomId를 방 ID로 사용하여 DetailedChatPage로 이동
+        const createdRoomId = response.result.chatRoomId;
 
         navigate(`/chat/${createdRoomId}`, {
           state: {
@@ -78,7 +78,7 @@ export default function PostDetailPage() {
       }
     } catch (err) {
       console.error("채팅방 생성 중 오류 발생:", err);
-      alert("채팅방을 생성할 수 없습니다. 로그인 상태를 확인해주세요.");
+      alert("채팅방을 생성할 수 없습니다.");
     }
   };
 
