@@ -1,170 +1,148 @@
 import { ArrowLeft, Heart } from "lucide-react"
 import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { getLikedPosts } from "../../api/member"
+import { categoryLabel, priceUnitLabel } from "../../utils/postMapper"
+import type { LikedPostItem } from "../../types/likedPosts"
+import type { PostCategory, RentalPriceUnit } from "../../types/post"
 
 export default function LikedPostsPage() {
   const navigate = useNavigate()
 
-  // mock 데이터 (실제로는 좋아요한 게시물 API로 조회)
-  const [likedPosts, setLikedPosts] = useState([
-    {
-      id: 1,
-      imageUrl: null,
-      status: "대여가능",
-      category: "전공서적",
-      title: "경영학원론 교재 빌리고 싶어요",
-      description: "경영학원론 최신판 필요합니다.\n한 학기만 빌릴 수 있을까요?!",
-      likes: 6,
-      author: "경영광",
-      date: "2026. 4. 3",
-      price: "20,000원 / 80일",
-    },
-    {
-      id: 2,
-      imageUrl: null,
-      status: "대여가능",
-      category: "실험복",
-      title: "경영학원론 교재 빌리고 싶어요",
-      description: "실험 수업이 있어 일주일만 빌립니다",
-      likes: 3,
-      author: "생시전공",
-      date: "2026. 4. 3",
-      price: "3,000원 / 7일",
-    },
-    {
-      id: 3,
-      imageUrl: null,
-      status: "대여가능",
-      category: "빈자리",
-      title: "숙명여자대학교 중앙도서관 4층",
-      description: "4층 / 창가 자리 X / 콘센트 있음",
-      likes: 6,
-      author: "경영짱",
-      date: "2026. 4. 3",
-      price: "빈자리 양도",
-    },
-    {
-      id: 4,
-      imageUrl: null,
-      status: "대여가능",
-      category: "빈자리",
-      title: "숙명여자대학교 중앙도서관 4층",
-      description: "4층 / 창가 자리 X / 콘센트 있음",
-      likes: 6,
-      author: "경영짱",
-      date: "2026. 4. 3",
-      price: "빈자리 양도",
-    },
-    {
-      id: 5,
-      imageUrl: null,
-      status: "대여가능",
-      category: "빈자리",
-      title: "숙명여자대학교 중앙도서관 4층",
-      description: "4층 / 창가 자리 X / 콘센트 있음",
-      likes: 6,
-      author: "경영짱",
-      date: "2026. 4. 3",
-      price: "빈자리 양도",
-    },
-    {
-      id: 6,
-      imageUrl: null,
-      status: "대여가능",
-      category: "빈자리",
-      title: "숙명여자대학교 중앙도서관 4층",
-      description: "4층 / 창가 자리 X / 콘센트 있음",
-      likes: 6,
-      author: "경영짱",
-      date: "2026. 4. 3",
-      price: "빈자리 양도",
-    },
-  ])
+  const [likedPosts, setLikedPosts] = useState<LikedPostItem[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const toggleLike = (postId: number) => {
-    setLikedPosts((prev) => prev.filter((post) => post.id !== postId))
-  }
+  useEffect(() => {
+    const fetchLikedPosts = async () => {
+      setIsLoading(true)
+      try {
+        const res = await getLikedPosts()
+        console.log("좋아요한 게시물 첫번째 항목 전체:", res.data.result[0])
+        setLikedPosts(res.data.result)
+      } catch (err) {
+        console.error("좋아요한 게시물 조회 실패:", err)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchLikedPosts()
+  }, [])
 
   return (
-    /* 1. 최상단 부모: 고정된 #root 크기를 벗어나는 레이아웃 완전 차단 */
     <div className="w-full h-full relative bg-white flex flex-col overflow-hidden">
-      
-      {/* 2. 스크롤 컨테이너: 세로 스크롤만 활성화하며 가로 튕김 방지 */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden vertical-scroll">
-        
-        {/* 3. 콘텐츠 래퍼: 가로 폭을 정확히 w-[402px]로 고정하여 스크롤바가 생겨도 내부 컴포넌트 크기 유지 */}
-        <div className="w-[402px] flex flex-col bg-white pb-6">
-          
+        <div className="w-[402px] flex flex-col bg-white pb-10">
           {/* 헤더 */}
           <div className="flex items-center gap-3 px-4 pt-5 pb-4">
-            <button onClick={() => navigate(-1)} className="flex items-center justify-center">
+            <button onClick={() => navigate(-1)}>
               <ArrowLeft size={22} className="text-[#1A1A1A]" />
             </button>
             <span className="text-[17px] font-bold text-[#1A1A1A]">좋아요한 게시물</span>
           </div>
 
           {/* 게시글 카드 목록 */}
-          <div className="flex flex-col px-4 gap-4 w-full">
-            {likedPosts.length === 0 ? (
+          <div className="flex flex-col px-4 py-2 gap-4">
+            {isLoading ? (
+              <p className="text-center text-sm text-[#7F7F7F] py-10">불러오는 중...</p>
+            ) : likedPosts.length === 0 ? (
               <p className="text-center text-sm text-[#7F7F7F] py-10">
                 좋아요한 게시물이 없어요
               </p>
             ) : (
-              likedPosts.map((post) => (
+              likedPosts.map((post, idx) => (
                 <div
-                  key={post.id}
-                  onClick={() => navigate(`/post/${post.id}`)}
-                  className="border border-gray-200 rounded-3xl p-4 flex items-center gap-3 w-full h-[203px] bg-gradient-to-tl from-[#efeffe] via-white to-white cursor-pointer"
+                  key={post.postId ?? idx}
+                  onClick={() => post.postId && navigate(`/post/${post.postId}`)}
+                  className="relative mx-auto flex gap-3 p-[18px] cursor-pointer"
+                  style={{
+                    width: "370px",
+                    minHeight: "203px",
+                    borderRadius: "40px",
+                    border: "1px solid #CCCCCC",
+                    background: "linear-gradient(90deg, #FFFFFF 51.91%, #E4E4FF 114.12%)",
+                  }}
                 >
-                  {/* 왼쪽: 이미지 + 작성자 */}
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="w-23 h-23 bg-[#E6E6E6] rounded-2xl flex-shrink-0 flex items-center justify-center overflow-hidden">
+                  {/* 왼쪽: 물건 사진 + 작성자 */}
+                  <div className="flex flex-col items-center gap-2 flex-shrink-0" style={{ width: "90px" }}>
+                    <div
+                      className="bg-[#E6E6E6] overflow-hidden flex items-center justify-center"
+                      style={{ width: "90px", height: "90px", borderRadius: "20px" }}
+                    >
                       <img
-                        src={post.imageUrl || "/logo3.png"}
-                        alt={post.title}
-                        className={post.imageUrl ? "w-full h-full object-cover" : "w-10 h-10 object-contain"}
+                        src={post.postImageUrl || "/logo3.png"}
+                        alt={post.postTitle}
+                        className={post.postImageUrl ? "w-full h-full object-cover" : "w-10 h-10 object-contain"}
                       />
                     </div>
-                    <div className="flex items-center gap-2 mt-10">
-                      <div className="w-6 h-6 bg-gray-300 rounded-full flex-shrink-0"></div>
-                      <span className="text-[12px] text-[#000000]">{post.author}</span>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <div
+                        className="bg-gray-300 flex-shrink-0"
+                        style={{ width: "25px", height: "25px", borderRadius: "15px" }}
+                      />
+                      <p
+                        className="overflow-hidden text-ellipsis whitespace-nowrap"
+                        style={{ maxWidth: "60px", fontFamily: "Pretendard", fontWeight: 400, fontSize: "12px", color: "#000000" }}
+                      >
+                        {post.postMemberNickname}
+                      </p>
                     </div>
                   </div>
 
-                  {/* 오른쪽: 내용 */}
-                  <div className="flex flex-col gap-1.5 flex-1">
-                    <div className="flex justify-between items-start">
+                  {/* 오른쪽: 뱃지 + 제목 + 설명 + 신청일 + 가격 */}
+                  <div className="flex flex-col flex-1 gap-1.5">
+                    <div className="flex items-center justify-between">
                       <div className="flex gap-1.5">
-                        <span className="text-[12px] bg-[#E9F5EE] text-black px-2.5 py-1 rounded-full">
-                          {post.status}
+                        <span
+                          className={`flex items-center justify-center text-[12px] px-3 whitespace-nowrap ${
+                            post.postStatus === "ACTIVE" ? "bg-[#E9F5EE] text-black" : post.postStatus === "RENTED" ? "bg-[#FFF3CD] text-[#8A6D00]" : "bg-[#FFE1E1] text-[#C93333]"
+                          }`}
+                          style={{ height: "30px", borderRadius: "40px" }}
+                        >
+                          {post.postStatus === "ACTIVE" ? "대여가능" : post.postStatus === "RENTED" ? "대여중" : "대여완료"}
                         </span>
-                        <span className="text-[12px] bg-[#E4E4FF] text-[#000000] px-2.5 py-1 rounded-full">
-                          {post.category}
+                        <span
+                          className="flex items-center justify-center text-[12px] bg-[#E4E4FF] text-[#000000] px-3 whitespace-nowrap"
+                          style={{ height: "30px", borderRadius: "40px" }}
+                        >
+                          {categoryLabel[post.postCategory as PostCategory]}
                         </span>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          toggleLike(post.id)
-                        }}
-                        className="flex items-center gap-0.5"
-                      >
+                      <div className="flex items-center gap-0.5">
                         <Heart size={20} className="fill-[#9996FF] text-[#9996FF]" />
-                        <span className="text-xs text-[#000000]">{post.likes}</span>
-                      </button>
+                        <span className="text-xs text-[#000000]">{post.likeCount}</span>
+                      </div>
                     </div>
-                    <p className="text-sm font-bold mt-0.5">{post.title}</p>
-                    <p className="text-[12px] text-[#000000] leading-tight whitespace-pre-line">
-                      {post.description}
+
+                    <p
+                      className="overflow-hidden text-ellipsis whitespace-nowrap"
+                      style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "14px", lineHeight: "1.2", color: "#1A1A1A" }}
+                    >
+                      {post.postTitle}
                     </p>
-                    <p className="text-[12px] text-[#43A860] mt-3">대여 신청일: {post.date}</p>
-                    <p className="text-sm font-bold mt-2 text-right">{post.price}</p>
+
+                    <p
+                      className="whitespace-pre-line"
+                      style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "12px", lineHeight: "1.4", color: "#4A4A4A" }}
+                    >
+                      {post.postDescription}
+                    </p>
+
+                    <div className="flex items-center justify-between mt-auto pt-2">
+                      <p style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "12px", lineHeight: "1.2", color: "#43A860" }}>
+                        대여 신청일 : {post.requestCreatedAt}
+                      </p>
+                      <p
+                        className="whitespace-nowrap"
+                        style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "14px", lineHeight: "1.2", color: "#1A1A1A" }}
+                      >
+                        {(post.price ?? 0).toLocaleString()}원 / {post.priceUnit ? priceUnitLabel[post.priceUnit as RentalPriceUnit] : ""}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-
         </div>
       </div>
     </div>

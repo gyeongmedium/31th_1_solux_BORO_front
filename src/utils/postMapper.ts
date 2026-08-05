@@ -15,7 +15,7 @@ export const categoryLabel: Record<PostCategory, string> = {
 export const statusLabel: Record<PostStatus, string> = {
   ACTIVE: "대여가능",
   RENTED: "대여중",
-  CLOSED: "대여완료",
+  COMPLETED: "대여완료",
   DELETED: "삭제됨",
 }
 

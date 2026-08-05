@@ -7,7 +7,7 @@ export type PostCategory =
   | "ETC"
   | "EMPTY_SPOTS"
 
-export type PostStatus = "ACTIVE" | "RENTED" | "CLOSED" | "DELETED"
+export type PostStatus = "ACTIVE" | "RENTED" | "COMPLETED" | "DELETED"
 
 export type RentalPriceUnit = "HOUR" | "DAY" | "WEEK" | "MONTH" | "SEMESTER"
 
