@@ -68,129 +68,109 @@ export default function HomePage() {
   }, [showAvailableOnly])
 
 
-  // 좋아요 토글
+  // 좋아요 토글 API 연동
   const toggleLike = async (postId: number) => {
-    setPosts((prev) =>
-      prev.map((post) =>
-        post.postId === postId
-          ? {
-              ...post,
-              liked: !post.liked,
-              likeCount: post.liked ? post.likeCount - 1 : post.likeCount + 1,
-            }
-          : post
-      )
-    )
-
     try {
-      await likePost(postId)
-    } catch (err) {
-      console.error("좋아요 처리 실패:", err)
+      const res = await likePost(postId)
+      const { liked, likeCount } = res.data.result
       setPosts((prev) =>
         prev.map((post) =>
-          post.postId === postId
-            ? {
-                ...post,
-                liked: !post.liked,
-                likeCount: post.liked ? post.likeCount - 1 : post.likeCount + 1,
-              }
-            : post
+          post.postId === postId ? { ...post, liked, likeCount } : post
         )
       )
+    } catch (err) { // 좋아요 처리 실패 시 콘솔에 에러 로그 출력
+      console.error("좋아요 처리 실패:", err)
     }
   }
 
-// 빈자리 게시글 목록
-const [spotPosts, setSpotPosts] = useState<EmptySpotListResponse[]>([])
+  // 빈자리 게시글 목록
+  const [spotPosts, setSpotPosts] = useState<EmptySpotListResponse[]>([])
 
-// 빈자리 게시글 목록 불러오기(API 연동)
-useEffect(() => {
-  if (activeTab !== "spot") return
-  const fetchEmptySpots = async () => {
-    try {
-      const res = await getEmptySpotList()
-      setSpotPosts((res.data as any).result || [])
-    } catch (err) {
-      console.error("빈자리 목록 조회 실패:", err)
+  // 빈자리 게시글 목록 불러오기(API 연동)
+  useEffect(() => {
+    if (activeTab !== "spot") return
+    const fetchEmptySpots = async () => {
+      try {
+        const res = await getEmptySpotList()
+        setSpotPosts((res.data as any).result || [])
+      } catch (err) {
+        console.error("빈자리 목록 조회 실패:", err)
+      }
     }
-  }
-  fetchEmptySpots()
-}, [activeTab])
+    fetchEmptySpots()
+  }, [activeTab])
 
-  // 빈자리 검색 필터링
-const filteredSpotPosts = spotPosts.filter((spot) => {
-  if (searchKeyword.trim() === "") return true
-  const keyword = searchKeyword.toLowerCase()
-  return (
-    spot.title.toLowerCase().includes(keyword) ||
-    spot.location.toLowerCase().includes(keyword)
-  )
-})
-
-// 선택된 카테고리 + 검색어 + 정렬 기준에 맞게 처리
-//대여가능, 대여중, 대여완료만 존재
-// 1. 홈 화면에 노출할 상태 정의
-const ALLOWED_STATUSES = ["ACTIVE", "RENTED", "COMPLETED"]
-
-// 2. 선택된 카테고리 + 검색어 + 정렬 기준 + 상태 처리
-const filteredPosts = posts
-  // ACTIVE, RENTED, COMPLETED 상태의 게시글만 통과
-  .filter((post) => ALLOWED_STATUSES.includes(post.status))
-  .filter((post) => selectedCategory === "전체" || post.category === selectedCategory)
-  .filter((post) => {
+    // 빈자리 검색 필터링
+  const filteredSpotPosts = spotPosts.filter((spot) => {
     if (searchKeyword.trim() === "") return true
     const keyword = searchKeyword.toLowerCase()
     return (
-      post.title.toLowerCase().includes(keyword) ||
-      post.description.toLowerCase().includes(keyword)
+      spot.location.toLowerCase().includes(keyword)
     )
   })
-  .sort((a, b) => {
-    if (sortType === "popular") {
-      return b.likeCount - a.likeCount
-    }
-    return new Date(b.rentalStartTime).getTime() - new Date(a.rentalStartTime).getTime()
-  })
 
 
-  const categoryList: PostCategory[] = [
-    "DEPARTMENT_JACKET",
-    "MAJOR_BOOKS",
-    "ELECTRONICS",
-    "LIVING_SUPPLIES",
-    "EMPTY_SPOTS",
-    "ETC",
-  ]
+  //홈화면 -> 대여가능, 대여중, 대여완료만 존재
+  // 1. 홈 화면에 노출할 상태 정의
+  const ALLOWED_STATUSES = ["ACTIVE", "RENTED", "COMPLETED"]
+
+  // 2. 선택된 카테고리 + 검색어 + 정렬 기준 + 상태 처리
+  const filteredPosts = posts
+    // ACTIVE, RENTED, COMPLETED 상태의 게시글만 통과
+    .filter((post) => ALLOWED_STATUSES.includes(post.status))
+    .filter((post) => selectedCategory === "전체" || post.category === selectedCategory)
+    .filter((post) => {
+      if (searchKeyword.trim() === "") return true
+      const keyword = searchKeyword.toLowerCase()
+      return (
+        post.title.toLowerCase().includes(keyword) ||
+        post.description.toLowerCase().includes(keyword)
+      )
+    })
+    .sort((a, b) => {
+      if (sortType === "popular") {
+        return b.likeCount - a.likeCount
+      }
+      return new Date(b.rentalStartTime).getTime() - new Date(a.rentalStartTime).getTime()
+    })
+
+    const categoryList: PostCategory[] = [
+      "DEPARTMENT_JACKET",
+      "MAJOR_BOOKS",
+      "ELECTRONICS",
+      "LIVING_SUPPLIES",
+      "ETC",
+    ]
 
   return (
     <div className="w-full min-h-full bg-white flex flex-col justify-between vertical-scroll">
-  <div className="w-full flex flex-col bg-white pb-10">
+    <div className="w-full flex flex-col bg-white pb-10">
 
     {/* 헤더: 로고 (116x29) + 글쓰기 버튼*/}
-    <div className="flex items-center justify-between px-[22px] pt-[30px] pb-4">
+    <div className="flex items-center justify-between px-5.5 pt-7.5 pb-4">
             <img src="/logo1.png" alt="BORO" style={{ width: "116.09px", height: "29px" }} />
             <button
               onClick={() => navigate("/post/create")}
               className="bg-[#9996FF] text-white text-sm font-semibold px-4 py-2 rounded-full flex items-center gap-1"
             >
+    
               <span
-  style={{
-    fontFamily: "Pretendard",
-    fontWeight: 400,
-    fontSize: "14px",
-    lineHeight: "1.7",
-    linwidth: "2px",
-  }}
->
-  + 글 쓰기
-</span>
+                style={{
+                  fontFamily: "Pretendard",
+                  fontWeight: 400,
+                  fontSize: "14px",
+                  lineHeight: "1.7",
+                }}
+              >
+                + 글 쓰기
+              </span>
             </button>
-          </div>
+    </div>
 
           {/* 검색창 (370x36, radius 35.9) */}
           <div className="px-4 mb-4 flex justify-center">
             <div
-              className="flex items-center gap-2 px-[20px]"
+              className="flex items-center gap-2 px-5"
               style={{
                 width: "370px",
                 height: "36px",
@@ -198,7 +178,7 @@ const filteredPosts = posts
                 backgroundColor: "#E6E6E6",
               }}
             >
-              <Search className="text-[#7F7F7F] flex-shrink-0" size={13} />
+              <Search className="text-[#7F7F7F] shrink-0" size={13} />
               <input
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
@@ -267,8 +247,8 @@ const filteredPosts = posts
           {activeTab === "all" ? (
             <>
               {/* 카테고리 타이틀 */}
-              <div className="px-4 mt-1 mb-0 flex items-center gap-2 h-[24px] w-full">
-                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="flex-shrink-0 h-[18px] w-[18px] -translate-y-0.5">
+              <div className="px-4 mt-1 mb-0 flex items-center gap-2 h-6 w-full">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" className="shrink-0 h-4.5 w-4.5 -translate-y-0.5">
                   <rect y="2" width="20" height="2" fill="#1A1A1A" />
                   <rect y="6" width="20" height="2" fill="#1A1A1A" />
                   <rect y="10" width="20" height="2" fill="#1A1A1A" />
@@ -281,7 +261,7 @@ const filteredPosts = posts
               <div className="flex px-4 gap-2 overflow-x-auto overflow-y-hidden mb-4 pt-3 pb-4 w-full category-scroll">
                 <button
                   onClick={() => setSelectedCategory("전체")}
-                  className={`text-sm font-medium w-[75px] h-[36px] rounded-[40px] flex-shrink-0 transition-colors border ${
+                  className={`text-sm font-medium w-18.75 h-9 rounded-[40px] shrink-0 transition-colors border ${
                     selectedCategory === "전체"
                       ? "bg-[#9996FF] text-white font-semibold shadow-sm border-[#9996FF]"
                       : "bg-[#E6E6E6] text-[#000000] border-[#E6E6E6]"
@@ -295,7 +275,7 @@ const filteredPosts = posts
                   <button
                     key={category}
                     onClick={() => setSelectedCategory(category)}
-                    className={`text-sm font-medium w-[75px] h-[36px] rounded-[40px] flex-shrink-0 transition-colors border ${
+                    className={`text-sm font-medium w-18.75 h-9 rounded-[40px] shrink-0 transition-colors border ${
                       selectedCategory === category
                         ? "bg-[#9996FF] text-white font-semibold shadow-sm border-[#9996FF]"
                         : "bg-[#E6E6E6] text-[#000000] border-[#E6E6E6]"
@@ -328,20 +308,20 @@ const filteredPosts = posts
                   <span className="text-xs text-[#000000]">정렬</span>
                   <button
                     onClick={() => setShowSortMenu(!showSortMenu)}
-                    className="bg-[#E6E6E6] rounded-[40px] w-[102px] h-[29px] flex items-center justify-center gap-1 text-xs font-semibold"
+                    className="bg-[#E6E6E6] rounded-[40px] w-25.5 h-7.25 flex items-center justify-center gap-1 text-xs font-semibold"
                   >
                     {sortType === "latest" ? "최신순" : "인기순"} <ChevronDown size={14} />
                   </button>
 
                   {showSortMenu && (
-                    <div className="absolute top-[34px] right-0 bg-[#E6E6E6] rounded-2xl shadow-md overflow-hidden z-10 w-[102px]">
+                    <div className="absolute top-8.5 right-0 bg-[#E6E6E6] rounded-2xl shadow-md overflow-hidden z-10 w-25.5">
                       <button
                         onClick={() => {
                           setSortType("latest")
                           setShowSortMenu(false)
                         }}
                         className={`w-full py-2 text-xs text-center transition-colors ${
-                          sortType === "latest" ? "bg-[#E6E6E6] text-black !font-extrabold" : "text-[#000000]"
+                          sortType === "latest" ? "bg-[#E6E6E6] text-black font-extrabold!" : "text-[#000000]"
                         }`}
                       >
                         최신순
@@ -352,7 +332,7 @@ const filteredPosts = posts
                           setShowSortMenu(false)
                         }}
                         className={`w-full py-2 text-xs text-center transition-colors ${
-                          sortType === "popular" ? "bg-[#E6E6E6] text-black !font-extrabold" : "text-[#000000]"
+                          sortType === "popular" ? "bg-[#E6E6E6] text-black font-extrabold!" : "text-[#000000]"
                         }`}
                       >
                         인기순

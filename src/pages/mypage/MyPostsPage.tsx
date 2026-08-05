@@ -14,13 +14,15 @@ export default function MyPostsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<MyPostItem | null>(null)
-
+  
   useEffect(() => {
     const fetchMyPosts = async () => {
       setIsLoading(true)
       try {
         const res = await getMyPosts()
-        setMyPosts(res.data.result)
+        console.log("내 게시글 목록:", res.data.result)
+        const activeOnly = res.data.result.filter((item) => item.postStatus !== "DELETED")
+        setMyPosts(activeOnly)
       } catch (err) {
         console.error("내가 작성한 게시글 조회 실패:", err)
       } finally {
