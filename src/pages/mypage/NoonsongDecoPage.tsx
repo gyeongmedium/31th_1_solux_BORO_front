@@ -73,9 +73,9 @@ const INITIAL_ITEMS: DisplayItem[] = [
 
 export default function NoonsongDecoPage() {
     const navigate = useNavigate();
-    const userPoint = 1250;             // 여기!
     const location = useLocation()
 
+    const userPoint = (location.state as { point?: number })?.point ?? 0;
     const nickname = (location.state as { nickname?: string })?.nickname || "눈송이"
 
     // 하드코딩된 목록을 초기값으로 설정하여 화면이 텅 비는 것 방지

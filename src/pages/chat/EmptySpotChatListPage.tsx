@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChatRooms } from "../../api/chat";        // 여기!
-//import { getMockChatRooms } from "../../api/chat";      // 여기! mock 데이터 불러옴
+import { getChatRooms } from "../../api/chat";
 import type { ChatRoomPreview } from "../../types/chat";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";

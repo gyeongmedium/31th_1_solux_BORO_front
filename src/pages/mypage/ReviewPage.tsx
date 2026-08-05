@@ -18,7 +18,6 @@ export default function ReviewPage() {
     const [likeCount, setLikeCount] = useState<number>(0);
     const [dislikeCount, setDislikeCount] = useState<number>(0);
 
-    // 백엔드 연동 시 getMockReceivedReviews -> getReceivedReviews 로 변경)
     useEffect(() => {
         getReceivedReviews(activeTab)           // 여기!
             .then((res) => {

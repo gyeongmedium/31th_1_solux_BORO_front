@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getStoreAssets, purchaseAsset } from "../../api/assets";
 import type { StoreAsset } from "../../types/assets";
+import { getMemberInfo } from "../../api/member-gm";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
-//import { mockAssets } from "../../api/mockAssets";      // mock 데이터
 
 import bagImg from "../../assets/bag.png";
 import coffeeImg from "../../assets/coffee.png";
@@ -113,13 +113,24 @@ export default function StorePage() {
     const navigate = useNavigate();
     
     // 초기값을 빈 배열로 설정하고 서버 데이터를 세팅할 수 있도록 수정
-    const [assets, setAssets] = useState<StoreAsset[]>([]);     
-    const [userPoint, setUserPoint] = useState<number>(1250);       // 여기! 포인트 하드 코딩 함
+    const [assets, setAssets] = useState<StoreAsset[]>([]);
+    const [userPoint, setUserPoint] = useState<number>(0);
     
     const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
 
     const [modalState, setModalState] = useState<{ show: boolean; item: StoreAsset | null }>({ show: false, item: null });
     const [toast, setToast] = useState<string | null>(null);
+
+    // 멤버 정보 조회를 통해 API 포인트 데이터 반영
+    useEffect(() => {
+        getMemberInfo()
+            .then((res) => {
+                if (res.isSuccess && res.result?.point !== undefined) {
+                    setUserPoint(res.result.point);
+                }
+            })
+            .catch((err) => console.error("멤버 정보 로딩 실패:", err));
+    }, []);
 
     // 백엔드에서 상점 아이템 로드
     useEffect(() => {
@@ -162,13 +173,14 @@ export default function StorePage() {
             const response = await purchaseAsset(itemId);
             
             if (response.isSuccess) {
+                // 1. 프론트엔드 상태에서 1회 차감 (API 성공 시에만)
                 setUserPoint((prev) => prev - itemPrice);
                 setModalState({ show: false, item: null });
 
                 setToast(`${itemName}을(를) 구매했습니다!`);
                 setTimeout(() => setToast(null), 2000);
 
-                // 구매 반영된 최신 목록 재조회 (owned: true 반영)
+                // 2. 상품 소유 정보(owned) 갱신을 위해 목록만 재조회
                 reloadStoreAssets();
             }
         } catch (err) {
