@@ -66,7 +66,7 @@ export const readChatRoom = async (
 // WebSocket / STOMP 엔드포인트 모음
 export const CHAT_SOCKET_ENDPOINTS = {
     // 웹소켓 서버 연결 엔드포인트
-    WS_CONNECT: "/ws-connect",
+    WS_CONNECT: "/ws-chat",
 
     // [SUBSCRIBE] 특정 채팅방 실시간 메시지 수신
     SUB_CHAT_ROOM: (roomId: number) => `/sub/chat/${roomId}`,

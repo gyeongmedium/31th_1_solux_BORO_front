@@ -40,7 +40,7 @@ export default function HomePage() {
   const [sortType, setSortType] = useState<"latest" | "popular">("latest")
   const [showSortMenu, setShowSortMenu] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<PostCategory | "전체">("전체")
-  const [showAvailableOnly, setShowAvailableOnly] = useState(false)
+  const [showAvailableOnly, setShowAvailableOnly] = useState(true)
   const [searchKeyword, setSearchKeyword] = useState("")
 
   const [posts, setPosts] = useState<PostSummary[]>([])
@@ -130,11 +130,11 @@ const filteredSpotPosts = spotPosts.filter((spot) => {
 // 선택된 카테고리 + 검색어 + 정렬 기준에 맞게 처리
 //대여가능, 대여중, 대여완료만 존재
 // 1. 홈 화면에 노출할 상태 정의
-const ALLOWED_STATUSES = ["ACTIVE", "PENDING", "COMPLETED"]
+const ALLOWED_STATUSES = ["ACTIVE", "RENTED", "COMPLETED"]
 
 // 2. 선택된 카테고리 + 검색어 + 정렬 기준 + 상태 처리
 const filteredPosts = posts
-  // ACTIVE, PENDING, COMPLETED 상태의 게시글만 통과
+  // ACTIVE, RENTED, COMPLETED 상태의 게시글만 통과
   .filter((post) => ALLOWED_STATUSES.includes(post.status))
   .filter((post) => selectedCategory === "전체" || post.category === selectedCategory)
   .filter((post) => {
@@ -402,7 +402,7 @@ const filteredPosts = posts
                         className={`flex items-center justify-center text-[12px] text-black px-2.5 whitespace-nowrap ${
                           post.status === "ACTIVE"
                             ? "bg-[#E9F5EE]"
-                            : post.status === "PENDING"
+                            : post.status === "RENTED"
                             ? "bg-[#FFF3CD]"
                             : post.status === "COMPLETED"
                             ? "bg-[#FFE1E1]"

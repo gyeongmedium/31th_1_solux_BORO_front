@@ -1,11 +1,14 @@
 // 거래 채팅 목록 (기본)
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { getChatRooms } from "../../api/chat";        // 여기!
-import type { ChatRoomPreview } from "../../types/chat";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import { getChatRooms, CHAT_SOCKET_ENDPOINTS } from "../../api/chat";
+import type { ChatRoomPreview, UnreadChatUpdatePayload } from "../../types/chat";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
+
 
 // LocalDateTime 문자열을 받아 오늘(시간)/어제/MM.DD/YY.MM.DD 형식으로 변환하는 함수
 const formatChatTime = (dateTimeStr: string): string => {
@@ -59,12 +62,14 @@ export default function ChatListPage() {
     const [rooms, setRooms] = useState<ChatRoomPreview[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
+    // STOMP Client 참조 객체
+    const stompClientRef = useRef<Client | null>(null);
+
     useEffect(() => {
         const fetchTradeRooms = async () => {
             try {
                 setLoading(true);
-                // 1. GET /api/v1/chat?type=ITEM 호출
-                const res = await getChatRooms("ITEM");       // 여기!
+                const res = await getChatRooms("ITEM");
                 
                 if (res.isSuccess && res.result?.chatRoomList) {
                     // 받아온 채팅방 리스트를 최신 메시지 작성 시간 순(내림차순) 정렬
@@ -81,6 +86,71 @@ export default function ChatListPage() {
         };
 
         fetchTradeRooms();
+    }, []);
+
+    // 2. 실시간 안 읽은 메시지/채팅방 업데이트 웹소켓 연결
+    useEffect(() => {
+        const baseUrl = import.meta.env.VITE_API_URL;
+        const token = localStorage.getItem("accessToken");
+
+        const socket = new SockJS(`${baseUrl}/ws-connect`);
+
+        const client = new Client({
+            webSocketFactory: () => socket,
+            connectHeaders: {
+                Authorization: `Bearer ${token}`,
+            },
+            reconnectDelay: 5000,
+            onConnect: () => {
+                console.log("✅ WebSocket 연결 성공");
+                
+                // 개인 큐 구독: /user/queue/unread
+                client.subscribe(CHAT_SOCKET_ENDPOINTS.SUB_UNREAD_QUEUE, (message) => {
+                    try {
+                        const payload: UnreadChatUpdatePayload = JSON.parse(message.body);
+
+                        setRooms((prevRooms) => {
+                            const targetIndex = prevRooms.findIndex(
+                                (r) => r.chatRoomId === payload.chatRoomId
+                            );
+
+                            if (targetIndex !== -1) {
+                                const updatedRooms = [...prevRooms];
+
+                                updatedRooms[targetIndex] = {
+                                    ...updatedRooms[targetIndex],
+                                    lastMessageContent: payload.lastMessageContent,
+                                    lastMessageAt: payload.lastMessageAt,
+                                    unreadCount: payload.unreadCount,
+                                };
+
+                                return updatedRooms.sort(
+                                    (a, b) =>
+                                        new Date(b.lastMessageAt).getTime() -
+                                        new Date(a.lastMessageAt).getTime()
+                                );
+                            }
+
+                            return prevRooms;
+                        });
+                    } catch (err) {
+                        console.error("실시간 안읽음 데이터 파싱 실패:", err);
+                    }
+                });
+            },
+            onStompError: (frame) => {
+                console.error("STOMP 에러:", frame.headers["message"]);
+            },
+        });
+
+        client.activate();
+        stompClientRef.current = client;
+
+        return () => {
+            if (client.active) {
+                client.deactivate();
+            }
+        };
     }, []);
 
     return (

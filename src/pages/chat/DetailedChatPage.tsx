@@ -2,18 +2,19 @@
 
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
-import SockJS from "sockjs-client";
 import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
-import { getChatMessageList, readChatRoom } from "../../api/chat";
-import type { ChatMessageDetail, ChatMessageList, ChatMessageType } from "../../types/chat";
+
+import { getChatMessageList, readChatRoom, CHAT_SOCKET_ENDPOINTS } from "../../api/chat";
+import type { ChatMessageDetail, ChatMessageList } from "../../types/chat";
 import { uploadImage } from "../../api/upload-image";
 
 // 메시지 상세 시간 포맷 함수 (오전/오후 HH : MM)
 const formatDetailTime = (isoString: string) => {
     if (!isoString) return "";
     
-    const normalizedIso = isoString.endsWith("Z") || isoString.includes("+") 
+    const normalizedIso = isoString.endsWith("Z") || isoString.includes("+")
         ? isoString 
         : `${isoString}Z`;
 
@@ -136,61 +137,66 @@ export default function DetailedChatPage() {
         initChatRoom();
     }, [roomId, navState]);
 
-    // 2. 🔌 STOMP 웹소켓 연결 및 구독 (안전장치 추가)
+    // 2. 
     useEffect(() => {
         if (!roomId) return;
 
-        const baseUrl = import.meta.env.VITE_API_URL || "https://api.boro-app.com";
+        const baseUrl =
+            import.meta.env.VITE_API_URL;
         const token = localStorage.getItem("accessToken");
 
+        // SockJS 사용
+        const socket = new SockJS(`${baseUrl}/ws-connect`);
+
         const client = new Client({
-            // SockJS 연결 팩토리
-            webSocketFactory: () => new SockJS(`${baseUrl}/ws-connect`),
+            webSocketFactory: () => socket,
+
             connectHeaders: {
-                Authorization: token ? `Bearer ${token}` : "",
+                Authorization: `Bearer ${token}`,
             },
+
             debug: (str) => {
-                console.log("[STOMP Debug]:", str);
+                console.log("[STOMP]", str);
             },
-            reconnectDelay: 5000, // 5초 후 재연결 시도
+
+            reconnectDelay: 5000,
             heartbeatIncoming: 10000,
             heartbeatOutgoing: 10000,
-            
-            // STOMP 연결 성공 핸들러
+
             onConnect: () => {
-                console.log("🟢 STOMP 연결 성공!");
+                console.log("✅ STOMP 연결 성공");
 
-                // 백엔드 명세에 맞춘 구독 (Sub) 경로
-                client.subscribe(`/sub/chat/${roomId}`, (message) => {
-                    try {
-                        const data = JSON.parse(message.body);
+                client.subscribe(
+                    CHAT_SOCKET_ENDPOINTS.SUB_CHAT_ROOM(Number(roomId)),
+                    (message) => {
+                        try {
+                            const data = JSON.parse(message.body);
 
-                        // 백엔드에서 보낸 시스템 메시지나 알 수 없는 프레임 필터링
-                        if (data.type === "ping" || data.type === "connected") return;
+                            const newMsg: ChatMessageDetail = {
+                                chatMessageType: data.chatMessageType || "TEXT",
+                                memberId: data.memberId,
+                                content: data.content || "",
+                                imageUrls: data.imageUrls || [],
+                                createdAt:
+                                    data.createdAt || new Date().toISOString(),
+                            };
 
-                        const newMsg: ChatMessageDetail = {
-                            chatMessageType: data.chatMessageType || "TEXT",
-                            memberId: data.memberId,
-                            content: data.content || "",
-                            imageUrls: data.imageUrls || [],
-                            createdAt: data.createdAt || new Date().toISOString(),
-                        };
-
-                        setMessages((prev) => [...prev, newMsg]);
-                    } catch (err) {
-                        console.error("수신 메시지 파싱 중 에러 발생 (무시됨):", err);
+                            setMessages((prev) => [...prev, newMsg]);
+                        } catch (err) {
+                            console.error("메시지 파싱 에러:", err);
+                        }
                     }
-                });
+                );
             },
-            
-            // STOMP 프로토콜 에러가 발생해도 튕기지 않도록 방어
+
             onStompError: (frame) => {
-                console.error("🔴 STOMP 에러 발생:", frame.headers["message"]);
-                console.error("상세 내용:", frame.body);
+                console.error("🔴 STOMP 에러:", frame.headers["message"]);
+                console.error("상세:", frame.body);
             },
+
             onWebSocketClose: () => {
-                console.log("🟡 STOMP 소켓 연결이 닫혔습니다.");
-            }
+                console.log("🟡 연결 종료");
+            },
         });
 
         client.activate();
@@ -202,6 +208,7 @@ export default function DetailedChatPage() {
             }
         };
     }, [roomId]);
+
 
     // 메시지 추가 시 스크롤 하단 이동
     useEffect(() => {
@@ -262,31 +269,17 @@ export default function DetailedChatPage() {
 
             const hasImages = uploadedUrls.length > 0;
 
-            // API 명세서에 명시된 Request Body 3개 필드
             const payload = {
                 chatMessageType: hasImages ? "IMAGE" : "TEXT",
                 content: inputValue.trim(),
                 imageUrls: uploadedUrls,
             };
 
-            // 백엔드 명세 경로: /pub/chat/{roomId} 로 전송
             stompClientRef.current.publish({
-                destination: `/pub/chat/${roomId}`,
+                destination: CHAT_SOCKET_ENDPOINTS.PUB_CHAT_MESSAGE(Number(roomId)),
                 body: JSON.stringify(payload),
             });
 
-            // 내 화면에 바로 반영 (낙관적 업데이트)
-            const myMessage: ChatMessageDetail = {
-                chatMessageType: payload.chatMessageType as ChatMessageType,
-                memberId: currentUserId,
-                content: payload.content,
-                imageUrls: payload.imageUrls,
-                createdAt: new Date().toISOString(),
-            };
-
-            setMessages((prev) => [...prev, myMessage]);
-
-            // 폼 초기화
             setInputValue("");
             selectedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
             setSelectedImages([]);
@@ -463,7 +456,7 @@ export default function DetailedChatPage() {
                             <svg width="20" height="16" viewBox="0 0 20 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M0.5 1.4375C0.5 1.18886 0.605357 0.950403 0.792893 0.774588C0.98043 0.598772 1.23478 0.5 1.5 0.5H18.5C18.7652 0.5 19.0196 0.598772 19.2071 0.774588C19.3946 0.950403 19.5 1.18886 19.5 1.4375V14.5625C19.5 14.8111 19.3946 15.0496 19.2071 15.2254C19.0196 15.4012 18.7652 15.5 18.5 15.5H1.5C1.23478 15.5 0.98043 15.4012 0.792893 15.2254C0.605357 15.0496 0.5 14.8111 0.5 14.5625V1.4375Z" stroke="black" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M5.25 5.1875C5.44891 5.1875 5.63968 5.11342 5.78033 4.98156C5.92098 4.8497 6 4.48438C6 4.29789 5.92098 4.11905 5.78033 3.98719C5.63968 3.85533 5.44891 3.78125 5.25 3.78125C5.05109 3.78125 4.86032 3.85533 4.71967 3.98719C4.57902 4.11905 4.5 4.29789 4.5 4.48438C4.5 4.67086 4.57902 4.8497 4.71967 4.98156C4.86032 5.11342 5.05109 5.1875 5.25 5.1875Z" stroke="black" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M5.5 8L8 9.875L11 6.59375L19.5 12.6875V14.5625C19.5 14.8111 19.3946 15.0496 19.2071 15.2254C19.0196 15.4012 18.7652 15.5 18.5 15.5H1.5C1.23478 15.5 0.98043 15.4012 0.792893 15.2254C0.605357 15.0496 0.5 14.8111 0.5 14.5625V12.6875L5.5 8Z" stroke="black" strokeLinejoin="round"/>
+                                <path d="M5.5 8L8 9.875L11 6.59375L19.5 12.6875V14.5625C19.5 14.8111 19.3946 15.0496 19.2071 15.2254C19.0196 15.4012 18.7652 15.5 18.5 15.5H1.5C1.23478 15.5 0.98043 15.2254 0.792893 15.2254C0.605357 15.0496 0.5 14.8111 0.5 14.5625V12.6875L5.5 8Z" stroke="black" strokeLinejoin="round"/>
                             </svg>
                         </label>
                         

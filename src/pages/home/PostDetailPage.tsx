@@ -70,6 +70,7 @@ export default function PostDetailPage() {
     }
   }
 
+  {/* 경민: 채팅하기 버튼과 채팅방 생성 연결을 위한 코드 (나중에 이 주석 삭제하기) */}    // 여기!
   const handleStartChat = async () => {
     if (!postId) return;
 

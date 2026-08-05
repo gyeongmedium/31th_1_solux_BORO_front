@@ -26,3 +26,7 @@ export const createPost = (data: {
   rentalPrice: number
   rentalPriceUnit: string
 }) => api.post("/api/v1/post", data)
+
+//게시글 삭제
+export const deletePost = (postId: number) =>
+  api.delete(`/api/v1/post/${postId}`)
