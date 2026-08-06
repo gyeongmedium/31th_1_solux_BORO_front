@@ -55,7 +55,7 @@ const positionMap: Record<string, React.CSSProperties> = {
 const INITIAL_ITEMS: DisplayItem[] = [
     // 의상 (CLOTHING)
     { itemId: 0, itemName: "기본 의상", itemCategory: "CLOTHING", isPurchased: true },
-    { itemId: -1, itemName: "후드티", itemCategory: "CLOTHING", isPurchased: false },
+    { itemId: -1, itemName: "후드티", itemCategory: "CLOTHING", isPurchased: true },
     { itemId: -2, itemName: "정장", itemCategory: "CLOTHING", isPurchased: false },
     { itemId: -3, itemName: "프린세스 송이", itemCategory: "CLOTHING", isPurchased: false },
     { itemId: -4, itemName: "정장 송이", itemCategory: "CLOTHING", isPurchased: false },
