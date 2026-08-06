@@ -171,8 +171,8 @@ export default function PostDetailPage() {
                 <span className="w-15.5 h-7.5 flex items-center justify-center text-[12px] font-normal bg-[#E9F5EE] text-[#000000] rounded-[40px]">
                   {statusLabel[post.status]}
                 </span>
-                <span className="w-10.75 h-7.5 flex items-center justify-center text-[12px] font-normal bg-[#E9E8FF] text-[#000000] rounded-[40px]">
-                  {categoryLabel[post.category]}
+                <span className="px-2.5 h-7.5 flex items-center justify-center text-[12px] font-normal bg-[#E9E8FF] text-[#000000] rounded-[40px] w-fit">
+                  {categoryLabel[post.category]}    {/* 경민: 여기가 w가 고정이면 4글자일 때 너비가 안 늘어나서 수정했어 */}
                 </span>
               </div>
 
