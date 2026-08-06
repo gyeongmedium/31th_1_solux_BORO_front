@@ -79,12 +79,13 @@ export default function PostDetailPage() {
         chatRoomType: "ITEM",
       };
 
-      const response = await createChatRoom(post.postId, requestData);
+      const response = await createChatRoom(Number(postId), requestData);
 
       if (response.isSuccess && response.result) {
 
         // 생성된 chatRoomId를 방 ID로 사용하여 DetailedChatPage로 이동
         const createdRoomId = response.result.chatRoomId;
+
 
         navigate(`/chat/${createdRoomId}`, {
           state: {
@@ -171,8 +172,8 @@ export default function PostDetailPage() {
                 <span className="w-15.5 h-7.5 flex items-center justify-center text-[12px] font-normal bg-[#E9F5EE] text-[#000000] rounded-[40px]">
                   {statusLabel[post.status]}
                 </span>
-                <span className="px-2.5 h-7.5 flex items-center justify-center text-[12px] font-normal bg-[#E9E8FF] text-[#000000] rounded-[40px] w-fit">
-                  {categoryLabel[post.category]}    {/* 경민: 여기가 w가 고정이면 4글자일 때 너비가 안 늘어나서 수정했어 */}
+                <span className="w-15.5 h-7.5 flex items-center justify-center text-[12px] font-normal bg-[#E9E8FF] text-[#000000] rounded-[40px]">
+                  {categoryLabel[post.category]}
                 </span>
               </div>
 

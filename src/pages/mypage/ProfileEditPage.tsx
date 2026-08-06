@@ -1,6 +1,10 @@
-import { ArrowLeft, AlertCircle } from "lucide-react"
+import { ArrowLeft, Camera, User, AlertCircle } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect, useRef } from "react"
+import axios from "axios"
+import { getMemberInfo, updateMemberInfo } from "../../api/member"
+import { getPresignedUrl } from "../../api/file"
+
 
 interface UserProfile {
   nickname: string
@@ -24,75 +28,85 @@ export default function ProfileEditPage() {
   const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [nickname, setNickname] = useState("홍길동")
-  const [phone, setPhone] = useState("010 - 1234 - 5678")
+  const [nickname, setNickname] = useState("")
+  const [phone, setPhone] = useState("")
   const [intro, setIntro] = useState("안녕하세요! 성실하게 거래합니다.")
   const [profileImageUrl, setProfileImageUrl] = useState<string | undefined>(undefined)
-  
-  const school = "숙명여자대학교"
-  const studentId = "2611111"
+
+  const [school, setSchool] = useState("")
+  const [studentId, setStudentId] = useState("")
 
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("")
 
   // GET 데이터 조회
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setIsLoading(true)
-      try {
-        const response = await fetch("/api/v1/members", { method: "GET" })
-        if (response.ok) {
-          const data: UserProfile = await response.json()
-          if (data.nickname) setNickname(data.nickname)
-          if (data.phoneNumber) setPhone(formatPhoneNumber(data.phoneNumber))
-          if (data.profileImageUrl) setProfileImageUrl(data.profileImageUrl)
-        }
-      } catch (err) {
-        console.error("GET Profile Error:", err)
-      } finally {
-        setIsLoading(false)
-      }
+useEffect(() => {
+  const fetchProfile = async () => {
+
+    
+    setIsLoading(true)
+    try {
+      const res = await getMemberInfo()
+      const member = res.data.result
+      setNickname(member.nickname)
+      setProfileImageUrl(member.profileUrl)
+      setSchool("숙명여자대학교")
+      setStudentId(member.studentNumber)
+      setEmail(member.email)  // ← 추가!
+    } catch (err) {
+      console.error("내 정보 조회 실패:", err)
+    } finally {
+      setIsLoading(false)
     }
-    fetchProfile()
-  }, [])
+  }
+  fetchProfile()
+}, [])
 
   // 카메라 버튼 클릭 시 숨겨진 파일 선택창 열기
   const handleCameraButtonClick = () => {
     fileInputRef.current?.click()
   }
 
-  // 사진 선택 완료 시 미리보기 적용
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 사진 선택 완료 시 실제 서버에 업로드
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const localPreviewUrl = URL.createObjectURL(file)
-      setProfileImageUrl(localPreviewUrl)
+    if (!file) return
+
+    setIsLoading(true)
+    try {
+      const presignedRes = await getPresignedUrl({
+        fileName: file.name,
+        contentType: file.type,
+      })
+      const { presignedUrl, fileUrl } = presignedRes.data.result
+
+      await axios.put(presignedUrl, file, {
+        headers: { "Content-Type": file.type },
+      })
+
+      setProfileImageUrl(fileUrl)
+    } catch (err) {
+      console.error("프로필 사진 업로드 실패:", err)
+      alert("사진 업로드에 실패했어요!")
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  // PATCH 프로필 수정 저장
+  // 프로필 수정 저장
   const handleSave = async () => {
     setIsLoading(true)
-    const payload: UserProfile = {
-      nickname: nickname,
-      phoneNumber: sanitizePhoneNumber(phone),
-      profileImageUrl: profileImageUrl || "",
-    }
-
     try {
-      const response = await fetch("/api/v1/members", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      await updateMemberInfo({
+        profileUrl: profileImageUrl || "",
+        nickname,
+        phoneNumber: phone,
       })
-
-      if (response.ok) {
-        navigate(-1)
-      } else {
-        alert("저장에 실패했습니다.")
-      }
+      navigate(-1)
     } catch (err) {
-      console.error(err)
+      console.error("프로필 수정 실패:", err)
+      alert("저장에 실패했습니다.")
     } finally {
       setIsLoading(false)
     }
@@ -210,19 +224,6 @@ export default function ProfileEditPage() {
               </div>
             </div>
 
-            {/* 전화번호 */}
-            <div>
-              <label className="text-[#1A1A1A] mb-2.5 block" style={labelStyle}>전화번호</label>
-              <div className="relative flex items-center w-[210px] h-[46px] bg-[#E6E6E6] rounded-[40px]">
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-full bg-transparent outline-none px-[26px] text-[#1A1A1A] text-[12px]"
-                />
-              </div>
-            </div>
-
             {/* 자기소개 */}
             <div>
               <label className="text-[#1A1A1A] mb-2.5 block" style={labelStyle}>자기소개</label>
@@ -253,6 +254,14 @@ export default function ProfileEditPage() {
               <p className="text-[#1A1A1A] font-bold text-[14px]">{studentId}</p>
               <p className="text-[11px] text-[#B3B3B3] mt-1.5">학번 정보는 변경할 수 없습니다</p>
             </div>
+            
+             {/* 이메일 */}
+            <div>
+              <p className="text-[#7F7F7F] mb-1.5" style={labelStyle}>학교 이메일</p>
+              <p className="text-[#1A1A1A] font-bold text-[14px]">{email}</p>
+              <p className="text-[11px] text-[#B3B3B3] mt-1.5">학교 이메일 정보는 변경할 수 없습니다</p>
+            </div>
+
           </div>
 
         </div>

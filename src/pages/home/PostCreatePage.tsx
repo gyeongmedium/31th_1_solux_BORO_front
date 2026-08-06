@@ -3,10 +3,11 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useEffect, useRef, useState } from "react"
 import { categoryLabel, priceUnitLabel } from "../../utils/postMapper"
 import type { PostCategory, RentalPriceUnit } from "../../types/post"
-import { createPost } from "../../api/post"
-import { createEmptySpot, updateEmptySpot } from "../../api/emptySpot"
+import { createPost, getPostDetail, updatePost } from "../../api/post"
+import { createEmptySpot, updateEmptySpot, getEmptySpotDetail } from "../../api/emptySpot"
 import axios from "axios"
 import { getPresignedUrl } from "../../api/file"
+
 
 
 export default function PostCreatePage() {
@@ -41,15 +42,36 @@ export default function PostCreatePage() {
   ]
 
   useEffect(() => {
-  if (isEditMode) {
-    // TODO: 실제로는 GET /api/v1/post/{postId} 호출해서 데이터 가져오기
-    // 지금은 mock으로 테스트
-    setTitle("미분적분학 교재 빌리고 싶어요.")
-    setDescription("스튜어트 8판 입니다.\n한 학기 대여 희망합니다.")
-    setCategory("MAJOR_BOOKS")
-    setRentalPrice("10000")
-  }
-}, [postId, spotId])
+    if (!isEditMode) return
+
+    const fetchEditData = async () => {
+      try {
+        if (postId) {
+          const res = await getPostDetail(Number(postId))
+          const post = res.data.result
+          setTitle(post.title)
+          setDescription(post.description)
+          setCategory(post.category)
+          setRentalPrice(String(post.rentalPrice))
+          setRentalStartTime(post.rentalStartTime)
+          setRentalPriceUnit(post.rentalPriceUnit)
+        } else if (spotId) {
+          const res = await getEmptySpotDetail(spotId)
+          const spot = (res.data as any).result
+          setLocation(spot.location)
+          setFloor(String(spot.floor))
+          setSeatNumber(String(spot.seatNumber))
+          setHasOutlet(spot.hasPowerOutlet)
+          setHasWindow(spot.hasWindowSeat)
+          setCheckoutTime(spot.expectedCheckoutTime?.slice(11, 16) || "")
+        }
+      } catch (err) {
+        console.error("수정할 데이터 불러오기 실패:", err)
+      }
+    }
+
+    fetchEditData()
+  }, [postId, spotId])
 
   const uploadImage = async (file: File): Promise<string> => {
     const res = await getPresignedUrl({
@@ -64,42 +86,38 @@ export default function PostCreatePage() {
     return fileUrl
   }
 
+  const calculateEndTime = (startDate: string, unit: RentalPriceUnit): string => {
+  const date = new Date(startDate)
+  switch (unit) {
+    case "HOUR":
+      date.setHours(date.getHours() + 1)
+      break
+    case "DAY":
+      date.setDate(date.getDate() + 1)
+      break
+    case "WEEK":
+      date.setDate(date.getDate() + 7)
+      break
+    case "MONTH":
+      date.setMonth(date.getMonth() + 1)
+      break
+    case "SEMESTER":
+      date.setMonth(date.getMonth() + 4)
+      break
+  }
+  return date.toISOString().split("T")[0]
+}
   const handleSubmit = async () => {
-    if (activeTab === "post") {
-      
-      //////////////////////////////////////////////////////
-      // 기존 게시글 작성 로직
-      if (!title || !description || !rentalStartTime || !rentalPrice || !rentalPriceUnit) {
-        alert("필수 항목을 모두 입력해주세요.")
-        return
-      }
+  if (activeTab === "post") {
+    if (!title || !description || !rentalStartTime || !rentalPrice || !rentalPriceUnit) {
+      alert("필수 항목을 모두 입력해주세요!")
+      return
+    }
 
-      if (Number(rentalPrice) > 5000) {
-        alert("대여 비용은 최대 5,000원까지 입력할 수 있습니다.")
-        return
-      }
-
-      const calculateEndTime = (startDate: string, unit: RentalPriceUnit): string => {
-        const date = new Date(startDate)
-        switch (unit) {
-          case "HOUR":
-            date.setHours(date.getHours() + 1)
-            break
-          case "DAY":
-            date.setDate(date.getDate() + 1)
-            break
-          case "WEEK":
-            date.setDate(date.getDate() + 7)
-            break
-          case "MONTH":
-            date.setMonth(date.getMonth() + 1)
-            break
-          case "SEMESTER":
-            date.setMonth(date.getMonth() + 4)
-            break
-        }
-        return date.toISOString().split("T")[0]
-      }
+    if (Number(rentalPrice) > 5000) {
+      alert("대여 비용은 최대 5,000원까지 입력할 수 있습니다.")
+      return
+    }
 
     try {
       if (imageFiles.length === 0) {
@@ -107,97 +125,99 @@ export default function PostCreatePage() {
         return
       }
 
-    const uploadedUrls = await Promise.all(imageFiles.map((file) => uploadImage(file)))
+      const uploadedUrls = await Promise.all(imageFiles.map((file) => uploadImage(file)))
 
-    if (isEditMode) {
-      console.log("수정할 게시글 ID:", postId)
-    } 
-    else {
-      await createPost({
-        imageUrlList: uploadedUrls,
-        category,
-        title,
-        description,
-        rentalStartTime,
-        rentalEndTime: calculateEndTime(rentalStartTime, rentalPriceUnit),
-        rentalPrice: Number(rentalPrice),
-        rentalPriceUnit,
-      })
-    }
-    navigate("/")
-    } 
-    catch (err) {
+      if (isEditMode && postId) {
+        await updatePost(Number(postId), {
+          imageUrlList: uploadedUrls,
+          category,
+          title,
+          description,
+          rentalStartTime,
+          rentalEndTime: calculateEndTime(rentalStartTime, rentalPriceUnit),
+          rentalPrice: Number(rentalPrice),
+          rentalPriceUnit,
+        })
+      } else {
+        await createPost({
+          imageUrlList: uploadedUrls,
+          category,
+          title,
+          description,
+          rentalStartTime,
+          rentalEndTime: calculateEndTime(rentalStartTime, rentalPriceUnit),
+          rentalPrice: Number(rentalPrice),
+          rentalPriceUnit,
+        })
+      }
+      navigate("/")
+    } catch (err) {
       console.error("게시글 처리 실패:", err)
       alert("처리에 실패했어요. 다시 시도해주세요.")
     }
-    } else {
-
-    //////////////////////////////////////////////////////////////
+  } else {
     // 빈자리 작성 로직
     if (!location || !floor || !seatNumber || !checkoutTime) {
-      alert("필수 항목을 모두 입력해주세요.")
+      alert("필수 항목을 모두 입력해주세요!")
       return
-    }
-    if (isNaN(Number(floor))) {
-    alert("층은 숫자만 입력해주세요.")
-    return
     }
 
     // 1. 선택한 시간으로 Date 객체 생성
-      const [hours, minutes] = checkoutTime.split(":").map(Number)
-      const now = new Date()
-      const checkoutDate = new Date()
-      checkoutDate.setHours(hours, minutes, 0, 0)
+    const [hours, minutes] = checkoutTime.split(":").map(Number)
+    const now = new Date()
+    const checkoutDate = new Date()
+    checkoutDate.setHours(hours, minutes, 0, 0)
 
-    // 2. 자정 경계 보정 (밤 11시 넘어서 새벽 12시~1시대를 입력했을 때)
+    // 2. 자정 경계 보정
     if (now.getHours() >= 23 && hours < 2) {
       checkoutDate.setDate(checkoutDate.getDate() + 1)
     }
 
     // 3. 현재 시간과의 차이 계산 (분 단위)
     const diffMinutes = (checkoutDate.getTime() - now.getTime()) / (1000 * 60)
-    //->5-20분 이내로 설정 하도록 팝업 띄우기
+
     if (diffMinutes < 5) {
-      alert("퇴실 예정 시간은 현재 시각으로부터 최소 5분 이후여야 합니다.")
+      alert("퇴실 예정 시간은 현재 시각으로부터 최소 5분 이후여야 합니다!")
       return
     }
 
     if (diffMinutes > 20) {
-      alert("퇴실 예정 시간은 현재 시각으로부터 20분 이내로 설정해야 합니다.")
+      alert("퇴실 예정 시간은 현재 시각으로부터 20분 이내로 설정해야 합니다!")
       return
     }
 
     try {
-      if (isEditMode) {
-        console.log("수정할 빈자리 ID:", spotId)
+      const parsedFloor = Number(floor.replace(/[^0-9]/g, "")) || 1
+      const parsedSeatNumber = Number(seatNumber.replace(/[^0-9]/g, "")) || 1
+      const isoCheckoutTime = checkoutDate.toISOString()
+
+      console.log("실제 서버로 보내는 값:", isoCheckoutTime)
+
+      if (isEditMode && spotId) {
+        await updateEmptySpot(spotId, {
+          location,
+          floor: parsedFloor,
+          seatNumber: parsedSeatNumber,
+          hasPowerOutlet: hasOutlet,
+          hasWindowSeat: hasWindow,
+          expectedCheckoutTime: isoCheckoutTime,
+        })
       } else {
-        const parsedFloor = Number(floor.replace(/[^0-9]/g, "")) || 1
-        const parsedSeatNumber = Number(seatNumber.replace(/[^0-9]/g, "")) || 1
-
-        // 4. 스웨거 규격 표준 UTC 문자열 생성 (.toISOString())
-        // <<오류난이유>> 백엔드 시간 설정과 프론트 자바스크립트 시간 보정이 들어가야 예외가 안남.
-        // 예: 03:14 KST -> "2026-07-30T18:14:00.000Z"
-        const isoCheckoutTime = checkoutDate.toISOString()
-
-        console.log("실제 서버로 보내는 값:", isoCheckoutTime)
-
         await createEmptySpot({
           location,
           floor: parsedFloor,
           seatNumber: parsedSeatNumber,
           hasPowerOutlet: hasOutlet,
           hasWindowSeat: hasWindow,
-          expectedCheckoutTime: isoCheckoutTime, //로컬 날짜/시간 적용
+          expectedCheckoutTime: isoCheckoutTime,
         })
       }
-        navigate("/")
-      } catch (err) {
-        console.error("빈자리 처리 실패:", err)
-        alert("처리에 실패했어요. 다시 시도해주세요.")
-      }
+      navigate("/")
+    } catch (err) {
+      console.error("빈자리 처리 실패:", err)
+      alert("처리에 실패했어요. 다시 시도해주세요.")
     }
-    /////////////////////////////////////////////////////////////////////////////////
-
+  }
 }
 
   ////////////////////////////////////////////////////

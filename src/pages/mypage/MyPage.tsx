@@ -38,14 +38,14 @@ const imageMap: Record<string, string> = {
 
 // 2. 아이템 오버레이 좌표
 const positionMap: Record<string, React.CSSProperties> = {
-  "후드티": { top: "65.5%", left: "50.9%", transform: "translate(-50%, -50%)", width: "46px", zIndex: 5 },
-  "정장": { top: "65.5%", left: "50.9%", transform: "translate(-50%, -50%)", width: "46px", zIndex: 10 },
+  "후드티": { top: "71.5%", left: "52%", transform: "translate(-50%, -50%)", width: "46px", zIndex: 5 },
+  "정장": { top: "72%", left: "52%", transform: "translate(-50%, -50%)", width: "46px", zIndex: 10 },
   "헤드셋": { top: "36%", left: "50%", transform: "translate(-50%, -50%)", width: "70px", zIndex: 20 },
-  "모자": { top: "24.5%", left: "50%", transform: "translate(-50%, -50%)", width: "58px", zIndex: 15 },
-  "안경": { top: "42%", left: "48.5%", transform: "translate(-50%, -50%)", width: "40px", zIndex: 30 },
+  "모자": { top: "27%", left: "48%", transform: "translate(-50%, -50%)", width: "58px", zIndex: 15 },
+  "안경": { top: "46.5%", left: "48%", transform: "translate(-50%, -50%)", width: "40px", zIndex: 30 },
   "가방": { top: "72%", left: "68%", transform: "translate(-50%, -50%)", width: "16px", zIndex: 15 },
   "마스크": { top: "53%", left: "49%", transform: "translate(-50%, -50%)", width: "41px", zIndex: 30 },
-  "커피": { top: "65%", left: "33%", transform: "translate(-50%, -50%) rotate(-20deg)", width: "12px", zIndex: 25 },
+  "커피": { top: "72.5%", left: "18%", transform: "translate(-50%, -50%) rotate(-20deg)", width: "12px", zIndex: 25 },
 }
 
 // 이메일 마스킹 함수 (예: example@sookmyung.ac.kr -> ex*****@sookmyung.ac.kr)

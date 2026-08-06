@@ -30,3 +30,18 @@ export const createPost = (data: {
 //게시글 삭제
 export const deletePost = (postId: number) =>
   api.delete(`/api/v1/post/${postId}`)
+
+//게시글 수정
+export const updatePost = (
+  postId: number,
+  data: {
+    imageUrlList: string[]
+    category: string
+    title: string
+    description: string
+    rentalStartTime: string
+    rentalEndTime: string
+    rentalPrice: number
+    rentalPriceUnit: string
+  }
+) => api.patch(`/api/v1/post?postId=${postId}`, data)
