@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getPointHistories } from "../../api/member-gm";
+import { getPointHistories, getMemberInfo } from "../../api/member-gm";
 import type { PointHistory } from "../../types/member-gm";
 import BottomNav from "../../components/BottomNav";
 import Tab from "../../components/Tab";
@@ -10,12 +10,21 @@ import Tab from "../../components/Tab";
 export default function PointPage() {
     const navigate = useNavigate();
     
-    const [userPoint] = useState<number>(1250);     // 여기!
+    const [userPoint, setUserPoint] = useState<number>(0);
 
     const [showHistoryModal, setShowHistoryModal] = useState<boolean>(false);
     const [historyList, setHistoryList] = useState<PointHistory[]>([]);
 
     useEffect(() => {
+        // 백엔드 API 연동하여 유저 정보 및 포인트 데이터 조회
+        getMemberInfo()
+            .then((res) => {
+                if (res.isSuccess && res.result?.point !== undefined) {
+                    setUserPoint(res.result.point);
+                }
+            })
+            .catch((err) => console.error("멤버 정보 로딩 실패:", err));
+
         // 백엔드 API 연동하여 포인트 이력 데이터 조회
         getPointHistories()
             .then((res) => {

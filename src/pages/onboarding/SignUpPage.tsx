@@ -1,6 +1,6 @@
 // 회원가입 페이지
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { signUp, checkNickname } from "../../api/auth";
 import type { SignUpRequest } from "../../types/auth";
@@ -13,14 +13,25 @@ export default function SignUpPage() {
     const signUpToken: string | undefined = location.state?.signUpToken;
     const initialEmail: string = location.state?.email || "";
     const initialName: string = location.state?.name || "";
+    const isAlertShown = useRef(false);
 
     // 2. direct 접근 및 signUpToken 유무 검증
     useEffect(() => {
+        if (isAlertShown.current) return;
+
         if (!signUpToken) {
+            isAlertShown.current = true;
             alert("회원가입이 필요합니다");
             navigate("/login");
+            return;
         }
-    }, [signUpToken, navigate]);
+
+        if (!initialEmail.endsWith(".ac.kr")) {
+            isAlertShown.current = true;
+            alert("학교 이메일 계정(.ac.kr)만 회원가입이 가능합니다.");
+            navigate("/login");
+        }
+    }, [signUpToken, initialEmail, navigate]);
 
     // 3. email, name 상태 고정 (readOnly)
     const [email] = useState(initialEmail);

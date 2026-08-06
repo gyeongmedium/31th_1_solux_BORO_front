@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getWrittenReviews } from "../../api/member-gm";     // 여기!
-//import { getMockWrittenReviews } from "../../api/member-gm";    // 여기! 삭제하기
+import { getWrittenReviews } from "../../api/member-gm";
 import type { ReviewDetail, ReviewSentiment } from "../../types/member-gm";
 
 export default function MyReviewPage() {
@@ -27,30 +26,6 @@ export default function MyReviewPage() {
             setReviewList([]);
         });
     }, [activeTab]);
-    
-    /* ---------------- 백엔드 연동 시 사용할 useEffect ----------------
-    // Mock 데이터 연동 useEffect       // 여기! 삭제하기
-    useEffect(() => {
-        Promise.all([
-            getMockWrittenReviews("GOOD"),
-            getMockWrittenReviews("BAD")
-        ]).then(([goodRes, badRes]) => {
-            const goodResult = goodRes.result;
-            const badResult = badRes.result;
-
-            const goodCount = goodResult?.likeCount ?? (goodResult?.reviewDetailList?.length || 0);
-            const badCount = badResult?.dislikeCount ?? (badResult?.reviewDetailList?.length || 0);
-
-            setLikeCount(goodCount);
-            setDislikeCount(badCount);
-
-            const activeResult = activeTab === "GOOD" ? goodResult : badResult;
-            setReviewList(activeResult?.reviewDetailList || []);
-        }).catch(() => {
-            setReviewList([]);
-        });
-    }, [activeTab]);
-    ----------------------------------------------------------------- */
 
     return (
         <div className="relative min-w-[402px] max-w-[402px] min-h-[874px] max-h-[874px] w-[402px] h-[874px] overflow-y-auto overflow-x-hidden flex flex-col bg-white mx-auto">

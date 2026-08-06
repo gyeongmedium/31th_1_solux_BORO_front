@@ -3,8 +3,8 @@ import BottomNav from "../../components/BottomNav"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
 
-import { getMemberAssets } from "../../api/member-gm"
-import type { MemberAsset } from "../../types/member-gm"
+import { getMemberAssets, getMemberInfo, logoutMember } from "../../api/member-gm"
+import type { MemberAsset, MemberInfo } from "../../types/member-gm"
 
 
 {/* 눈송이 꾸미기 */}
@@ -47,18 +47,51 @@ const positionMap: Record<string, React.CSSProperties> = {
   "커피": { top: "65%", left: "33%", transform: "translate(-50%, -50%) rotate(-20deg)", width: "12px", zIndex: 25 },
 }
 
+// 이메일 마스킹 함수 (예: example@sookmyung.ac.kr -> ex*****@sookmyung.ac.kr)
+const maskEmail = (email?: string) => {
+  if (!email || !email.includes("@")) return email ?? "";
+  
+  const [localPart, domain] = email.split("@");
+  
+  if (localPart.length <= 2) {
+    return `${localPart}*@${domain}`;
+  }
+  
+  const visible = localPart.slice(0, 2);
+  const masked = "*".repeat(localPart.length - 2);
+  
+  return `${visible}${masked}@${domain}`;
+};
+
+
 export default function MyPage() {
   const navigate = useNavigate()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const location = useLocation()
+  const [memberInfo, setMemberInfo] = useState<MemberInfo | null>(null)
+
+  // 1. SignUpPage.tsx 처럼 location.state에서 name 가져오기
+  const initialName = (location.state as { name?: string })?.name || "수정필요"
+
+  useEffect(() => {
+    getMemberInfo()
+      .then((res) => {
+        if (res.isSuccess) {
+          setMemberInfo(res.result)
+        }
+      })
+      .catch((err) => {
+        console.error("멤버 정보 조회 실패:", err)
+      })
+  }, [])
 
   const user = {
-    name: "김윤지",
-    nickname: "김눈송",
+    name: initialName,
+    nickname: memberInfo?.nickname,
     isVerified: true,
-    universityInfo: "숙명여대 25학번 / 재학생",
-    departmentInfo: "경영학과 24*****",
-    points: "1,250",
+    universityInfo: `숙명여대 ${String(memberInfo?.studentNumber)?.slice(0, 2)}학번 / 재학생`,
+    departmentInfo: maskEmail(memberInfo?.email),
+    points: memberInfo?.point !== undefined ? memberInfo.point.toLocaleString() : "0",
   }
 
   const menuItems = [
@@ -70,10 +103,22 @@ export default function MyPage() {
     { icon: Settings, label: "설정", path: "/mypage/settings" },
   ]
 
-  const handleLogout = () => {
-    setShowLogoutModal(false)
-    navigate("/login")
+  // 경로 이동 핸들러
+  const handleMenuClick = (path: string) => {
+    navigate(path)
   }
+
+  const handleLogout = async () => {
+    try {
+      await logoutMember();
+    } catch (err) {
+      console.error("로그아웃 요청 실패:", err);
+    } finally {
+      localStorage.removeItem("accessToken"); 
+      setShowLogoutModal(false);
+      navigate("/login");
+    }
+  };
 
   {/* 눈송이 꾸미기 */}
   // 착용중인 아이템 상태 관리
@@ -111,7 +156,7 @@ export default function MyPage() {
 
 
   return (
-    <div className="flex flex-col bg-white pb-24 vertical-scroll">
+    <div className="flex flex-col bg-white pb-24 vertical-scroll min-h-screen">
       {/* 헤더: 마이페이지 (font 24 bold) */}
       <div className="px-[30px] pt-[30px] pb-3">
         <span
@@ -123,22 +168,34 @@ export default function MyPage() {
       </div>
 
       {/* 프로필 영역 */}
-      <div className="flex items-center gap-[14px] px-[42px] mt-4 mb-6">
+      <div className="flex items-center gap-[25px] px-[42px] mt-4 mb-6">
         {/* 원형 배경 105x105 */}
-        <div className="w-[105px] h-[105px] bg-[#E6E6E6] rounded-full flex items-center justify-center flex-shrink-0">
-          {/* 커스텀 사람 아이콘 (37x37) */}
-          <svg width="37" height="37" viewBox="0 0 37 37" fill="none">
-            <circle cx="18.5" cy="10" r="6.5" stroke="#7F7F7F" strokeWidth="2.5" />
-            <path
-              d="M6 32C6 24.5 11 20 18.5 20C26 20 31 24.5 31 32"
-              stroke="#7F7F7F"
-              strokeWidth="2.5"
-              strokeLinecap="round"
+        <div className="w-[105px] h-[105px] bg-[#E6E6E6] rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+          {memberInfo?.profileUrl ? (
+            <img
+              src={memberInfo.profileUrl}
+              alt="프로필 이미지"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                // 이미지 로딩 실패 시 기본 처리 (예: 이미지 숨기기)
+                e.currentTarget.style.display = 'none';
+              }}
             />
-          </svg>
+          ) : (
+            /* 기본 SVG 아이콘 */
+            <svg width="37" height="37" viewBox="0 0 37 37" fill="none">
+              <circle cx="18.5" cy="10" r="6.5" stroke="#7F7F7F" strokeWidth="2.5" />
+              <path
+                d="M6 32C6 24.5 11 20 18.5 20C26 20 31 24.5 31 32"
+                stroke="#7F7F7F"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           {/* 이름/닉네임 + 인증완료 뱃지 */}
           <div className="flex items-center gap-4">
             <span
@@ -174,13 +231,13 @@ export default function MyPage() {
 
           {/* 학교/학번 정보 */}
           <span
-            className="text-[14px] text-[#1A1A1A]"
+            className="text-[13px] text-[#1A1A1A] mt-2"
             style={{ fontFamily: "Pretendard", fontWeight: 400, lineHeight: "1.2" }}
           >
             {user.universityInfo}
           </span>
           <span
-            className="text-[14px] text-[#1A1A1A]"
+            className="text-[13px] text-[#1A1A1A]"
             style={{ fontFamily: "Pretendard", fontWeight: 400, lineHeight: "1.2" }}
           >
             {user.departmentInfo}
@@ -217,7 +274,7 @@ export default function MyPage() {
               {user.nickname}
             </span>
             <button
-              onClick={() => navigate("/mypage/noonsong", { state: { nickname: user.nickname } })}
+              onClick={() => navigate("/mypage/noonsong", { state: { nickname: user.nickname, point: memberInfo?.point } })}
               className="text-[15px] text-[#8E8E93] flex items-center gap-0.5"
               style={{ width: "80px", marginTop: "8px" }}
             >
@@ -309,7 +366,7 @@ export default function MyPage() {
           </div>
 
           {/* 우측: 포인트 금액 + 충전 버튼 */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <span
               className="text-[16px] text-[#1A1A1A]"
               style={{ fontFamily: "Pretendard", fontWeight: 800 }}
@@ -317,7 +374,7 @@ export default function MyPage() {
               {user.points} p
             </span>
             <button
-              onClick={() => navigate("/mypage/point")}
+              onClick={() => handleMenuClick("/mypage/point")}
               className="bg-[#9996FF] text-white text-[13px] font-medium px-4 py-1.5 rounded-full"
             >
               충전
@@ -394,7 +451,7 @@ export default function MyPage() {
           {menuItems.map((item) => (
             <button
               key={item.label}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleMenuClick(item.path)}
               className="w-full flex items-center justify-between px-4 py-2.5 rounded-[20px] transition-colors hover:bg-gray-50"
             >
               <div className="flex items-center gap-5">
@@ -417,8 +474,8 @@ export default function MyPage() {
         </div>
       </div>
 
-      {/* 로그아웃 버튼 (하단 여백 mb-10 추가) */}
-      <div className="px-4 mb-30">
+      {/* 로그아웃 버튼 */}
+      <div className="px-4 mb-40">
         <button
           onClick={() => setShowLogoutModal(true)}
           className="w-full h-[48px] rounded-[40px] border border-[#9996FF] bg-white flex items-center justify-center gap-2 text-[#9996FF] text-[14px]"
@@ -431,7 +488,7 @@ export default function MyPage() {
 
       {/* 로그아웃 모달 */}
       {showLogoutModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 max-w-[402px] mx-auto">
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 pr-3">
           <div
             className="bg-white flex flex-col items-center"
             style={{
@@ -443,7 +500,7 @@ export default function MyPage() {
               paddingRight: "16px",
             }}
           >
-            {/* 느낌표 아이콘 영역 (배경 64x64 유지, 내부 아이콘만 24px로 축소) */}
+            {/* 느낌표 아이콘 영역 */}
             <div
               className="flex items-center justify-center flex-shrink-0"
               style={{
@@ -464,7 +521,6 @@ export default function MyPage() {
               로그아웃 하시겠어요?
             </p>
 
-            {/* 한 줄로 정렬되도록 whitespace-nowrap 및 폰트 12.5px 처리 */}
             <p
               className="text-[#8E8E93] text-center whitespace-nowrap"
               style={{ fontSize: "12.5px", marginBottom: "30px" }}

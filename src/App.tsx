@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, Outlet, useLocation } from "react-router-dom";
 
 import LoginPage from "./pages/onboarding/LoginPage";
 import SignUpPage from "./pages/onboarding/SignUpPage";
@@ -41,29 +41,27 @@ function MobileLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
-// 루트 진입 시 토큰 여부에 따라 /login 또는 /home 등으로 보내주는 진입점역할 컴포넌트
-function RootPage() {
-  const token = localStorage.getItem("accessToken");
-
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
-  return <HomePage />;
-}
 
 function ProtectedRoute() {
   const token = localStorage.getItem("accessToken");
   const navigate = useNavigate();
+  const location = useLocation();
   const isAlertShown = useRef(false);
 
   useEffect(() => {
     if (!token && !isAlertShown.current) {
       isAlertShown.current = true;
-      alert("로그인이 필요한 서비스입니다.");
-      navigate("/login", { replace: true });
+
+      // 루트 경로(/) 접속일 때는 alert 없이 바로 /login으로 이동
+      if (location.pathname === "/") {
+        navigate("/login", { replace: true });
+      } else {
+        // 루트 경로가 아닐 때만 alert를 띄우고 /login으로 이동
+        alert("로그인이 필요한 서비스입니다.");
+        navigate("/login", { replace: true });
+      }
     }
-  }, [token, navigate]);
+  }, [token, navigate, location.pathname]);
 
   if (!token) {
     return null;
@@ -78,9 +76,6 @@ export default function App() {
     <BrowserRouter>
       <MobileLayout>
         <Routes>
-          {/* 루트 경로 (주소 변경 없이 로그인 여부에 따라 화면 결정) */}
-          <Route path="/" element={<RootPage />} />
-
           {/* 온보딩 (누구나 접근 가능)*/}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
@@ -88,7 +83,10 @@ export default function App() {
 
           {/* 로그인 토큰 필수 */}
           <Route element={<ProtectedRoute />}>
-            {/* 홈 */}
+
+            {/* 루트 경로 진입 시 토큰이 있으면 HomePage, 없으면 ProtectedRoute가 /login으로 튕겨냄 */}
+            <Route path="/" element={<HomePage />} />
+            {/* 홈 하위 페이지 */}
             <Route path="/post/create" element={<PostCreatePage />} />
             <Route path="/post/edit/:postId" element={<PostCreatePage />} />
             <Route path="/spot/edit/:spotId" element={<PostCreatePage />} />

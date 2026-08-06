@@ -79,3 +79,19 @@ export interface PointHistory {
 // 5. GET /api/v1/members/points (포인트 이력 조회)
 // responses
 export type ApiResponseListPointHistory = ApiResponse<PointHistory[]>;
+
+
+// 6. GET /api/v1/members (멤버의 정보를 조회)
+export interface MemberInfo {
+    profileUrl: string;
+    email: string;
+    studentNumber: string;
+    nickname: string;
+    point: number;
+}
+
+export type ApiResponseMemberInfo = ApiResponse<MemberInfo>;
+
+
+// 6. POST /api/v1/members/logout (로그아웃)
+export type ApiResponseVoid = ApiResponse<Record<string, never> | null>;

@@ -6,6 +6,8 @@ import type {
     ReviewResponse,
     ReviewSentiment,
     ApiResponseListPointHistory,
+    ApiResponseMemberInfo,
+    ApiResponseVoid,
 } from "../types/member-gm";
 
 
@@ -66,112 +68,14 @@ export const getPointHistories = async (): Promise<ApiResponseListPointHistory> 
 };
 
 
-// ==========================================
-// Mock 데이터 정의 및 API 핸들러
-// ==========================================
-import type { Review } from "../types/member-gm";
-
-// 1. Mock 데이터 정의 (새로운 Review 구조 반영)
-const MOCK_GOOD_REVIEWS: Review = {
-    likeCount: 3,
-    dislikeCount: 1,
-    reviewDetailList: [
-        {
-            memberId: 1,
-            memberNickname: "코딩왕",
-            postTitle: "노트북 대여합니다",
-            createdAt: "2026-07-15",
-            content: "약속 시간도 잘 지키시고 설명도 너무 친절하게 해주셨어요! 물건 상태도 설명하신 것이랑 똑같아서 대만족입니다 :)",
-        },
-        {
-            memberId: 2,
-            memberNickname: "눈송이",
-            postTitle: "전공 서적 대여",
-            createdAt: "2026-07-20",
-            content: "친절하고 좋은 거래였습니다!",
-        },
-        {
-            memberId: 3,
-            memberNickname: "숙명인",
-            postTitle: "보조배터리 빌려드려요",
-            createdAt: "2026-07-25",
-            content: "포장도 꼼꼼하게 해서 보내주셨고, 제품 동작도 문제없이 잘 됩니다.",
-        },
-    ],
+// 6. GET /api/v1/members (멤버 정보 조회)
+export const getMemberInfo = async (): Promise<ApiResponseMemberInfo> => {
+    const response = await api.get<ApiResponseMemberInfo>('/api/v1/members');
+    return response.data;
 };
 
-const MOCK_BAD_REVIEWS: Review = {
-    likeCount: 3,
-    dislikeCount: 1,
-    reviewDetailList: [
-        {
-            memberId: 4,
-            memberNickname: "레몬",
-            postTitle: "우산 대여합니다",
-            createdAt: "2026-06-10",
-            content: "약속 시간에 20분 정도 늦으셨는데 미리 연락이 없으셔서 조금 아쉬웠습니다.",
-        },
-    ],
-};
-
-// 2. Mock 조회 함수
-export const getMockReceivedReviews = async (
-    sentiment: ReviewSentiment
-): Promise<{ isSuccess: boolean; result: Review }> => {
-    // 실제 서버 통신처럼 0.2초 딜레이
-    await new Promise((resolve) => setTimeout(resolve, 200));
-
-    const data = sentiment === "GOOD" ? MOCK_GOOD_REVIEWS : MOCK_BAD_REVIEWS;
-
-    return {
-        isSuccess: true,
-        result: data,
-    };
-};
-
-// 백엔드 연동 전 Mock 데이터를 반환하는 함수 (테스트용)
-export const getMockWrittenReviews = async (
-    reviewSentiment?: ReviewSentiment
-): Promise<ReviewResponse> => {
-    // 1초 후 Mock Response 반환
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                isSuccess: true,
-                code: "COMMON200",
-                message: "성공입니다.",
-                result: {
-                    likeCount: 2,
-                    dislikeCount: 1,
-                    reviewDetailList:
-                        reviewSentiment === "GOOD"
-                            ? [
-                                    {
-                                        memberId: 101,
-                                        memberNickname: "이웃집토토로",
-                                        postTitle: "닌텐도 스위치 OLED 풀셋 대여",
-                                        createdAt: "2026-07-20",
-                                        content: "시간 맞춰 잘 전달해주셨고 물품 상태도 깨끗해서 아주 좋았습니다! 다음에 또 거래하고 싶어요.",
-                                    },
-                                    {
-                                        memberId: 102,
-                                        memberNickname: "캠핑조아",
-                                        postTitle: "4인용 원터치 텐트 + 의자 2개",
-                                        createdAt: "2026-07-15",
-                                        content: "친절하고 빠른 응대 감사드립니다.",
-                                    },
-                                ]
-                                : [
-                                    {
-                                        memberId: 103,
-                                        memberNickname: "매너거래원함",
-                                        postTitle: "전동 킥보드 렌탈",
-                                        createdAt: "2026-06-28",
-                                        content: "약속 시간보다 20분 늦게 오셨어요.",
-                                    },
-                                ],
-                },
-            });
-        }, 200);
-    });
+// 7. POST /api/v1/members/logout (로그아웃)
+export const logoutMember = async (): Promise<ApiResponseVoid> => {
+    const response = await api.post<ApiResponseVoid>('/api/v1/members/logout');
+    return response.data;
 };
