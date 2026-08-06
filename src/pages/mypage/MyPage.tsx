@@ -2,8 +2,9 @@ import { ChevronRight, Clock, Star, Heart, ShoppingCart, UserCog, Settings, LogO
 import BottomNav from "../../components/BottomNav"
 import { useNavigate, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
+import { isAxiosError } from "axios"
 
-import { getMemberAssets, getMemberInfo, logoutMember } from "../../api/member-gm"
+import { getMemberAssets, getMemberInfo, logoutMember, withdrawMember } from "../../api/member-gm"
 import type { MemberAsset, MemberInfo } from "../../types/member-gm"
 
 
@@ -67,6 +68,7 @@ const maskEmail = (email?: string) => {
 export default function MyPage() {
   const navigate = useNavigate()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
   const location = useLocation()
   const [memberInfo, setMemberInfo] = useState<MemberInfo | null>(null)
 
@@ -97,12 +99,16 @@ export default function MyPage() {
     { icon: Heart, label: "찜한 게시물 보기", path: "/mypage/liked" },
     { icon: ShoppingCart, label: "포인트 / 상점", path: "/mypage/store" },
     { icon: UserCog, label: "프로필 수정", path: "/mypage/edit" },
-    { icon: Settings, label: "설정", path: "/mypage/settings" },
+    { icon: Settings, label: "탈퇴하기", path: "withdraw" },
   ]
 
   // 경로 이동 핸들러
   const handleMenuClick = (path: string) => {
-    navigate(path)
+    if (path === "withdraw") {
+      setShowWithdrawModal(true)
+    } else if (path) {
+      navigate(path)
+    }
   }
 
   const handleLogout = async () => {
@@ -114,6 +120,38 @@ export default function MyPage() {
       localStorage.removeItem("accessToken"); 
       setShowLogoutModal(false);
       navigate("/login");
+    }
+  };
+
+  const handleWithdraw = async () => {
+    try {
+      const res = await withdrawMember();
+      
+      if (res.isSuccess) {
+        localStorage.removeItem("accessToken");
+        setShowWithdrawModal(false);
+        navigate("/login");
+      } else {
+        alert(res.message || "회원 탈퇴 처리 중 오류가 발생했습니다.");
+        setShowWithdrawModal(false);
+      }
+    } catch (err) {
+      console.error("탈퇴 요청 실패:", err);
+      
+      let errorMessage = "회원 탈퇴 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+
+      if (isAxiosError(err)) {
+        const backendMsg = err.response?.data?.message;
+        
+        if (backendMsg && !backendMsg.includes("foreign key constraint") && !backendMsg.includes("could not execute statement")) {
+          errorMessage = backendMsg;
+        } else {
+          errorMessage = "진행 중인 거래가 존재하여 탈퇴할 수 없습니다.";
+        }
+      }
+      
+      alert(errorMessage);
+      setShowWithdrawModal(false);
     }
   };
 
@@ -525,18 +563,80 @@ export default function MyPage() {
               로그아웃 후 다시 로그인해야 서비스를 이용할 수 있습니다.
             </p>
 
-            <div className="flex justify-center gap-3 w-full">
+            <div className="flex justify-center gap-3 w-full mb-2">
               <button
                 onClick={() => setShowLogoutModal(false)}
-                className="flex-1 h-[44px] rounded-[40px] border border-[#A0A0A0] bg-white font-semibold text-[14px] text-[#1A1A1A]"
+                className="w-[128px] h-[44px] rounded-[40px] border border-[#A0A0A0] bg-white font-semibold text-[14px] text-[#1A1A1A]"
               >
                 취소
               </button>
               <button
                 onClick={handleLogout}
-                className="flex-1 h-[44px] rounded-[40px] bg-[#9996FF] font-semibold text-[14px] text-white"
+                className="w-[128px] h-[44px] rounded-[40px] bg-[#9996FF] font-semibold text-[14px] text-white"
               >
                 로그아웃
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 탈퇴 모달 */}
+      {showWithdrawModal && (
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 pr-3">
+          <div
+            className="bg-white flex flex-col items-center"
+            style={{
+              width: "350px",
+              borderRadius: "40px",
+              paddingTop: "24px",
+              paddingBottom: "20px",
+              paddingLeft: "16px",
+              paddingRight: "16px",
+            }}
+          >
+            {/* 느낌표 아이콘 영역 */}
+            <div
+              className="flex items-center justify-center flex-shrink-0"
+              style={{
+                width: "64px",
+                height: "64px",
+                backgroundColor: "#FFDBC8",
+                borderRadius: "50%",
+                marginBottom: "14px",
+              }}
+            >
+              <AlertCircle style={{ width: "24px", height: "24px" }} className="text-[#FF5E00]" strokeWidth={2.2} />
+            </div>
+
+            <p
+              className="text-[#1A1A1A] text-center"
+              style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "19px", marginBottom: "20px" }}
+            >
+              서비스를 탈퇴하시겠어요?
+            </p>
+
+            <p
+              className="text-[#8E8E93] text-center whitespace-normal break-words"
+              style={{ fontSize: "12.5px", marginBottom: "30px" }}
+            >
+              탈퇴가 완료되면, 기존의 데이터나 로그는 되돌릴 수 없습니다.
+              <br />
+              그래도 탈퇴하시겠습니까?
+            </p>
+
+            <div className="flex justify-center gap-3 w-full mb-2">
+              <button
+                onClick={() => setShowWithdrawModal(false)}
+                className="w-[128px] h-[44px] rounded-[40px] border border-[#A0A0A0] bg-white font-semibold text-[14px] text-[#1A1A1A]"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleWithdraw}
+                className="w-[128px] h-[44px] rounded-[40px] bg-[#FF5E00] font-semibold text-[14px] text-white"
+              >
+                탈퇴하기
               </button>
             </div>
           </div>

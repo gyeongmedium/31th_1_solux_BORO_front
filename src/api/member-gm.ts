@@ -8,6 +8,7 @@ import type {
     ApiResponseListPointHistory,
     ApiResponseMemberInfo,
     ApiResponseVoid,
+    WithdrawResponse,
 } from "../types/member-gm";
 
 
@@ -74,8 +75,16 @@ export const getMemberInfo = async (): Promise<ApiResponseMemberInfo> => {
     return response.data;
 };
 
+
 // 7. POST /api/v1/members/logout (로그아웃)
 export const logoutMember = async (): Promise<ApiResponseVoid> => {
     const response = await api.post<ApiResponseVoid>('/api/v1/members/logout');
+    return response.data;
+};
+
+
+// 8. DELETE /api/v1/members/withdraw (탈퇴)
+export const withdrawMember = async (): Promise<WithdrawResponse> => {
+    const response = await api.delete<WithdrawResponse>("/api/v1/members/withdraw");
     return response.data;
 };
