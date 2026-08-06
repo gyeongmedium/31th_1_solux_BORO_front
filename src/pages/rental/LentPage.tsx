@@ -173,7 +173,7 @@ export default function LentPage() {
     const [modalState, setModalState] = useState<{
         show: boolean;
         item: RentalRequestPreview | null;
-        action: 'approve' | 'reject' | 'confirmReturn' | null;
+        action: 'approve' | 'reject' | 'confirmReturn' | 'returnFailed' | null;
     }>({ show: false, item: null, action: null });
 
     const [toast, setToast] = useState<string | null>(null);
@@ -265,7 +265,16 @@ export default function LentPage() {
                     setToast('대여자 처리시 마이페이지에서 확인 가능합니다.');
                     setTimeout(() => setToast(null), 2000);
                     fetchAllData();
+                } else {
+                    // 반납 실패 시 실패 안내 팝업으로 변경
+                    setModalState(prev => ({
+                        ...prev,
+                        action: 'returnFailed'
+                    }));
                 }
+            } else if (modalState.action === 'returnFailed') {
+                // 실패 안내 팝업에서 확인/취소 클릭 시 모달 닫기
+                setModalState({ show: false, item: null, action: null });
             } else {
                 const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
                 const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
@@ -279,7 +288,11 @@ export default function LentPage() {
             }
         } catch (error) {
             console.error("요청 처리 실패:", error);
-            setModalState({ show: false, item: null, action: null });
+            // HTTP 에러(400 등) 발생 시에도 실패 팝업으로 모달 상태 변경
+            setModalState(prev => ({
+                ...prev,
+                action: 'returnFailed'
+            }));
         }
     };
 
@@ -310,6 +323,13 @@ export default function LentPage() {
         if (!modalState.item || !modalState.action) return { message: "", subMessage: "" };
 
         const isBlankCategory = modalState.item.postCategory === "EMPTY_SPOTS";
+
+        if (modalState.action === 'returnFailed') {
+            return {
+                message: "반납 확인 불가",
+                subMessage: "대여자가 반납한 경우에만\n반납 확인이 가능합니다."
+            };
+        }
 
         if (modalState.action === 'approve') {
             return isBlankCategory
