@@ -2,9 +2,9 @@ import { Clock, Check, ArrowLeft } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { getMemberRentals } from "../../api/member"
-import { categoryLabel } from "../../utils/postMapper"
+import { categoryLabel, priceUnitLabel } from "../../utils/postMapper"
 import type { TradeHistoryItem } from "../../types/tradeHistory"
-import type { PostCategory } from "../../types/post"
+import type { PostCategory, RentalPriceUnit } from "../../types/post"
 
 export default function TradeHistoryPage() {
   const navigate = useNavigate()
@@ -17,6 +17,8 @@ export default function TradeHistoryPage() {
       setIsLoading(true)
     try {
         const res = await getMemberRentals(activeTab === "all" ? "ALL" : "PROVIDED")
+        console.log("거래내역 전체 응답:", res.data.result)
+
         const completedOnly = res.data.result.filter((trade) => trade.postStatus === "COMPLETED")
         setTrades(completedOnly)
       } catch (err) {
@@ -177,12 +179,14 @@ export default function TradeHistoryPage() {
                           {spot ? "빈자리" : categoryLabel[trade.postCategory as PostCategory]}
                         </span>
                       </div>
-                      <span
-                        className="whitespace-nowrap"
-                        style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "14px", color: "#1A1A1A" }}
-                      >
-                        {spot ? "빈자리 양도" : `${trade.price.toLocaleString()}원`}
-                      </span>
+                        <span
+                          className="whitespace-nowrap"
+                          style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "14px", color: "#1A1A1A" }}
+                        >
+                          {spot
+                            ? "빈자리 양도"
+                            : `${trade.price.toLocaleString()}원 / ${priceUnitLabel[trade.priceUnit as RentalPriceUnit]}`}
+                        </span>
                     </div>
 
                     {/* 제목 */}
@@ -201,24 +205,52 @@ export default function TradeHistoryPage() {
                       {spot ? "양도자" : "대여자"} : {trade.postMemberNickname}
                     </p>
 
-                    {/* 하단: 날짜 */}
-                    <div
-                      style={{
-                        fontFamily: "Pretendard",
-                        fontWeight: 400,
-                        fontSize: "12px",
-                        color: "#1A1A1A",
-                        lineHeight: "1.5",
-                      }}
-                    >
-                      {spot ? (
-                        <p style={{ marginLeft: "20px" }}>양도 완료일 : {trade.rentalEndTime}</p>
-                      ) : (
-                        <>
-                          <p style={{ marginLeft: "20px" }}>대여 시작 : {trade.rentalStartTime}</p>
-                          <p style={{ marginLeft: "20px" }}>반납 완료 : {trade.rentalEndTime}</p>
-                        </>
-                      )}
+                    {/* 하단: 날짜 + 후기 보내기 버튼 */}
+                    <div className="flex items-end justify-between">
+                      <div
+                        style={{
+                          fontFamily: "Pretendard",
+                          fontWeight: 400,
+                          fontSize: "12px",
+                          color: "#1A1A1A",
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        {spot ? (
+                          <p style={{ marginLeft: "20px" }}>양도 완료일 : {trade.rentalEndTime}</p>
+                        ) : (
+                          <>
+                            <p style={{ marginLeft: "20px" }}>대여 시작 : {trade.rentalStartTime}</p>
+                            <p style={{ marginLeft: "20px" }}>반납 완료 : {trade.rentalEndTime}</p>
+                          </>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigate(`/mypage/review/create/${trade.postId}`, {
+                            state: {
+                              nickname: trade.postMemberNickname,
+                              title: spot ? `${trade.location} ${trade.floor}층 ${trade.seatNumber}번` : trade.postTitle,
+                            },
+                          })
+                        }}
+                        className="flex items-center justify-center"
+                        style={{
+                          width: "142px",
+                          height: "34px",
+                          borderRadius: "40px",
+                          border: "1px solid #7F7F7F",
+                          color: "#000000",
+                          fontFamily: "Pretendard",
+                          fontWeight: 400,
+                          fontSize: "12px",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        후기 보내기
+                      </button>
                     </div>
                   </div>
                 )

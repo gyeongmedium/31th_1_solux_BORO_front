@@ -47,3 +47,20 @@ export interface ReceivedReviewResponse {
     dislikeCount: number;
     reviewDetailList: ReceivedReviewItem[];
 }
+
+// 회원 정보 타입
+export interface MemberInfo {
+  profileUrl: string
+  email: string
+  studentNumber: string
+  name: string
+  nickname: string
+  point: number
+}
+
+// 회원 정보 수정 요청 타입
+export interface UpdateMemberRequest {
+  profileUrl: string
+  nickname: string
+  phoneNumber: string
+}
