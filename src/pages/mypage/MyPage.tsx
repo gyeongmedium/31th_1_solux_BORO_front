@@ -70,9 +70,6 @@ export default function MyPage() {
   const location = useLocation()
   const [memberInfo, setMemberInfo] = useState<MemberInfo | null>(null)
 
-  // 1. SignUpPage.tsx 처럼 location.state에서 name 가져오기
-  const initialName = (location.state as { name?: string })?.name || "수정필요"
-
   useEffect(() => {
     getMemberInfo()
       .then((res) => {
@@ -86,7 +83,7 @@ export default function MyPage() {
   }, [])
 
   const user = {
-    name: initialName,
+    name: memberInfo?.name,
     nickname: memberInfo?.nickname,
     isVerified: true,
     universityInfo: `숙명여대 ${String(memberInfo?.studentNumber)?.slice(0, 2)}학번 / 재학생`,

@@ -86,6 +86,7 @@ export interface MemberInfo {
     profileUrl: string;
     email: string;
     studentNumber: string;
+    name: string;
     nickname: string;
     point: number;
 }
