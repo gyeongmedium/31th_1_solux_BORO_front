@@ -71,7 +71,7 @@ export default function MyPage() {
   const [memberInfo, setMemberInfo] = useState<MemberInfo | null>(null)
 
   // 1. SignUpPage.tsx 처럼 location.state에서 name 가져오기
-  const initialName = (location.state as { name?: string })?.name || "여기!"
+  const initialName = (location.state as { name?: string })?.name || "수정필요"
 
   useEffect(() => {
     getMemberInfo()
