@@ -104,6 +104,7 @@ export default function BorrowedPage() {
     const fetchRentals = useCallback(async () => {
         try {
             const res = await getBorrowedRentalRequests();
+
             if (res.isSuccess) {
                 setRentals(res.result);
             }
@@ -119,6 +120,7 @@ export default function BorrowedPage() {
         (async () => {
             try {
                 const res = await getBorrowedRentalRequests();
+
                 if (res.isSuccess && isMounted) {
                     setRentals(res.result);
                 }

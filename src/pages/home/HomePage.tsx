@@ -479,7 +479,7 @@ export default function HomePage() {
                         className="absolute overflow-hidden text-ellipsis whitespace-nowrap"
                         style={{
                           width: "100px",
-                          height: "14px",
+                          height: "16px",
                           top: "160px",
                           left: "62px",
                           fontFamily: "Pretendard",
