@@ -86,6 +86,7 @@ export interface MemberInfo {
     profileUrl: string;
     email: string;
     studentNumber: string;
+    name: string;
     nickname: string;
     point: number;
 }
@@ -93,5 +94,9 @@ export interface MemberInfo {
 export type ApiResponseMemberInfo = ApiResponse<MemberInfo>;
 
 
-// 6. POST /api/v1/members/logout (로그아웃)
+// 7. POST /api/v1/members/logout (로그아웃)
 export type ApiResponseVoid = ApiResponse<Record<string, never> | null>;
+
+
+// 8. DELETE /api/v1/members/withdraw (탈퇴)
+export type WithdrawResponse = ApiResponse<Record<string, never> | null>;

@@ -1,10 +1,9 @@
 // 상세 채팅
 
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useRef } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-
 
 import { getChatMessageList, readChatRoom, CHAT_SOCKET_ENDPOINTS } from "../../api/chat";
 import type { ChatMessageDetail, ChatMessageList } from "../../types/chat";
@@ -56,29 +55,12 @@ const formatSectionDate = (isoString: string): string => {
     return `${month}.${day}`;
 };
 
-// navigation state 타입 정의
-interface ChatNavState {
-    type?: string;
-    title?: string;
-    ownerNickname?: string;
-    profileUrl?: string;
-}
-
 export default function DetailedChatPage() {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate = useNavigate();
-    const location = useLocation();
 
-    // LentPage에서 전달받은 state
-    const navState = location.state as ChatNavState | null;
-
-    // ChatMessageList 타입을 유지하면서 navState 값으로 초기화
-    const [roomInfo, setRoomInfo] = useState<ChatMessageList | null>({
-        chatRoomName: navState?.ownerNickname || "",
-        postName: navState?.title || "",
-        profileUrl: navState?.profileUrl || "",
-        chatMessageList: []
-    });
+    // API 응답 데이터로 채워질 채팅방 정보 상태
+    const [roomInfo, setRoomInfo] = useState<ChatMessageList | null>(null);
     
     // 로그인한 사용자 ID
     const savedUserId = localStorage.getItem("memberId");
@@ -111,21 +93,16 @@ export default function DetailedChatPage() {
                 const res = await getChatMessageList(Number(roomId));
                 
                 if (res.isSuccess && res.result) {
-                    setRoomInfo({
-                        ...res.result,
-                        profileUrl: res.result.profileUrl || navState?.profileUrl || "",
-                        chatRoomName: res.result.chatRoomName || navState?.ownerNickname || "상대 아이디",
-                        postName: res.result.postName || navState?.title || "게시글 제목"
-                    });
+                    setRoomInfo(res.result);
                     const fetchedMessages = res.result.chatMessageList || [];
                     setMessages([...fetchedMessages].reverse());
                 }
             } catch (error) {
                 console.error("채팅 내역을 불러오는데 실패했습니다.", error);
                 setRoomInfo({
-                    chatRoomName: navState?.ownerNickname || "상대 아이디",
-                    postName: navState?.title || "게시글 제목",
-                    profileUrl: navState?.profileUrl || "",
+                    chatRoomName: "상대 아이디",
+                    postName: "게시글 제목",
+                    profileUrl: "",
                     chatMessageList: []
                 });
                 setMessages([]);
@@ -135,14 +112,13 @@ export default function DetailedChatPage() {
         };
 
         initChatRoom();
-    }, [roomId, navState]);
+    }, [roomId]);
 
-    // 2. 
+    // 2. WebSocket/STOMP 구독 연결
     useEffect(() => {
         if (!roomId) return;
 
-        const baseUrl =
-            import.meta.env.VITE_API_URL;
+        const baseUrl = import.meta.env.VITE_API_URL;
         const token = localStorage.getItem("accessToken");
 
         // SockJS 사용
@@ -208,7 +184,6 @@ export default function DetailedChatPage() {
             }
         };
     }, [roomId]);
-
 
     // 메시지 추가 시 스크롤 하단 이동
     useEffect(() => {

@@ -131,22 +131,28 @@ const getRemainingTimeBadge = (dateTimeStr?: string): string => {
     return `${diffMins}분 후`;
 };
 
-// 대여 요청/물품 데이터와 채팅방 목록 데이터를 매칭하여 상대방 Nickname(chatName)을 반환하는 함수
 const getTargetChatName = (
     item: RentalRequestPreview,
     tradeRooms: ChatRoomPreview[],
     spotRooms: ChatRoomPreview[]
 ): string => {
+    // 1. chatRoomId가 존재하면 가장 먼저 ID로 정확히 매칭
+    if (item.chatRoomId) {
+        const matchedRoom = [...tradeRooms, ...spotRooms].find(
+            (room) => room.chatRoomId === item.chatRoomId
+        );
+        if (matchedRoom?.chatName) return matchedRoom.chatName;
+    }
+
+    // 2. ID 매칭 실패 시 기존 조건(제목/장소)으로 Fallback
     const isBlankCategory = item.postCategory === "EMPTY_SPOTS";
 
     if (isBlankCategory) {
-        // 빈자리 게시글: item.seatDetail.location 과 spot.location 이 일치하는 채팅방 검색
         const matchedSpot = spotRooms.find(
             (spot) => spot.location && item.seatDetail?.location && spot.location === item.seatDetail.location
         );
         return matchedSpot?.chatName || item.ownerNickname || "요청자 정보 없음";
     } else {
-        // 물품 게시글: item.itemDetail.title 과 room.postTitle 이 일치하는 채팅방 검색
         const matchedTrade = tradeRooms.find(
             (room) => room.postTitle && item.itemDetail?.title && room.postTitle === item.itemDetail.title
         );
@@ -167,7 +173,7 @@ export default function LentPage() {
     const [modalState, setModalState] = useState<{
         show: boolean;
         item: RentalRequestPreview | null;
-        action: 'approve' | 'reject' | 'confirmReturn' | null;
+        action: 'approve' | 'reject' | 'confirmReturn' | 'returnFailed' | null;
     }>({ show: false, item: null, action: null });
 
     const [toast, setToast] = useState<string | null>(null);
@@ -259,7 +265,16 @@ export default function LentPage() {
                     setToast('대여자 처리시 마이페이지에서 확인 가능합니다.');
                     setTimeout(() => setToast(null), 2000);
                     fetchAllData();
+                } else {
+                    // 반납 실패 시 실패 안내 팝업으로 변경
+                    setModalState(prev => ({
+                        ...prev,
+                        action: 'returnFailed'
+                    }));
                 }
+            } else if (modalState.action === 'returnFailed') {
+                // 실패 안내 팝업에서 확인/취소 클릭 시 모달 닫기
+                setModalState({ show: false, item: null, action: null });
             } else {
                 const decideType = modalState.action === 'approve' ? 'APPROVE' : 'REJECT';
                 const res = await decideRentalRequest(currentItem.rentalRequestId, decideType);
@@ -273,7 +288,11 @@ export default function LentPage() {
             }
         } catch (error) {
             console.error("요청 처리 실패:", error);
-            setModalState({ show: false, item: null, action: null });
+            // HTTP 에러(400 등) 발생 시에도 실패 팝업으로 모달 상태 변경
+            setModalState(prev => ({
+                ...prev,
+                action: 'returnFailed'
+            }));
         }
     };
 
@@ -296,7 +315,6 @@ export default function LentPage() {
             state: {
                 type: chatType,
                 title: title,
-                ownerNickname: item.ownerNickname,
             }
         });
     };
@@ -305,6 +323,13 @@ export default function LentPage() {
         if (!modalState.item || !modalState.action) return { message: "", subMessage: "" };
 
         const isBlankCategory = modalState.item.postCategory === "EMPTY_SPOTS";
+
+        if (modalState.action === 'returnFailed') {
+            return {
+                message: "반납 확인 불가",
+                subMessage: "대여자가 반납한 경우에만\n반납 확인이 가능합니다."
+            };
+        }
 
         if (modalState.action === 'approve') {
             return isBlankCategory
