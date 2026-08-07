@@ -33,7 +33,7 @@ import TradeHistoryPage from "./pages/mypage/TradeHistoryPage";
 
 function MobileLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-auto h-dvh w-full max-w-[440px] bg-white shadow-lg flex flex-col overflow-hidden select-none">
+    <div className="mx-auto h-full w-full max-w-[440px] bg-white shadow-lg flex flex-col overflow-hidden select-none">
       <div className="flex-1 overflow-y-auto w-full h-full">
         {children}
       </div>

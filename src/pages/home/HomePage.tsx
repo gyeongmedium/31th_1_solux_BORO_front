@@ -343,7 +343,7 @@ export default function HomePage() {
               </div>
 
               {/* 게시글 카드 목록 */}
-              <div className="flex flex-col px-4 py-2 gap-4">
+              <div className="flex flex-col px-4 py-2 gap-4 mb-10">
                 {isLoading ? (
                   <p className="text-center text-sm text-[#7F7F7F] py-10">불러오는 중...</p>
                 ) : filteredPosts.length === 0 ? (
