@@ -135,6 +135,7 @@ export default function PostDetailPage() {
             <Share2 size={20} className="text-[#1A1A1A]" />
           </button>
         </div>
+
 {/* 이미지 영역 (370x295, radius 40) */}
 <div className="px-4 mb-5 flex justify-center">
   {post.imageUrlList && post.imageUrlList.length > 0 ? (
