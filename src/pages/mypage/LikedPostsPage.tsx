@@ -33,7 +33,7 @@ export default function LikedPostsPage() {
       <div className="flex-1 overflow-y-auto overflow-x-hidden vertical-scroll">
         <div className="w-[402px] flex flex-col bg-white pb-10">
           {/* 헤더 */}
-          <div className="flex items-center gap-3 px-4 pt-5 pb-4">
+          <div className="flex items-center gap-3 px-4 pt-8 pb-4">
             <button onClick={() => navigate(-1)}>
               <ArrowLeft size={22} className="text-[#1A1A1A]" />
             </button>
