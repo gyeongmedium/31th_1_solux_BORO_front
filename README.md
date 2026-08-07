@@ -1,18 +1,28 @@
 # 31th_1_solux_BORO_front
 solux 31th BORO team Front End
-<p align="center">
-  <img src="public/logo1.png" alt="바로 로고" width="70%" />
-</p>
+
+<img src="public/logo1.png" alt="바로 로고" width="30%" />
 
 ## 🌀 BORO (바로)
 > 바로 송이끼리! 대학생만의 신뢰 기반 대여 플랫폼
 
 <br>
 
-## 💻 프로젝트 소개
-- **개발 기간**: 202X.XX.XX ~ 202X.XX.XX (X주)
-- **배포 주소**: [boro](https://your-deploy-url.com)
-- **기획 의도**: 프로젝트를 왜 만들었는지, 어떤 문제를 해결하는지 작성합니다.
+## 📌 목차
+1. [팀원 소개](#-프론트엔드-팀원-소개)
+2. [기술 스택](#-기술-스택)
+3. [기능 소개](#-기능-소개)
+4. [프로젝트 구조](#-프로젝트-구조)
+
+<br>
+
+## 💻 프론트엔드 팀원 소개 
+
+| 신정원 (프론트장) | 김경민 (팀원) |
+| :---: | :---: |
+| <img src="https://github.com/gardenew12.png" width="100" height="100" alt="신정원 프로필" /> | <img src="https://github.com/gyeongmedium.png" width="100" height="100" alt="김경민 프로필" /> |
+| [@gardenew12](https://github.com/gardenew12) | [@gyeongmedium](https://github.com/gyeongmedium) |
+| UI/UX, API 연동 | UI/UX, API 연동 |
 
 <br>
 
@@ -34,82 +44,68 @@ solux 31th BORO team Front End
 
 <br>
 
-## ✨ 기능 소개
+## 👻 기능 소개
 
-### 온보딩
+### 🌀 온보딩
 
 | 로그인 | 회원가입 | 
 | :---: | :---: |
-| <img src="" width="300"> | <img src="" width="300"> |
-| Google Social Login 지원 | 인증된 이메일, 이름<br>자동입력 |
+| <img src="src/assets/images/login.png" width="250"> | <img src="src/assets/images/signup.png" width="250"> |
 
 <br>
 
-### 홈
+### 🌀 홈
 
-| 전체 대여 | 빈자리 핫클립 | 글쓰기 |
-| :---: | :---: | :---: |
-| <img src="" width="300"> | <img src="" width="300"> | <img src="" width="300"> |
-| 물품 게시글<br>상세보기<br>채팅 &rarr; 대여요청  | 빈자리 게시글<br>상세보기<br>채팅 &rarr; 대여요청 | 물품, 빈자리 게시글 작성
+| 홈 (전체 대여) | 홈 (빈자리 핫클립) | 게시글 작성 | 게시글 상세보기 |
+| :---: | :---: | :---: | :---: |
+| <img src="src/assets/images/post.png" width="250"> | <img src="src/assets/images/spot.png" width="250"> | <img src="src/assets/images/create.png" width="250"> | <img src="src/assets/images/detailed_post.png" width="250"> |
 
 <br>
 
-### 대여현황
+### 🌀 대여현황
 
 | 내가 빌려준 것 | 내가 빌린 것 | 
 | :---: | :---: |
-| <img src="" width="300"> | <img src="" width="300"> |
-| Google Social Login 지원 | 인증된 이메일, 이름<br>자동입력 |
-
-### 채팅
-
-### 마이페이지
+| <img src="src/assets/images/lent.png" width="250"> | <img src="src/assets/images/borrow.png" width="250"> |
 
 <br>
 
-## 🏃 시작하기
-로컬 환경에서 프로젝트를 실행하는 방법입니다.
+### 🌀 채팅
+| 물품 채팅 | 빈자리 채팅 | 채팅방 |
+| :---: | :---: | :---: |
+| <img src="src/assets/images/item_chat.png" width="250"> | <img src="src/assets/images/spot_chat.png" width="250"> | <img src="src/assets/images/detailed_chat.png" width="250"> |
 
-### 1. 저장소 클론 (Clone the repository)
-```bash
-git clone https://github.com
-cd repository-name
-```
+<br>
 
-### 2. 환경 변수 설정 (Environment Variables)
-루트 디렉토리에 `.env.local` 파일을 생성하고 아래 내용을 입력하세요.
-```env
-VITE_API_BASE_URL=https://yourdomain.com
-```
+### 🌀 마이페이지
+| 기본 | 꾸미기 | 내가 작성한 게시글 | 거래 내역  |
+| :---: | :---: | :---: | :---: |
+| <img src="src/assets/images/mypage.png" width="250"> | <img src="src/assets/images/deco.png" width="250"> | <img src="src/assets/images/my_post.png" width="250"> | <img src="src/assets/images/history.png" width="250"> |
 
-### 3. 패키지 설치 및 실행 (Installation & Run)
-```bash
-# 의존성 패키지 설치
-npm install
+| 받은 후기 | 보낸 후기 | 찜한 게시물 보기 | 상점 |
+| :---: | :---: | :---: | :---: |
+| <img src="src/assets/images/review.png" width="250"> | <img src="src/assets/images/my_review.png" width="250"> | <img src="src/assets/images/liked.png" width="250"> | <img src="src/assets/images/store.png" width="250"> |
 
-# 로컬 개발 서버 실행
-npm run dev
-```
+
+| 포인트 | 프로필 수정 | 탈퇴 | 로그아웃 |
+| :---: | :---: | :---: | :---: |
+| <img src="src/assets/images/point.png" width="250"> | <img src="src/assets/images/profile.png" width="250"> | <img src="src/assets/images/delete.png" width="250"> | <img src="src/assets/images/logout.png" width="250"> |
+
+<br>
 
 ## 📂 프로젝트 구조
 ```text
+public/             # 공통 logo 이미지
 src/
-├── assets/          # 이미지, 폰트 등의 정적 파일
-├── components/      # 공통 재사용 컴포넌트
-├── constants/       # 상수 관리
-├── hooks/           # 커스텀 훅
-├── pages/           # 라우팅 페이지 컴포넌트
-├── services/        # API 요청 모듈 (Axios 등)
-├── store/           # 전역 상태 관리 (Zustand 등)
-├── types/           # TypeScript 타입 정의
-├── App.tsx          # 최상위 컴포넌트
-└── main.tsx         # 엔트리 포인트
+├── api/            # API 요청 함수
+├── assets/         # 아이템 이미지
+├── components/     # 공통 재사용 컴포넌트 (Nav, Tab)
+├── lib/            # 외부 라이브러리 설정 (Axios 인스턴스 등)
+├── pages/          # 라우팅 페이지 컴포넌트
+├── types/          # TypeScript 타입
+├── utils/          # 유틸리티 함수
+├── App.tsx         # 애플리케이션 최상위 및 라우팅 설정
+├── index.css       # 글로벌 스타일 및 커스텀 스크롤 정의
+└── main.tsx        # 엔트리 포인트
 ```
 
-## 👥 팀원 소개
-
-| **홍길동 (팀장)** | **임꺽정 (팀원)** |
-| :---: | :---: |
-| <img src="https://github.com" width="100"> | <img src="https://github.com" width="100"> |
-| [@gildong](https://github.com) | [@kkeokjeong](https://github.com) |
-| **Role**: UI/UX, 전역 상태 설계 | **Role**: API 연동, 성능 최적화 |
