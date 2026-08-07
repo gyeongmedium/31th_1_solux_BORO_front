@@ -6,7 +6,7 @@ import { getPosts, likePost } from "../../api/post"
 import { getEmptySpotList } from "../../api/emptySpot"
 import { categoryLabel, statusLabel, priceUnitLabel } from "../../utils/postMapper"
 import type { PostSummary, PostCategory } from "../../types/post"
-import type { EmptySpotListResponse } from "../../types/emptySpot"
+import type { EmptySpotCreateResponse} from "../../types/emptySpot"
 
 //남은 시간 계산 함수(빈자리 게시물에 -분 후 라고 표기 예정)
 const getRemainingMinutesText = (expectedCheckoutTime: string) => {
@@ -84,7 +84,7 @@ export default function HomePage() {
   }
 
   // 빈자리 게시글 목록
-  const [spotPosts, setSpotPosts] = useState<EmptySpotListResponse[]>([])
+  const [spotPosts, setSpotPosts] = useState<EmptySpotCreateResponse[]>([])
 
   // 빈자리 게시글 목록 불러오기(API 연동)
   useEffect(() => {
@@ -92,7 +92,7 @@ export default function HomePage() {
     const fetchEmptySpots = async () => {
       try {
         const res = await getEmptySpotList()
-        setSpotPosts((res.data as any).result || [])
+        setSpotPosts(res.data.result || [])
       } catch (err) {
         console.error("빈자리 목록 조회 실패:", err)
       }
@@ -470,9 +470,13 @@ export default function HomePage() {
 
                       {/* 사용자 사진 (25x25, radius 15, top 154 left 26) */}
                       <div
-                        className="absolute bg-gray-300"
+                        className="absolute bg-gray-300 overflow-hidden flex items-center justify-center"
                         style={{ width: "25px", height: "25px", top: "154px", left: "26px", borderRadius: "15px" }}
-                      />
+                      >
+                        {post.profileUrl && (
+                          <img src={post.profileUrl} alt={post.authorNickname} className="w-full h-full object-cover" />
+                        )}
+                      </div>
 
                       {/* 사용자 이름 (32x14, top 160 left 62, font12 regular) */}
                       <p
@@ -593,7 +597,14 @@ export default function HomePage() {
 
     {/* 작성자 */}
     <div className="flex items-center gap-2">
-      <div className="bg-gray-700 flex-shrink-0" style={{ width: "25px", height: "25px", borderRadius: "15px" }} />
+      <div
+        className="bg-gray-700 flex-shrink-0 overflow-hidden flex items-center justify-center"
+        style={{ width: "25px", height: "25px", borderRadius: "15px" }}
+      >
+        {spot.profileUrl && (
+          <img src={spot.profileUrl} alt={spot.authorNickname} className="w-full h-full object-cover" />
+        )}
+      </div>
       <span style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "12px", color: "#000000" }}>
         {spot.authorNickname}
       </span>

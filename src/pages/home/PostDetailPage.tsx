@@ -173,16 +173,21 @@ export default function PostDetailPage() {
         {/* 상세 정보 카드 */}
         <div className="px-4 mb-5">
           <div className="w-92.5 min-h-105.25 border border-[#9996FF] rounded-[40px] px-6 pt-5 pb-5">
-            {/* 작성자 */}
-            <div className="flex items-center gap-3 mb-5 my-4">
-              <div className="w-11.25 h-11.25 bg-linear-to-br from-[#3A3A5C] to-[#1A1A2E] rounded-full shrink-0" />
-              <span 
-                className="text-[16px] text-[#1A1A1A]"
-                style={{ fontFamily: "Pretendard", fontWeight: 700, lineHeight: "1.2" }}
-              >
-                {post.authorNickname}
-              </span>
-            </div>
+            
+        {/* 작성자 */}
+        <div className="flex items-center gap-3 mb-5 my-4">
+          <div className="w-11.25 h-11.25 bg-linear-to-br from-[#3A3A5C] to-[#1A1A2E] rounded-full shrink-0 overflow-hidden flex items-center justify-center">
+            {post.profileUrl && (
+              <img src={post.profileUrl} alt={post.authorNickname} className="w-full h-full object-cover" />
+            )}
+          </div>
+          <span 
+            className="text-[16px] text-[#1A1A1A]"
+            style={{ fontFamily: "Pretendard", fontWeight: 700, lineHeight: "1.2" }}
+          >
+            {post.authorNickname}
+          </span>
+        </div>
 
             {/* 상태 뱃지 */}
             <div className="flex gap-2 mb-4">

@@ -20,6 +20,7 @@ export interface PostSummary {
   description: string
   rentalStartTime: string
   rentalEndTime: string
+  profileUrl: string
   rentalPrice: number
   rentalPriceUnit: RentalPriceUnit
   authorNickname: string

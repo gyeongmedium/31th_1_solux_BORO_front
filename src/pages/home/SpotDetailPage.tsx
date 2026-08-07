@@ -2,7 +2,7 @@ import { ArrowLeft, Share2, Clock, MessageCircle } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { getEmptySpotDetail } from "../../api/emptySpot"
-import type { EmptySpotDetailResponse } from "../../types/emptySpot"
+import type { EmptySpotCreateResponse } from "../../types/emptySpot"
 
 import { createChatRoom } from "../../api/chat"
 import type { ChatRoom } from "../../types/chat"
@@ -11,7 +11,7 @@ export default function SpotDetailPage() {
   const navigate = useNavigate()
   const { spotId } = useParams()
 
-  const [spot, setSpot] = useState<EmptySpotDetailResponse | null>(null)
+  const [spot, setSpot] = useState<EmptySpotCreateResponse | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   // 공유하기 버튼 클릭 시
@@ -31,7 +31,7 @@ export default function SpotDetailPage() {
       setIsLoading(true)
       try {
         const res = await getEmptySpotDetail(spotId)
-        setSpot((res.data as any).result)
+        setSpot(res.data.result)
       } catch (err) {
         console.error("빈자리 상세 조회 실패:", err)
       } finally {
@@ -109,16 +109,20 @@ export default function SpotDetailPage() {
         {/* 상세 정보 카드 */}
         <div className="px-4 mb-5">
           <div className="w-92.5 min-h-105.25 border border-[#9996FF] rounded-[40px] px-6 pt-5 pb-5">
-            {/* 작성자 */}
-            <div className="flex items-center gap-3 mb-5 my-4">
-              <div className="w-11.25 h-11.25 bg-linear-to-br from-[#3A3A5C] to-[#1A1A2E] rounded-full flex-shrink-0" />
-              <span
-                className="text-[16px] text-[#1A1A1A]"
-                style={{ fontFamily: "Pretendard", fontWeight: 700, lineHeight: "1.2" }}
-              >
-                {spot.authorNickname}
-              </span>
-            </div>
+        {/* 작성자 */}
+        <div className="flex items-center gap-3 mb-5 my-4">
+          <div className="w-11.25 h-11.25 bg-linear-to-br from-[#3A3A5C] to-[#1A1A2E] rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center">
+            {spot.profileUrl && (
+              <img src={spot.profileUrl} alt={spot.authorNickname} className="w-full h-full object-cover" />
+            )}
+          </div>
+          <span 
+            className="text-[16px] text-[#1A1A1A]"
+            style={{ fontFamily: "Pretendard", fontWeight: 700, lineHeight: "1.2" }}
+          >
+            {spot.authorNickname}
+          </span>
+        </div>
 
             {/* 상태 뱃지 */}
             <div className="flex gap-2 mb-4">

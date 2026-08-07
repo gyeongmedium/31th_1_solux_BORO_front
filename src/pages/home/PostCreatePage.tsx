@@ -32,6 +32,7 @@ export default function PostCreatePage() {
   const isEditMode = !!postId || !!spotId  // postId나 spotId가 있으면 true (수정 모드)
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
 
   const postCategoryList: PostCategory[] = [
     "DEPARTMENT_JACKET",
@@ -1267,7 +1268,9 @@ export default function PostCreatePage() {
             {checkoutTime || "Time"}
           </span>
           <button
-            onClick={() => document.getElementById("checkout-time-input")?.showPicker()}
+            onClick={() =>
+              (document.getElementById("checkout-time-input") as HTMLInputElement)?.showPicker()
+            }
             className="flex items-center justify-center"
             style={{ marginRight: "5px" }}
           >
