@@ -8,6 +8,8 @@ export type MyPostCategory =
 
 export interface MyPostItem {
   postId: number
+  emptySpotId?: number
+  spotId?: number
   postStatus: string
   postCategory: MyPostCategory
   price: number

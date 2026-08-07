@@ -135,7 +135,7 @@ export default function TradeHistoryPage() {
                 console.log("전체 데이터:", trade)
                 return (
                   <div
-                    key={trade.postId}
+                    key={trade.rentalRequestId}
                     onClick={() => (spot ? navigate(`/post/spot/${trade.postId}`) : navigate(`/post/${trade.postId}`))}
                     className="relative mx-auto cursor-pointer"
                     style={{

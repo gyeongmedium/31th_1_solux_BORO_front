@@ -1,5 +1,3 @@
-// 리뷰 작성
-
 import { useState } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import type { ReviewSentiment, ReviewRequest } from "../../types/rental";
@@ -64,18 +62,23 @@ interface LocationState {
     rentalId?: number;
     title?: string;
     partnerName?: string;
+    nickname?: string; // 거래내역에서 넘어오는 키 호환
 }
 
 export default function ReviewCreatePage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { rentalId: paramRentalId } = useParams();
+    const params = useParams(); // URL 파라미터 추출
+
     const state = (location.state as LocationState) || {};
 
-    // 데이터 전달이 없어도 동작하도록 기본값 설정
-    const rentalId = Number(paramRentalId) || state.rentalId;
+    // 1. URL 파라미터(rentalRequestId 또는 rentalId) 우선 추출
+    const urlId = params.rentalRequestId || params.rentalId;
+    const rentalId = urlId ? Number(urlId) : (state.rentalId ?? 1);
+
+    // 2. 제목 및 닉네임 상태 바인딩
     const title = state.title || "게시글 제목";
-    const partnerName = state.partnerName || "거래 상대 아이디";
+    const partnerName = state.nickname || state.partnerName || "거래 상대 아이디";
 
     const [sentiment, setSentiment] = useState<ReviewSentiment>("GOOD");
     const [content, setContent] = useState<string>("");
@@ -86,22 +89,22 @@ export default function ReviewCreatePage() {
         setShowModal(false);
 
         try {
-        const payload: ReviewRequest = {
-            reviewSentiment: sentiment,
-            content,
-        };
+            const payload: ReviewRequest = {
+                reviewSentiment: sentiment,
+                content,
+            };
 
-        await createRentalReview(rentalId, payload);
+            // rental.ts의 createRentalReview(rentalId, payload) 호출
+            await createRentalReview(rentalId, payload);
 
-        setToast("후기가 전송되었습니다");
-        setTimeout(() => {
-            setToast(null);
-            navigate('/mypage/history');
-        }, 1000);
+            setToast("후기가 전송되었습니다");
+            setTimeout(() => {
+                setToast(null);
+                // 절대 경로 지정 (/mypage/history)
+                navigate('/mypage/history');
+            }, 1000);
         } catch (error) {
             console.error("후기 전송 실패:", error);
-
-            // API 요청 실패 시 사용자가 알 수 있도록 에러 토스트 표시
             setToast("후기 전송에 실패했습니다");
             setTimeout(() => setToast(null), 1000);
         }

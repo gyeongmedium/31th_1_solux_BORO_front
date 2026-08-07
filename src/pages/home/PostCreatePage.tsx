@@ -317,39 +317,6 @@ export default function PostCreatePage() {
 
       {activeTab === "post" ? (
         <>
-      {/* 사진 추가하기 (334x295, radius 40, 배경 #E6E6E6) */}
-      <div className="w-full flex justify-center mb-5">
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="flex flex-col items-center justify-center gap-3"
-          style={{
-            width: "334px",
-            height: "295px",
-            borderRadius: "40px",
-            backgroundColor: "#E6E6E6",
-          }}
-        >
-          <ImagePlus size={56} className="text-[#B3B3B3]" strokeWidth={1.5} />
-          <span style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "16px", color: "#7F7F7F" }}>
-            사진 추가하기
-          </span>
-          <span style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "13px", color: "#B3B3B3" }}>
-            최대 10장 ({imageFiles.length}장 선택됨)
-          </span>
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          multiple
-          className="hidden"
-          onChange={(e) => {
-            if (e.target.files) {
-              setImageFiles(Array.from(e.target.files))
-            }
-          }}
-        />
-      </div>
 
         {/* 카테고리 (334x107, radius 40, border 1px #CCCCCC) */}
       <div className="w-full flex justify-center mb-4">
