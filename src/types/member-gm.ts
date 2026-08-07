@@ -98,5 +98,5 @@ export type ApiResponseMemberInfo = ApiResponse<MemberInfo>;
 export type ApiResponseVoid = ApiResponse<Record<string, never> | null>;
 
 
-// 8. DELETE /api/v1/members/withdraw (탈퇴)
+// 8. PATCH /api/v1/members/withdraw (탈퇴)
 export type WithdrawResponse = ApiResponse<Record<string, never> | null>;

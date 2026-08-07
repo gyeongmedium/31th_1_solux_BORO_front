@@ -229,9 +229,13 @@ export default function TradeHistoryPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          navigate(`/mypage/review/create/${trade.postId}`, {
+                          // trade 객체의 실제 대여 ID 필드명(예: rentalId 또는 rentalRequestId)을 전달
+                          const targetRentalId = trade.rentalId || trade.rentalRequestId || trade.postId;
+
+                          navigate(`/mypage/review-create/${targetRentalId}`, {
                             state: {
-                              nickname: trade.postMemberNickname,
+                              rentalId: targetRentalId,
+                              partnerName: trade.postMemberNickname,
                               title: spot ? `${trade.location} ${trade.floor}층 ${trade.seatNumber}번` : trade.postTitle,
                             },
                           })

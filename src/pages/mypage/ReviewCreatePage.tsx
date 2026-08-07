@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom"; // useParams 추가
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import type { ReviewSentiment, ReviewRequest } from "../../types/rental";
 import { createRentalReview } from "../../api/rental";
 

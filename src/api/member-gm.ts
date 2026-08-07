@@ -83,8 +83,8 @@ export const logoutMember = async (): Promise<ApiResponseVoid> => {
 };
 
 
-// 8. DELETE /api/v1/members/withdraw (탈퇴)
+// 8. PATCH /api/v1/members/withdraw (탈퇴)
 export const withdrawMember = async (): Promise<WithdrawResponse> => {
-    const response = await api.delete<WithdrawResponse>("/api/v1/members/withdraw");
+    const response = await api.patch<WithdrawResponse>("/api/v1/members/withdraw");
     return response.data;
 };
