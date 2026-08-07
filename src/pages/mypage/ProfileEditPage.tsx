@@ -269,7 +269,7 @@ useEffect(() => {
 
       {/* 모달 하단 요소 간격이 넓어진 취소 모달 */}
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 max-w-[402px] mx-auto transition-opacity">
+        <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 transition-opacity">          
           <div 
             className="bg-white flex flex-col items-center shadow-xl box-border opacity-100"
             style={{
