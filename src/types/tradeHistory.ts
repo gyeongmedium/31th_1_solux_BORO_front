@@ -1,4 +1,5 @@
 export interface TradeHistoryItem {
+  rentalRequestId: number
   postId: number
   postStatus: string
   postCategory: string

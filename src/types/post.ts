@@ -1,4 +1,4 @@
-//게시글 데이터 type 정의
+// 게시글 데이터 type 정의
 export type PostCategory =
   | "DEPARTMENT_JACKET"
   | "MAJOR_BOOKS"
@@ -33,4 +33,35 @@ export interface ApiResponse<T> {
   code: string
   message: string
   result: T
+}
+
+// 게시글 생성 요청 타입
+export interface CreatePostRequest {
+  imageUrlList: string[]
+  category: PostCategory
+  title: string
+  description: string
+  rentalStartTime: string
+  rentalEndTime: string
+  rentalPrice: number
+  rentalPriceUnit: RentalPriceUnit
+}
+
+// 게시글 수정 요청 타입
+export interface UpdatePostRequest extends CreatePostRequest {}
+
+// 내 작성 게시물 조회 응답 타입 (GET /api/v1/members/posts)
+export interface MemberPostItem {
+  postId: number
+  postStatus: PostStatus | string
+  postCategory: PostCategory | string
+  price: number
+  priceUnit: RentalPriceUnit | string
+  postTitle: string
+  postDescription: string
+  requestCreatedAt: string
+  leftMinutes: number
+  location?: string
+  floor?: number
+  seatNumber?: number
 }
