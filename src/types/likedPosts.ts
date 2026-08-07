@@ -1,5 +1,5 @@
 export interface LikedPostItem {
-  postId?: number
+  postId: number
   postImageUrl: string
   postCategory: string
   postStatus: string

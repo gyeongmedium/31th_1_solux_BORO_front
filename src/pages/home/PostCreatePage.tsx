@@ -32,6 +32,7 @@ export default function PostCreatePage() {
   const isEditMode = !!postId || !!spotId  // postId나 spotId가 있으면 true (수정 모드)
   const [imageFiles, setImageFiles] = useState<File[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
 
   const postCategoryList: PostCategory[] = [
     "DEPARTMENT_JACKET",
@@ -317,6 +318,95 @@ export default function PostCreatePage() {
 
       {activeTab === "post" ? (
         <>
+
+        {/* 사진 추가하기 (334x295, radius 40, 배경 #E6E6E6) */}
+<div className="w-full flex justify-center mb-5">
+  {imageFiles.length > 0 || (isEditMode && existingImageUrls.length > 0) ? (
+    <div
+      className="relative overflow-x-auto flex snap-x snap-mandatory"
+      style={{
+        width: "334px",
+        height: "295px",
+        borderRadius: "40px",
+        scrollSnapType: "x mandatory",
+      }}
+    >
+      {/* 기존 사진들 */}
+      {isEditMode &&
+        existingImageUrls.map((url, idx) => (
+          <div
+            key={`existing-${idx}`}
+            className="flex-shrink-0 snap-center relative"
+            style={{ width: "334px", height: "295px" }}
+          >
+            <img src={url} alt={`기존 사진 ${idx + 1}`} className="w-full h-full object-cover" style={{ borderRadius: "40px" }} />
+          </div>
+        ))}
+      {/* 새로 선택한 사진들 */}
+      {imageFiles.map((file, idx) => (
+        <div
+          key={`new-${idx}`}
+          className="flex-shrink-0 snap-center relative"
+          style={{ width: "334px", height: "295px" }}
+        >
+          <img
+            src={URL.createObjectURL(file)}
+            alt={`새 사진 ${idx + 1}`}
+            className="w-full h-full object-cover"
+            style={{ borderRadius: "40px" }}
+          />
+        </div>
+      ))}
+
+          {/* 사진 추가 버튼 (오버레이) */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute flex items-center justify-center"
+            style={{
+              bottom: "16px",
+              right: "16px",
+              width: "44px",
+              height: "44px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(0,0,0,0.5)",
+            }}
+          >
+            <ImagePlus size={20} className="text-white" />
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="flex flex-col items-center justify-center gap-3"
+          style={{
+            width: "334px",
+            height: "295px",
+            borderRadius: "40px",
+            backgroundColor: "#E6E6E6",
+          }}
+        >
+          <ImagePlus size={56} className="text-[#B3B3B3]" strokeWidth={1.5} />
+          <span style={{ fontFamily: "Pretendard", fontWeight: 700, fontSize: "16px", color: "#7F7F7F" }}>
+            사진 추가하기
+          </span>
+          <span style={{ fontFamily: "Pretendard", fontWeight: 400, fontSize: "13px", color: "#B3B3B3" }}>
+            최대 10장
+          </span>
+        </button>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files) {
+            setImageFiles((prev) => [...prev, ...Array.from(e.target.files!)])
+          }
+        }}
+      />
+    </div>
 
         {/* 카테고리 (334x107, radius 40, border 1px #CCCCCC) */}
       <div className="w-full flex justify-center mb-4">
@@ -1178,7 +1268,9 @@ export default function PostCreatePage() {
             {checkoutTime || "Time"}
           </span>
           <button
-            onClick={() => document.getElementById("checkout-time-input")?.showPicker()}
+            onClick={() =>
+              (document.getElementById("checkout-time-input") as HTMLInputElement)?.showPicker()
+            }
             className="flex items-center justify-center"
             style={{ marginRight: "5px" }}
           >

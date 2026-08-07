@@ -20,12 +20,16 @@ export interface UpdateEmptySpotRequest {
 // 응답(Response) 타입
 export interface EmptySpotCreateResponse {
   postId: number;
+  emptySpotId: number;
   location: string;
   floor: number;
   seatNumber: number;
   hasPowerOutlet: boolean;
   hasWindowSeat: boolean;
   expectedCheckoutTime: string;
+  createdAt: string;
+  profileUrl: string;
+  authorNickname: string;
 }
 
 export interface EmptySpotListResponse {
