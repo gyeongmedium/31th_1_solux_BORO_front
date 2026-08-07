@@ -1,7 +1,7 @@
 // 리뷰 작성
 
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import type { ReviewSentiment, ReviewRequest } from "../../types/rental";
 import { createRentalReview } from "../../api/rental";
 
@@ -69,10 +69,11 @@ interface LocationState {
 export default function ReviewCreatePage() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { rentalId: paramRentalId } = useParams();
     const state = (location.state as LocationState) || {};
 
     // 데이터 전달이 없어도 동작하도록 기본값 설정
-    const rentalId = state.rentalId ?? 1;
+    const rentalId = Number(paramRentalId) || state.rentalId;
     const title = state.title || "게시글 제목";
     const partnerName = state.partnerName || "거래 상대 아이디";
 
@@ -95,7 +96,7 @@ export default function ReviewCreatePage() {
         setToast("후기가 전송되었습니다");
         setTimeout(() => {
             setToast(null);
-            navigate('mypage/history');
+            navigate('/mypage/history');
         }, 1000);
         } catch (error) {
             console.error("후기 전송 실패:", error);
