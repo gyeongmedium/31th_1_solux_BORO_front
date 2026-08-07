@@ -136,20 +136,39 @@ export default function PostDetailPage() {
           </button>
         </div>
 
-        {/* 이미지 영역 */}
-        <div className="px-4 mb-5">
-          {post.imageUrlList[0] ? (
-            <img
-              src={post.imageUrlList[0]}
-              alt={post.title}
-              className="w-92.5 h-73.75 object-cover rounded-[40px]"
-            />
-          ) : (
-            <div className="w-92.5 h-73.75 bg-[#E6E6E6] rounded-[40px] flex items-center justify-center">
-              <img src="/logo3.png" alt="기본 이미지" className="w-16 h-16 object-contain opacity-60" />
-            </div>
-          )}
+{/* 이미지 영역 (370x295, radius 40) */}
+<div className="px-4 mb-5 flex justify-center">
+  {post.imageUrlList && post.imageUrlList.length > 0 ? (
+    <div
+      className="relative overflow-x-auto overflow-y-hidden flex snap-x snap-mandatory category-scroll"
+      style={{
+        width: "370px",
+        height: "295px",
+        borderRadius: "40px",
+        scrollSnapType: "x mandatory",
+      }}
+    >
+      {post.imageUrlList.map((url, idx) => (
+        <div
+          key={idx}
+          className="flex-shrink-0 snap-center relative"
+          style={{ width: "370px", height: "295px" }}
+        >
+          <img
+            src={url}
+            alt={`${post.title} ${idx + 1}`}
+            className="w-full h-full object-cover"
+            style={{ borderRadius: "40px" }}
+          />
         </div>
+      ))}
+    </div>
+  ) : (
+    <div className="w-[370px] h-[295px] bg-[#E6E6E6] rounded-[40px] flex items-center justify-center">
+      <img src="/logo3.png" alt="기본 이미지" className="w-16 h-16 object-contain opacity-60" />
+    </div>
+  )}
+</div>
 
         {/* 상세 정보 카드 */}
         <div className="px-4 mb-5">
