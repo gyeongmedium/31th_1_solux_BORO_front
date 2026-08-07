@@ -78,18 +78,21 @@ solux 31th BORO team Front End
 <br>
 
 ### 🌀 마이페이지
-| 기본 | 꾸미기 | 내가 작성한 게시글 | 거래 내역  |
-| :---: | :---: | :---: | :---: |
-| <img src="src/assets/images/mypage.png" width="250"> | <img src="src/assets/images/deco.png" width="250"> | <img src="src/assets/images/my_post.png" width="250"> | <img src="src/assets/images/history.png" width="250"> |
+| 기본 | 꾸미기 | 내가 작성한 게시글 |
+| :---: | :---: | :---: |
+| <img src="src/assets/images/mypage.png" width="250"> | <img src="src/assets/images/deco.png" width="250"> | <img src="src/assets/images/my_post.png" width="250"> |
 
-| 받은 후기 | 보낸 후기 | 찜한 게시물 보기 | 상점 |
-| :---: | :---: | :---: | :---: |
-| <img src="src/assets/images/review.png" width="250"> | <img src="src/assets/images/my_review.png" width="250"> | <img src="src/assets/images/liked.png" width="250"> | <img src="src/assets/images/store.png" width="250"> |
+| 거래 내역 | 받은 후기 | 보낸 후기 |
+| :---: | :---: | :---: |
+| <img src="src/assets/images/history.png" width="250"> | <img src="src/assets/images/review.png" width="250"> | <img src="src/assets/images/my_review.png" width="250"> |
 
+| 찜한 게시물 보기 | 상점 | 포인트 |
+| :---: | :---: | :---: |
+| <img src="src/assets/images/liked.png" width="250"> | <img src="src/assets/images/store.png" width="250"> | <img src="src/assets/images/point.png" width="250"> |
 
-| 포인트 | 프로필 수정 | 탈퇴 | 로그아웃 |
-| :---: | :---: | :---: | :---: |
-| <img src="src/assets/images/point.png" width="250"> | <img src="src/assets/images/profile.png" width="250"> | <img src="src/assets/images/delete.png" width="250"> | <img src="src/assets/images/logout.png" width="250"> |
+| 프로필 수정 | 탈퇴 | 로그아웃 |
+| :---: | :---: | :---: |
+| <img src="src/assets/images/profile.png" width="250"> | <img src="src/assets/images/delete.png" width="250"> | <img src="src/assets/images/logout.png" width="250"> |
 
 <br>
 
