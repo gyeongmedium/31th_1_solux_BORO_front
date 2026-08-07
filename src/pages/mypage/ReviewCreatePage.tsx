@@ -97,16 +97,34 @@ export default function ReviewCreatePage() {
             // rental.ts의 createRentalReview(rentalId, payload) 호출
             await createRentalReview(rentalId, payload);
 
+            // 로컬 스토리지에 새 후기 저장
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, "0");
+            const day = String(today.getDate()).padStart(2, "0");
+            const formattedDate = `${year}-${month}-${day}`;
+
+            const newReview = {
+                memberNickname: partnerName,
+                postTitle: title,
+                content: content,
+                reviewSentiment: sentiment,
+                createdAt: formattedDate,
+            };
+
+            const localReviews = JSON.parse(localStorage.getItem("my_local_reviews") || "[]");
+            localStorage.setItem("my_local_reviews", JSON.stringify([newReview, ...localReviews]));
+
             setToast("후기가 전송되었습니다");
             setTimeout(() => {
                 setToast(null);
                 // 절대 경로 지정 (/mypage/history)
-                navigate('/mypage/history');
+                navigate('/mypage');
             }, 1000);
         } catch (error) {
             console.error("후기 전송 실패:", error);
             setToast("후기 전송에 실패했습니다");
-            setTimeout(() => setToast(null), 1000);
+            //navigate('/mypage/history');
         }
     };
 

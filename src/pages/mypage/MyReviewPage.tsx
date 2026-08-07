@@ -14,16 +14,30 @@ export default function MyReviewPage() {
     const [dislikeCount, setDislikeCount] = useState<number>(0);
 
     useEffect(() => {
+        // LocalStorage 데이터 로드
+        const localReviews: (ReviewDetail & { reviewSentiment: ReviewSentiment })[] = JSON.parse(
+            localStorage.getItem("my_local_reviews") || "[]"
+        );
+
+        const localLikeCount = localReviews.filter((r) => r.reviewSentiment === "GOOD").length;
+        const localDislikeCount = localReviews.filter((r) => r.reviewSentiment === "BAD").length;
+
         getWrittenReviews(activeTab).then((res) => {
-            if (res.isSuccess && res.result) {
-                setLikeCount(res.result.likeCount);
-                setDislikeCount(res.result.dislikeCount);
-                setReviewList(res.result.reviewDetailList || []);
-            } else {
-                setReviewList([]);
-            }
+            const apiReviews = (res.isSuccess && res.result?.reviewDetailList) || [];
+            const apiLikeCount = res.result?.likeCount || 0;
+            const apiDislikeCount = res.result?.dislikeCount || 0;
+
+            setLikeCount(apiLikeCount + localLikeCount);
+            setDislikeCount(apiDislikeCount + localDislikeCount);
+
+            const filteredLocal = localReviews.filter((r) => r.reviewSentiment === activeTab);
+            setReviewList([...filteredLocal, ...apiReviews]);
         }).catch(() => {
-            setReviewList([]);
+            setLikeCount(localLikeCount);
+            setDislikeCount(localDislikeCount);
+
+            const filteredLocal = localReviews.filter((r) => r.reviewSentiment === activeTab);
+            setReviewList(filteredLocal);
         });
     }, [activeTab]);
 
