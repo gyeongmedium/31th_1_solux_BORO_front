@@ -68,17 +68,17 @@ interface LocationState {
 export default function ReviewCreatePage() {
     const navigate = useNavigate();
     const location = useLocation();
-    const params = useParams(); // URL 파라미터 추출
+    const params = useParams();
 
     const state = (location.state as LocationState) || {};
 
-    // 1. URL 파라미터(rentalRequestId 또는 rentalId) 우선 추출
+    // 1. URL 파라미터(rentalRequestId/rentalId) 및 state fallback 처리
     const urlId = params.rentalRequestId || params.rentalId;
-    const rentalId = urlId ? Number(urlId) : (state.rentalId ?? 1);
+    const rentalRequestId = urlId ? Number(urlId) : (state.rentalId ?? 0);
 
-    // 2. 제목 및 닉네임 상태 바인딩
-    const title = state.title || "게시글 제목";
-    const partnerName = state.nickname || state.partnerName || "거래 상대 아이디";
+    // 2. 제목 및 상대방 닉네임 바인딩
+    const title = state.title || "거래 정보 없음";
+    const partnerName = state.partnerName || state.nickname || "거래 상대";
 
     const [sentiment, setSentiment] = useState<ReviewSentiment>("GOOD");
     const [content, setContent] = useState<string>("");
@@ -88,43 +88,43 @@ export default function ReviewCreatePage() {
     const handleSubmitConfirm = async () => {
         setShowModal(false);
 
+        if (!rentalRequestId) {
+            setToast("올바르지 않은 거래 정보입니다.");
+            return;
+        }
+
         try {
             const payload: ReviewRequest = {
                 reviewSentiment: sentiment,
                 content,
             };
 
-            // rental.ts의 createRentalReview(rentalId, payload) 호출
-            await createRentalReview(rentalId, payload);
+            // /api/v1/rentals/{rentalRequestId}/review 호출
+            await createRentalReview(rentalRequestId, payload);
 
-            // 로컬 스토리지에 새 후기 저장
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, "0");
-            const day = String(today.getDate()).padStart(2, "0");
-            const formattedDate = `${year}-${month}-${day}`;
+            // -------------------------------------------------------------
+            // [수정된 부분] 로컬스토리지에 후기 작성 완료된 거래 ID 저장
+            // -------------------------------------------------------------
+            const currentRentalId = Number(rentalRequestId);
+            const savedIds: number[] = JSON.parse(
+                localStorage.getItem("reviewed_rental_ids") || "[]"
+            ).map((id: any) => Number(id));
 
-            const newReview = {
-                memberNickname: partnerName,
-                postTitle: title,
-                content: content,
-                reviewSentiment: sentiment,
-                createdAt: formattedDate,
-            };
-
-            const localReviews = JSON.parse(localStorage.getItem("my_local_reviews") || "[]");
-            localStorage.setItem("my_local_reviews", JSON.stringify([newReview, ...localReviews]));
+            if (!savedIds.includes(currentRentalId)) {
+                savedIds.push(currentRentalId);
+                localStorage.setItem("reviewed_rental_ids", JSON.stringify(savedIds));
+            }
+            // -------------------------------------------------------------
 
             setToast("후기가 전송되었습니다");
             setTimeout(() => {
                 setToast(null);
-                // 절대 경로 지정 (/mypage/history)
-                navigate('/mypage');
+                // 후기 완료 후 이전 페이지(거래내역)로 돌아가기
+                navigate(-1);
             }, 1000);
         } catch (error) {
             console.error("후기 전송 실패:", error);
             setToast("후기 전송에 실패했습니다");
-            //navigate('/mypage/history');
         }
     };
 

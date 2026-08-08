@@ -1,5 +1,3 @@
-// 받은 후기 (좋았어요/별로였어요)
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getReceivedReviews } from "../../api/member-gm";
@@ -8,63 +6,29 @@ import type { ReviewDetail, ReviewSentiment } from "../../types/member-gm";
 // 이의신청 구글 폼 URL
 const APPEAL_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf2VDNrRoVJaGDTOwpwLt2lb7ynHyfa91h54QGRJyne4np8bg/viewform";
 
-const DEFAULT_GOOD_REVIEWS: ReviewDetail[] = [
-    {
-        memberId: 9991,
-        memberNickname: "송송이",
-        postTitle: "졸업 눈송이 인형 대여해주실 분",
-        createdAt: "2026-08-07",
-        content: "시간 맞춰서 와주시고 매너가 너무 좋으셨어요!",
-    },
-    {
-        memberId: 9992,
-        memberNickname: "니모",
-        postTitle: "컴아텍 교재 급해요!!",
-        createdAt: "2026-08-05",
-        content: "교재 상태가 설명과 같고 매우 깨끗했습니다.\n 덕분에 A+ 받았습니다~",
-    },
-];
-
-const DEFAULT_BAD_REVIEWS: ReviewDetail[] = [
-    {
-        memberId: 9993,
-        memberNickname: "애햄이",
-        postTitle: "중앙도서관 휴 오두막",
-        createdAt: "2026-08-08",
-        content: "약속된 퇴실 시간보다 20분이나 늦게 자리를 양도해주셨고, 미리 연락도 없어서 조금 난감했습니다.",
-    },
-];
-
 export default function ReviewPage() {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState<ReviewSentiment>("GOOD");
     
-    // 초기값을 Mock 데이터로 설정하여 화면에 즉시 보임
-    const [reviewList, setReviewList] = useState<ReviewDetail[]>(DEFAULT_GOOD_REVIEWS);
-    const [likeCount, setLikeCount] = useState<number>(DEFAULT_GOOD_REVIEWS.length);
-    const [dislikeCount, setDislikeCount] = useState<number>(DEFAULT_BAD_REVIEWS.length);
+    // API 데이터만 담기 위해 빈 값/0으로 초기화
+    const [reviewList, setReviewList] = useState<ReviewDetail[]>([]);
+    const [likeCount, setLikeCount] = useState<number>(0);
+    const [dislikeCount, setDislikeCount] = useState<number>(0);
 
     useEffect(() => {
-        const currentMockList = activeTab === "GOOD" ? DEFAULT_GOOD_REVIEWS : DEFAULT_BAD_REVIEWS;
-
         getReceivedReviews(activeTab)
             .then((res) => {
                 if (res.isSuccess && res.result) {
-                    const apiList = res.result.reviewDetailList || [];
-                    
-                    // API가 성공해도 Mock 데이터 + API 데이터를 함께 유지
-                    setLikeCount((res.result.likeCount || 0) + DEFAULT_GOOD_REVIEWS.length);
-                    setDislikeCount((res.result.dislikeCount || 0) + DEFAULT_BAD_REVIEWS.length);
-                    setReviewList([...currentMockList, ...apiList]);
+                    setLikeCount(res.result.likeCount || 0);
+                    setDislikeCount(res.result.dislikeCount || 0);
+                    setReviewList(res.result.reviewDetailList || []);
                 } else {
-                    // API 응답 실패 시에도 Mock 데이터 유지
-                    setReviewList(currentMockList);
+                    setReviewList([]);
                 }
             })
             .catch(() => {
-                // API 에러 시에도 Mock 데이터 유지
-                setReviewList(currentMockList);
+                setReviewList([]);
             });
     }, [activeTab]);
 

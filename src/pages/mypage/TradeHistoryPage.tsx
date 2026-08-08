@@ -14,9 +14,18 @@ export default function TradeHistoryPage() {
     const [trades, setTrades] = useState<TradeHistoryItem[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
+    // 로컬스토리지에 저장된 작성 완료 ID 목록
+    const [reviewedIds, setReviewedIds] = useState<number[]>([])
+
     // 채팅 목록 상태
     const [tradeRooms, setTradeRooms] = useState<ChatRoomPreview[]>([])
     const [spotRooms, setSpotRooms] = useState<ChatRoomPreview[]>([])
+
+    // 페이지 진입 시 로컬스토리지에서 작성된 후기 ID 불러오기
+    useEffect(() => {
+        const savedIds = JSON.parse(localStorage.getItem("reviewed_rental_ids") || "[]")
+        setReviewedIds(savedIds)
+    }, [])
 
     useEffect(() => {
         const fetchTrades = async () => {
@@ -180,7 +189,10 @@ export default function TradeHistoryPage() {
                                 const spot = isSpot(trade)
                                 const colors = statusColor(trade.postStatus, spot)
                                 const partnerName = getTargetChatName(trade, tradeRooms, spotRooms)
-                                console.log("전체 데이터:", trade)
+                                
+                                // 로컬스토리지에 저장된 ID인지 판별
+                                const isReviewed = reviewedIds.includes(trade.rentalRequestId)
+
                                 return (
                                     <div
                                         key={trade.rentalRequestId}
@@ -275,32 +287,42 @@ export default function TradeHistoryPage() {
                                             </div>
 
                                             <button
+                                                disabled={isReviewed}
                                                 onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    const targetRentalId = trade.rentalId || trade.rentalRequestId || trade.postId
+                                                    e.stopPropagation();
 
-                                                    navigate(`/mypage/review-create/${targetRentalId}`, {
+                                                    if (isReviewed) return;
+
+                                                    const targetRentalRequestId = trade.rentalRequestId;
+
+                                                    const displayTitle = spot 
+                                                        ? `${trade.location} ${trade.floor}층 ${trade.seatNumber}번` 
+                                                        : trade.postTitle;
+
+                                                    navigate(`/mypage/review-create/${targetRentalRequestId}`, {
                                                         state: {
-                                                            rentalId: targetRentalId,
+                                                            rentalId: targetRentalRequestId,
                                                             partnerName: partnerName,
-                                                            title: spot ? `${trade.location} ${trade.floor}층 ${trade.seatNumber}번` : trade.postTitle,
+                                                            title: displayTitle,
                                                         },
-                                                    })
+                                                    });
                                                 }}
                                                 className="flex items-center justify-center"
                                                 style={{
                                                     width: "142px",
                                                     height: "34px",
                                                     borderRadius: "40px",
-                                                    border: "1px solid #7F7F7F",
-                                                    color: "#000000",
+                                                    border: isReviewed ? "none" : "1px solid #7F7F7F",
+                                                    backgroundColor: isReviewed ? "#E6E6E6" : "transparent",
+                                                    color: isReviewed ? "#7F7F7F" : "#000000",
                                                     fontFamily: "Pretendard",
                                                     fontWeight: 400,
                                                     fontSize: "12px",
                                                     whiteSpace: "nowrap",
+                                                    cursor: isReviewed ? "not-allowed" : "pointer",
                                                 }}
                                             >
-                                                후기 보내기
+                                                {isReviewed ? "작성 완료" : "후기 보내기"}
                                             </button>
                                         </div>
                                     </div>

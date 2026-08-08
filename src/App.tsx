@@ -109,7 +109,7 @@ export default function App() {
             <Route path="/mypage/store" element={<StorePage />} />
             <Route path="/mypage/point" element={<PointPage />} />
             <Route path="/mypage/noonsong" element={<NoonsongDecoPage />} />
-            <Route path="/mypage/review-create/:rentalId" element={<ReviewCreatePage />} />
+            <Route path="/mypage/review-create/:rentalRequestId" element={<ReviewCreatePage />} />
             <Route path="/mypage/review" element={<ReviewPage />} />
             <Route path="/mypage/my-review" element={<MyReviewPage />} />
             <Route path="/mypage/liked" element={<LikedPostsPage />} />
