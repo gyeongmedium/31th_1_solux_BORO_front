@@ -1,0 +1,96 @@
+@import 'pretendard/dist/web/variable/pretendardvariable.css';
+@import "tailwindcss";
+
+* {
+    font-family: 'Pretendard Variable', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+}
+
+button {
+    font-weight: inherit;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f3f4f6; /* 배경 */
+    display: flex;
+    justify-content: center;   /* 가로 가운데 정렬 */
+    align-items: center;       /* 세로 가운데 정렬 */
+    min-height: 100vh;         /* 모니터 꽉 차게 */
+    font-family: 'Pretendard', sans-serif;
+    font-weight: 400;  
+    font-size: 14px;
+}
+
+#root {
+    width: 402px;
+    height: 874px;
+    background-color: #ffffff; /* 내부 배경 */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    
+    /* 크기 고정 핵심 설정 */
+    min-width: 402px;
+    max-width: 402px;
+    min-height: 874px;
+    max-height: 874px;
+    
+    overflow: hidden;
+    
+    position: relative;
+}
+
+/* 세로 스크롤바 - 오버레이 방식 수정 (최신 브라우저 대응) */
+.vertical-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+}
+
+.vertical-scroll::-webkit-scrollbar {
+  width: 11px;
+}
+
+.vertical-scroll::-webkit-scrollbar-track {
+  background: transparent; /* 트랙을 투명하게 만들어 레이아웃 공간을 안 차지하는 것처럼 처리 */
+  border-radius: 10px;
+}
+
+.vertical-scroll::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 10px;
+  border: 2px solid transparent; /* 기존 2px에서 3px로 늘려 thumb를 더 슬림하고 예쁘게 조정 */
+  background-clip: content-box;
+}
+
+.vertical-scroll::-webkit-scrollbar-button {
+  display: none;
+}
+
+/* 핵심: 스크롤바가 콘텐츠 영역을 갉아먹지 않도록 자식 요소들을 우측으로 11px 확장 */
+.vertical-scroll > * {
+  margin-right: -11px;
+}
+
+/* 카테고리 가로 스크롤바 - 조금 더 두껍게 */
+.category-scroll {
+  overflow-y: hidden;
+}
+
+.category-scroll::-webkit-scrollbar {
+  height: 14px;
+  width: 0px;
+}
+
+.category-scroll::-webkit-scrollbar-track {
+  background: #E6E6E6;
+  border-radius: 10px;
+  margin: 0 20px;
+}
+
+.category-scroll::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 10px;
+  border: 4px solid transparent;
+  background-clip: content-box;
+}
+
