@@ -30,6 +30,7 @@ export interface EmptySpotCreateResponse {
   createdAt: string;
   profileUrl: string;
   authorNickname: string;
+  status: "ACTIVE" | "RENTED" | "COMPLETED" | "DELETED";
 }
 
 export interface EmptySpotListResponse {

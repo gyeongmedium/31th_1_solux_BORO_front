@@ -725,11 +725,13 @@ export default function PostCreatePage() {
             })
           : "연도, 월, 일"}
       </span>
-      <button
-        onClick={() => document.getElementById("rental-date-input")?.showPicker()}
-        className="flex items-center justify-center"
-        style={{ marginRight: "5px" }}
-      >
+        <button
+          onClick={() =>
+            (document.getElementById("rental-date-input") as HTMLInputElement)?.showPicker()
+          }
+          className="flex items-center justify-center"
+          style={{ marginRight: "5px" }}
+        >
         <Calendar size={16} className="text-[#1A1A1A]" style={{ transform: "scaleX(1.1)" }}/>
       
       </button>
