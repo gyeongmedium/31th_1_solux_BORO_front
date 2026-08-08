@@ -6,7 +6,8 @@ export default function LoginPage() {
         const CLIENT_ID = "201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com";
         
         // redirect_uri를 프론트엔드 콜백 페이지 주소로 설정
-        const REDIRECT_URI = encodeURIComponent("http://localhost:5173/auth/google/callback");
+        const currentOrigin = window.location.origin;
+        const REDIRECT_URI = encodeURIComponent(`${currentOrigin}/auth/google/callback`);
         
         const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=email%20profile&prompt=consent`;
 
