@@ -14,30 +14,45 @@ export default function MyReviewPage() {
     const [dislikeCount, setDislikeCount] = useState<number>(0);
 
     useEffect(() => {
-        // LocalStorage 데이터 로드
+        /* LocalStorage 데이터 로드 주석 처리 (API 테스트용)
         const localReviews: (ReviewDetail & { reviewSentiment: ReviewSentiment })[] = JSON.parse(
             localStorage.getItem("my_local_reviews") || "[]"
         );
 
         const localLikeCount = localReviews.filter((r) => r.reviewSentiment === "GOOD").length;
         const localDislikeCount = localReviews.filter((r) => r.reviewSentiment === "BAD").length;
+        */
 
         getWrittenReviews(activeTab).then((res) => {
             const apiReviews = (res.isSuccess && res.result?.reviewDetailList) || [];
             const apiLikeCount = res.result?.likeCount || 0;
             const apiDislikeCount = res.result?.dislikeCount || 0;
 
+            // API 데이터만 반영
+            setLikeCount(apiLikeCount);
+            setDislikeCount(apiDislikeCount);
+            setReviewList(apiReviews);
+
+            /* 기존 로컬 저장소 병합 로직 주석 처리
             setLikeCount(apiLikeCount + localLikeCount);
             setDislikeCount(apiDislikeCount + localDislikeCount);
 
             const filteredLocal = localReviews.filter((r) => r.reviewSentiment === activeTab);
             setReviewList([...filteredLocal, ...apiReviews]);
+            */
         }).catch(() => {
+            // API 실패 시 0 또는 빈 배열 처리
+            setLikeCount(0);
+            setDislikeCount(0);
+            setReviewList([]);
+
+            /* 에러 시 로컬 저장소 사용 주석 처리
             setLikeCount(localLikeCount);
             setDislikeCount(localDislikeCount);
 
             const filteredLocal = localReviews.filter((r) => r.reviewSentiment === activeTab);
             setReviewList(filteredLocal);
+            */
         });
     }, [activeTab]);
 

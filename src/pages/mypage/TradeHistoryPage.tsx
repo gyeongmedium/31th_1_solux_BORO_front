@@ -276,16 +276,23 @@ export default function TradeHistoryPage() {
 
                                             <button
                                                 onClick={(e) => {
-                                                    e.stopPropagation()
-                                                    const targetRentalId = trade.rentalId || trade.rentalRequestId || trade.postId
+                                                    e.stopPropagation();
 
-                                                    navigate(`/mypage/review-create/${targetRentalId}`, {
+                                                    // 대여 요청 ID (API 경로 및 URL 파라미터로 사용)
+                                                    const targetRentalRequestId = trade.rentalRequestId;
+
+                                                    // 양도 완료(빈자리) 및 일반 대여 상품의 제목 처리
+                                                    const displayTitle = spot 
+                                                        ? `${trade.location} ${trade.floor}층 ${trade.seatNumber}번` 
+                                                        : trade.postTitle;
+
+                                                    navigate(`/mypage/review-create/${targetRentalRequestId}`, {
                                                         state: {
-                                                            rentalId: targetRentalId,
+                                                            rentalId: targetRentalRequestId,
                                                             partnerName: partnerName,
-                                                            title: spot ? `${trade.location} ${trade.floor}층 ${trade.seatNumber}번` : trade.postTitle,
+                                                            title: displayTitle,
                                                         },
-                                                    })
+                                                    });
                                                 }}
                                                 className="flex items-center justify-center"
                                                 style={{
