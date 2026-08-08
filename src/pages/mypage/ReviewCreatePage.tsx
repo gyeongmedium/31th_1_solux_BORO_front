@@ -102,21 +102,19 @@ export default function ReviewCreatePage() {
             // /api/v1/rentals/{rentalRequestId}/review 호출
             await createRentalReview(rentalRequestId, payload);
 
-            /* LocalStorage 저장 로직 주석 처리
-            const today = new Date();
-            const formattedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            // -------------------------------------------------------------
+            // [수정된 부분] 로컬스토리지에 후기 작성 완료된 거래 ID 저장
+            // -------------------------------------------------------------
+            const currentRentalId = Number(rentalRequestId);
+            const savedIds: number[] = JSON.parse(
+                localStorage.getItem("reviewed_rental_ids") || "[]"
+            ).map((id: any) => Number(id));
 
-            const newReview = {
-                memberNickname: partnerName,
-                postTitle: title,
-                content: content,
-                reviewSentiment: sentiment,
-                createdAt: formattedDate,
-            };
-
-            const localReviews = JSON.parse(localStorage.getItem("my_local_reviews") || "[]");
-            localStorage.setItem("my_local_reviews", JSON.stringify([newReview, ...localReviews]));
-            */
+            if (!savedIds.includes(currentRentalId)) {
+                savedIds.push(currentRentalId);
+                localStorage.setItem("reviewed_rental_ids", JSON.stringify(savedIds));
+            }
+            // -------------------------------------------------------------
 
             setToast("후기가 전송되었습니다");
             setTimeout(() => {

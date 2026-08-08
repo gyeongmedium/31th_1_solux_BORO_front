@@ -18,11 +18,15 @@ solux 31th BORO team Front End
 
 ## 💻 프론트엔드 팀원 소개 
 
+<div align="left">
+
 | 신정원 (프론트장) | 김경민 (팀원) |
 | :---: | :---: |
 | <img src="https://github.com/gardenew12.png" width="100" height="100" alt="신정원 프로필" /> | <img src="https://github.com/gyeongmedium.png" width="100" height="100" alt="김경민 프로필" /> |
 | [@gardenew12](https://github.com/gardenew12) | [@gyeongmedium](https://github.com/gyeongmedium) |
-| UI/UX, API 연동<br>(홈, 마이페이지)<br>배포 | UI/UX, API 연동<br>(온보딩, 대여현황,<br>채팅, 마이페이지) |
+| • UI/UX, API 연동<br>&nbsp;&nbsp;(홈, 마이페이지)<br>• 배포 | • UI/UX, API 연동<br>&nbsp;&nbsp;(온보딩, 대여현황, 채팅, 마이페이지) |
+
+</div>
 
 <br>
 
