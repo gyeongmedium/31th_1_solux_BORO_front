@@ -5,8 +5,10 @@ export default function LoginPage() {
     const handleGoogleLogin = () => {
         const CLIENT_ID = "201930860581-912d9h4a75m7tun7nc5ifl5qt7h4th8d.apps.googleusercontent.com";
         
-        // redirect_uri를 프론트엔드 콜백 페이지 주소로 설정
-        const REDIRECT_URI = encodeURIComponent("https://31th-1-solux-boro-front-three.vercel.app/auth/google/callback");
+        // 현재 브라우저의 접속 도메인(origin)을 동적으로 반영
+        const currentOrigin = window.location.origin;
+        const REDIRECT_URI = encodeURIComponent(`${currentOrigin}/auth/google/callback`);
+        
         const GOOGLE_AUTH_URL = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=email%20profile&prompt=consent`;
         window.location.href = GOOGLE_AUTH_URL;
         };
