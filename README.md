@@ -1,6 +1,5 @@
-# 31th_1_solux_BORO_front
-solux 31th BORO team Front End
-=======
+<h1>solux 31th BORO team Front End </h1>
+<br>
 
 <img src="public/logo1.png" alt="바로 로고" width="30%" />
 
